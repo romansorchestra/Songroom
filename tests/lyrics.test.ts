@@ -109,3 +109,11 @@ describe('constraint checks', () => {
     expect(good.every((x) => x.ok)).toBe(true);
   });
 });
+
+describe('ruled-out words', () => {
+  it('reads quoted words he says to remove or avoid', () => {
+    expect(extractConstraints("Remove 'leaving' while keeping a natural sung rhyme with 'dreaming'.").forbidden).toEqual(['leaving']);
+    expect(extractConstraints('Give me a chorus without “fire” and no "baby".').forbidden).toEqual(['fire', 'baby']);
+    expect(extractConstraints('No artist imitation or required rhyme.').forbidden).toBeUndefined();
+  });
+});

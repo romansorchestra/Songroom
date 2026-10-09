@@ -54,6 +54,10 @@ export function extractConstraints(request: string): Partial<Constraints> {
   if (end) out.mustEndWith = end[1].trim();
   const start = request.match(new RegExp(`(?:start(?:s|ing)?|begin(?:s|ning)?|open(?:s|ing)?)\\s+(?:on|with)\\s+${q}([^"“”‘’]+?)${q}`, 'i'));
   if (start) out.mustStartWith = start[1].trim();
+  // "Remove 'leaving'", "without 'fire'", "avoid 'night'", "no 'baby'": quoted words he has ruled out.
+  const banned = [...request.matchAll(new RegExp(`\\b(?:remove|without|avoid|avoiding|drop|lose|no|not|never)\\s+(?:the\\s+word\\s+|using\\s+)?${q}([^"“”‘’]{1,30})${q}`, 'gi'))]
+    .map((m) => m[1].trim()).filter((w) => w.split(/\s+/).length <= 3);
+  if (banned.length) out.forbidden = banned;
   const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
   const count = request.match(/\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:distinct\s+|original\s+|alternative\s+|different\s+|strange\s+|more\s+|new\s+)*(?:\w+\s+)?(ideas?|concepts?|options?|alternatives?|titles?|couplets?|passages?|lines?|endings?|replacements?|versions?)\b/i);
   if (count) {

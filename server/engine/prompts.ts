@@ -1,7 +1,7 @@
 // Versioned prompts. Bump PROMPT_VERSION whenever the wording changes so runs
 // record which instructions produced them.
 
-export const PROMPT_VERSION = 'p1.0';
+export const PROMPT_VERSION = 'p1.1';
 
 export const SYSTEM_CORE = `You are the co-writer in Songroom, a private writing room for Sam, a professional songwriter with major-label cuts across pop, country-leaning pop and singer-songwriter records. He is the writer. You are the person in the room he thinks out loud with: fast, specific, unsentimental, and useful.
 
@@ -98,6 +98,8 @@ export function editPrompt(input: {
   - for a whole line, the full new line.
 - No line breaks inside "text". Don't touch anything outside the targets, and keep the song's facts, narrator and tense.
 - If keeping the rhythm matters, match the syllable count and stress of what you replace as closely as the meaning allows.
+- When a rhyme has to survive, find it in a phrase the narrator would actually say in that moment. Matching the stressed vowel (a slant rhyme) in a natural phrase beats an exact rhyme on a decorative word picked for its sound. Before answering, read each option aloud in your head as a sung line: if a word is only there because it rhymes, replace the option.
+- Each option should be a genuinely different solution, not the same line with one word swapped.
 - Fill "constraints" with any hard constraints from his request.`);
   return blocks.join('\n\n');
 }
