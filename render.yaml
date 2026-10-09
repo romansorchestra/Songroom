@@ -1,4 +1,5 @@
-# Render Blueprint: one web service + one Postgres database (~$13/month).
+# Render Blueprint: one web service with a 1 GB disk (~$7.25/month).
+# Data lives in an embedded Postgres (PGlite) on the disk; Render snapshots the disk daily.
 services:
   - type: web
     name: songroom
@@ -19,13 +20,10 @@ services:
         sync: false
       - key: SESSION_SECRET
         generateValue: true
-      - key: DATABASE_URL
-        fromDatabase:
-          name: songroom-db
-          property: connectionString
+      - key: PGLITE_DIR
+        value: /var/data/pglite
+    disk:
+      name: songroom-data
+      mountPath: /var/data
+      sizeGB: 1
 
-databases:
-  - name: songroom-db
-    plan: 0.1c-256mb
-    region: oregon
-    postgresMajorVersion: "17"
