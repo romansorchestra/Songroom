@@ -20,7 +20,7 @@ async function main() {
   await migrate(db);
 
   let writer: Writer | null = null;
-  if (env.ANTHROPIC_API_KEY) writer = new AnthropicWriter(env.ANTHROPIC_API_KEY);
+  if (env.ANTHROPIC_API_KEY) writer = new AnthropicWriter(env.ANTHROPIC_API_KEY, env.ANTHROPIC_WORKSPACE_ID || undefined);
   else if (env.SONGROOM_STANDIN === '1' && env.NODE_ENV !== 'production') writer = new StandInWriter();
 
   const svc = new Service(db, writer);

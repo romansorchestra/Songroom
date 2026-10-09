@@ -18,6 +18,9 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      # Only needed for multi-workspace keys (wrkspc_...).
+      - key: ANTHROPIC_WORKSPACE_ID
+        sync: false
       - key: SESSION_SECRET
         generateValue: true
       - key: DB_PATH

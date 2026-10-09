@@ -68,8 +68,12 @@ export class AnthropicWriter implements Writer {
   readonly live = true;
   readonly label = 'Anthropic API';
   private client: Anthropic;
-  constructor(apiKey: string) {
-    this.client = new Anthropic({ apiKey, maxRetries: 1, timeout: 180_000 });
+  constructor(apiKey: string, workspaceId?: string) {
+    // Newer multi-workspace keys must name the workspace on every request.
+    this.client = new Anthropic({
+      apiKey, maxRetries: 1, timeout: 180_000,
+      defaultHeaders: workspaceId ? { 'anthropic-workspace-id': workspaceId } : undefined,
+    });
   }
 
   async write(req: WriterRequest): Promise<WriterResult> {

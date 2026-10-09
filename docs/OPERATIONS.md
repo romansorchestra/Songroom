@@ -5,6 +5,7 @@
 | --- | --- |
 | `APP_PASSWORD` | The single login password |
 | `ANTHROPIC_API_KEY` | Console API key for the writer (keep it out of shell profiles so Claude Code keeps using the Max subscription) |
+| `ANTHROPIC_WORKSPACE_ID` | Needed only if the key is a multi-workspace key (the API says so with a 400): the `wrkspc_…` ID from Console → Settings → Workspaces |
 | `SESSION_SECRET` | Signs the login cookie (Render generates it) |
 | `DB_PATH` | The SQLite file (Render: `/var/data/songroom.db` on the disk; locally `.data/songroom.db`) |
 | `SONGROOM_STANDIN=1` | Local only: placeholder writer for UI checks; never in production |
