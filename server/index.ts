@@ -11,7 +11,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
   const env = process.env;
-  const db = await openDb(env.DATABASE_URL, env.DATABASE_URL ? undefined : (env.PGLITE_DIR ?? path.join(process.cwd(), '.data')));
+  const db = await openDb(env.DB_PATH ?? path.join(process.cwd(), '.data', 'songroom.db'));
   await migrate(db);
 
   let writer: Writer | null = null;

@@ -2,23 +2,20 @@
   "name": "songroom",
   "version": "0.1.0",
   "scripts": {
-    "dev": "SONGROOM_STANDIN=1 APP_PASSWORD=dev SESSION_SECRET=dev tsx watch server/index.ts & vite --config web/vite.config.ts",
+    "dev": "SONGROOM_STANDIN=1 APP_PASSWORD=dev SESSION_SECRET=dev tsx watch --disable-warning=ExperimentalWarning server/index.ts & vite --config web/vite.config.ts",
     "build": "vite build --config web/vite.config.ts && esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server/index.js",
-    "start": "node dist/server/index.js",
+    "start": "node --disable-warning=ExperimentalWarning dist/server/index.js",
     "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json",
     "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
-    "@electric-sql/pglite": "^0.5.8",
     "express": "^5.3.0",
-    "pg": "^8.23.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.4",
-    "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
@@ -33,6 +30,6 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   }
 }

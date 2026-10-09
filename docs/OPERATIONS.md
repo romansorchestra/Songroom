@@ -6,8 +6,7 @@
 | `APP_PASSWORD` | The single login password |
 | `ANTHROPIC_API_KEY` | Console API key for the writer (keep it out of shell profiles so Claude Code keeps using the Max subscription) |
 | `SESSION_SECRET` | Signs the login cookie (Render generates it) |
-| `PGLITE_DIR` | Where the embedded database lives (Render: `/var/data/pglite` on the disk) |
-| `DATABASE_URL` | Optional external Postgres; if set it is used instead of PGlite |
+| `DB_PATH` | The SQLite file (Render: `/var/data/songroom.db` on the disk; locally `.data/songroom.db`) |
 | `SONGROOM_STANDIN=1` | Local only: placeholder writer for UI checks; never in production |
 
 ## Deploy

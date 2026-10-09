@@ -52,7 +52,7 @@ export class Service {
 
   async recoverInterrupted(): Promise<number> {
     const rows = await this.db.query(`UPDATE runs SET status='interrupted', finished_at=now(),
-      error='{"code":"interrupted","message":"The server restarted during this request. It may have been billed. Retry if you need it."}'::jsonb
+      error='{"code":"interrupted","message":"The server restarted during this request. It may have been billed. Retry if you need it."}'
       WHERE status='running' RETURNING id`);
     return rows.length;
   }
@@ -109,19 +109,17 @@ export class Service {
 
   // ---------------- budget ----------------
   async spend() {
-    const [row] = await this.db.query<{ today: string; month: string }>(`
+    const [row] = await this.db.query<{ today: number; month: number }>(`
       SELECT
-        COALESCE(SUM(CASE WHEN created_at >= (date_trunc('day', now() AT TIME ZONE 'America/Los_Angeles') AT TIME ZONE 'America/Los_Angeles')
-          THEN COALESCE(cost_usd, reserved_usd) END), 0) AS today,
-        COALESCE(SUM(CASE WHEN created_at >= (date_trunc('month', now() AT TIME ZONE 'America/Los_Angeles') AT TIME ZONE 'America/Los_Angeles')
-          THEN COALESCE(cost_usd, reserved_usd) END), 0) AS month
-      FROM runs WHERE live`);
+        COALESCE(SUM(CASE WHEN created_at >= $1 THEN COALESCE(cost_usd, reserved_usd) END), 0) AS today,
+        COALESCE(SUM(CASE WHEN created_at >= $2 THEN COALESCE(cost_usd, reserved_usd) END), 0) AS month
+      FROM runs WHERE live`, [laStart('day'), laStart('month')]);
     const s = await this.settings();
     return { today: Number(row.today), month: Number(row.month), dailyCapUsd: s.dailyCapUsd, monthlyCapUsd: s.monthlyCapUsd };
   }
 
   async receipts(limit = 60) {
-    return this.db.query(`SELECT id, task, status, model, effort, usage, cost_usd, reserved_usd, live, created_at, finished_at, error->>'code' AS error_code
+    return this.db.query(`SELECT id, task, status, model, effort, usage, cost_usd, reserved_usd, live, created_at, finished_at, json_extract(error, '$.code') AS error_code
       FROM runs ORDER BY created_at DESC LIMIT $1`, [limit]);
   }
 
@@ -234,14 +232,14 @@ export class Service {
   // ---------------- threads & writing ----------------
   async threads(limit = 40) {
     return this.db.query(`SELECT t.id, t.title, t.song_id, t.updated_at,
-        (SELECT COUNT(*) FROM messages m WHERE m.thread_id=t.id)::int AS messages
+        (SELECT COUNT(*) FROM messages m WHERE m.thread_id=t.id) AS messages
       FROM threads t WHERE t.song_id IS NULL AND t.kind='normal' ORDER BY t.updated_at DESC LIMIT $1`, [limit]);
   }
 
   async thread(id: string) {
     const [t] = await this.db.query<Record<string, unknown>>(`SELECT id, title, song_id, updated_at FROM threads WHERE id=$1`, [id]);
     if (!t) throw new AppError(404, 'not_found', 'Session not found.');
-    const messages = await this.db.query(`SELECT id, role, text, run_id, payload, created_at FROM messages WHERE thread_id=$1 ORDER BY created_at, id`, [id]);
+    const messages = await this.db.query(`SELECT id, role, text, run_id, payload, created_at FROM messages WHERE thread_id=$1 ORDER BY created_at, rowid`, [id]);
     const runs = await this.db.query(`SELECT id, task, status, error, created_at FROM runs WHERE thread_id=$1 AND status IN ('running','failed','interrupted','cancelled') ORDER BY created_at`, [id]);
     return { ...t, messages, runs };
   }
@@ -253,7 +251,7 @@ export class Service {
 
   private async recentTurns(threadId: string, excludeId?: string): Promise<Turn[]> {
     const rows = await this.db.query<{ id: string; role: 'user' | 'assistant'; text: string; payload: Record<string, unknown> | null }>(
-      `SELECT id, role, text, payload FROM messages WHERE thread_id=$1 ORDER BY created_at DESC, id DESC LIMIT 14`, [threadId]);
+      `SELECT id, role, text, payload FROM messages WHERE thread_id=$1 ORDER BY created_at DESC, rowid DESC LIMIT 14`, [threadId]);
     return rows.reverse().filter((r) => r.id !== excludeId).map((r) => ({ role: r.role, text: compactMessage(r.text, r.payload) }));
   }
 
@@ -318,7 +316,7 @@ export class Service {
     } catch (e) {
       // Keep the typed message so nothing is lost, and say why nothing came back.
       if (e instanceof AppError) {
-        await this.db.query(`UPDATE messages SET payload = payload || $2 WHERE id=$1`, [userMsgId, JSON.stringify({ blocked: e.message })]);
+        await this.db.query(`UPDATE messages SET payload = json_patch(COALESCE(payload, '{}'), $2) WHERE id=$1`, [userMsgId, JSON.stringify({ blocked: e.message })]);
       }
       throw e;
     }
@@ -342,7 +340,7 @@ export class Service {
 
   async savedKeys(runIds: string[]): Promise<Record<string, string>> {
     if (!runIds.length) return {};
-    const rows = await this.db.query<{ id: string; source_key: string }>(`SELECT id, source_key FROM ideas WHERE source_run_id = ANY($1) AND source_key IS NOT NULL`, [runIds]);
+    const rows = await this.db.query<{ id: string; source_key: string }>(`SELECT id, source_key FROM ideas WHERE source_run_id IN (${runIds.map((_, i) => `$${i + 1}`).join(',')}) AND source_key IS NOT NULL`, runIds);
     return Object.fromEntries(rows.map((r) => [r.source_key, r.id]));
   }
 
@@ -376,13 +374,13 @@ export class Service {
     const like = `%${q.trim().toLowerCase()}%`;
     const ideas = filter === 'songs' ? [] : await this.db.query(
       `SELECT id, kind, title, concept, lines, starred, motif, updated_at, created_at FROM ideas
-       WHERE NOT archived AND ($1 = '%%' OR lower(title || ' ' || concept || ' ' || lines::text || ' ' || notes) LIKE $1)
+       WHERE NOT archived AND ($1 = '%%' OR lower(title || ' ' || concept || ' ' || lines || ' ' || notes) LIKE $1)
          AND ($2 = 'all' OR ($2 = 'starred' AND starred) OR ($2 = 'seeds' AND kind='seed') OR ($2 = 'lines' AND kind='line'))
        ORDER BY updated_at DESC LIMIT 300`, [like, filter]);
     const songs = ['seeds', 'lines'].includes(filter) ? [] : await this.db.query(
       `SELECT s.id, s.title, s.brief, s.starred, s.motif, s.updated_at, s.created_at, r.sections FROM songs s
        JOIN song_revisions r ON r.song_id=s.id AND r.rev=s.current_rev
-       WHERE NOT s.archived AND s.kind='normal' AND ($1 = '%%' OR lower(s.title || ' ' || s.brief || ' ' || s.notes || ' ' || r.sections::text) LIKE $1)
+       WHERE NOT s.archived AND s.kind='normal' AND ($1 = '%%' OR lower(s.title || ' ' || s.brief || ' ' || s.notes || ' ' || r.sections) LIKE $1)
          AND ($2 IN ('all','songs') OR ($2 = 'starred' AND s.starred))
        ORDER BY s.updated_at DESC LIMIT 300`, [like, filter]);
     return { ideas, songs };
@@ -444,7 +442,7 @@ export class Service {
   /** Write a new immutable revision. Throws 409 if the base revision is stale. */
   private async commitRevision(songId: string, baseRev: number, build: (sections: Section[], locks: Set<string>, current: number, q: Db['query']) => Promise<Section[]> | Section[], source: string, note: string, runId: string | null = null) {
     return this.db.tx(async (q) => {
-      const [song] = await q<{ current_rev: number; locks: string[] }>(`SELECT current_rev, locks FROM songs WHERE id=$1 FOR UPDATE`, [songId]);
+      const [song] = await q<{ current_rev: number; locks: string[] }>(`SELECT current_rev, locks FROM songs WHERE id=$1`, [songId]);
       if (!song) throw new AppError(404, 'not_found', 'Song not found.');
       const [cur] = await q<{ sections: Section[] }>(`SELECT sections FROM song_revisions WHERE song_id=$1 AND rev=$2`, [songId, song.current_rev]);
       const locks = new Set(song.locks ?? []);
@@ -653,6 +651,16 @@ export class Service {
 }
 
 // ---------------- helpers ----------------
+
+/** Start of the current day or month in Los Angeles, as an ISO UTC timestamp. */
+export function laStart(unit: 'day' | 'month', now = new Date()): string {
+  const tz = 'America/Los_Angeles';
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
+    .formatToParts(now).map((x) => [x.type, x.value]));
+  const guess = new Date(Date.UTC(Number(p.year), Number(p.month) - 1, unit === 'month' ? 1 : Number(p.day)));
+  const wall = (d: Date, zone: string) => Date.parse(d.toLocaleString('en-US', { timeZone: zone }));
+  return new Date(guess.getTime() + (wall(guess, 'UTC') - wall(guess, tz))).toISOString();
+}
 
 function titleFrom(text: string): string {
   const t = text.replace(/\s+/g, ' ').trim();

@@ -17,4 +17,4 @@ Private songwriting app for Sam (single user). Spec: `docs/PRODUCT_SPEC.md` (ame
 
 ## Commands
 - `npm test`, `npm run typecheck`, `npm run build`, `npm start`
-- Local with placeholder writer: `SONGROOM_STANDIN=1 APP_PASSWORD=dev SESSION_SECRET=dev node dist/server/index.js` (PGlite in `.data/`)
+- Local with placeholder writer: `SONGROOM_STANDIN=1 APP_PASSWORD=dev SESSION_SECRET=dev node dist/server/index.js` (SQLite file in `.data/`)

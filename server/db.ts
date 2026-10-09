@@ -1,7 +1,10 @@
-// One small database interface. Production uses Postgres (Render); local runs
-// and tests use PGlite, an in-process Postgres, so the SQL is identical.
+// One small database interface over SQLite (built into Node, ~50 MB of memory),
+// stored in a single file on Render's disk. Queries are written with $1, $2…
+// placeholders; JSON columns are stored as text and parsed on the way out.
 
-import pg from 'pg';
+import { DatabaseSync } from 'node:sqlite';
+import { mkdirSync } from 'node:fs';
+import path from 'node:path';
 
 export interface Db {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
@@ -9,109 +12,116 @@ export interface Db {
   close(): Promise<void>;
 }
 
-export async function openDb(url: string | undefined, dataDir?: string): Promise<Db> {
-  if (url) {
-    const pool = new pg.Pool({
-      connectionString: url,
-      // Render's internal URL (host without a dot) is a private network: no TLS.
-      // External hosts get TLS; an explicit sslmode in the URL is left to pg.
-      ssl: /sslmode=/.test(url) ? undefined
-        : (() => { const host = new URL(url).hostname; return host.includes('.') && host !== '127.0.0.1' ? { rejectUnauthorized: false } : undefined; })(),
-      max: 5,
-    });
-    const query = async <T,>(sql: string, params: unknown[] = []) => (await pool.query(sql, params)).rows as T[];
-    return {
-      query,
-      async tx(fn) {
-        const client = await pool.connect();
-        try {
-          await client.query('BEGIN');
-          const out = await fn(async <T,>(sql: string, params: unknown[] = []) => (await client.query(sql, params)).rows as T[]);
-          await client.query('COMMIT');
-          return out;
-        } catch (e) {
-          await client.query('ROLLBACK').catch(() => {});
-          throw e;
-        } finally {
-          client.release();
-        }
-      },
-      close: () => pool.end(),
-    };
+/** Columns holding JSON text. They are parsed when read. */
+const JSON_COLS = new Set(['value', 'request', 'result', 'error', 'usage', 'payload', 'lines', 'original', 'locks', 'suno', 'sections']);
+
+function toParam(v: unknown): null | number | bigint | string | Uint8Array {
+  if (v === undefined || v === null) return null;
+  if (typeof v === 'boolean') return v ? 1 : 0;
+  if (typeof v === 'number' || typeof v === 'bigint' || typeof v === 'string' || v instanceof Uint8Array) return v;
+  return JSON.stringify(v);
+}
+
+function fromRow(row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (typeof v === 'string' && JSON_COLS.has(k)) {
+      try { out[k] = JSON.parse(v); } catch { out[k] = v; }
+    } else out[k] = v;
   }
-  const { PGlite } = await import('@electric-sql/pglite');
-  if (dataDir) {
-    const { mkdirSync } = await import('node:fs');
-    try {
-      mkdirSync(dataDir, { recursive: true });
-    } catch (e) {
-      throw new Error(`Cannot create the data folder ${dataDir}: ${(e as Error).message}. On Render, check the disk is mounted at /var/data.`);
-    }
-  }
-  const lite = new PGlite(dataDir);
+  return out;
+}
+
+/** Open the database. `file` undefined → in-memory (tests). */
+export async function openDb(file?: string): Promise<Db> {
+  if (file) mkdirSync(path.dirname(file), { recursive: true });
+  const sqlite = new DatabaseSync(file ?? ':memory:');
+  sqlite.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
+  sqlite.function('now', () => new Date().toISOString());
+
+  const run = <T,>(sql: string, params: unknown[] = []): T[] => {
+    const stmt = sqlite.prepare(sql.replace(/\$(\d+)/g, '?$1'));
+    const bound = params.map(toParam);
+    if (/^\s*(select|with)\b/i.test(sql) || /\breturning\b/i.test(sql)) return stmt.all(...bound).map((r) => fromRow(r as Record<string, unknown>)) as T[];
+    stmt.run(...bound);
+    return [];
+  };
+
+  // One connection: queries and transactions take turns so a query from another
+  // request can never land inside someone else's open transaction.
   let chain: Promise<unknown> = Promise.resolve();
-  const query = async <T,>(sql: string, params: unknown[] = []) => (await lite.query(sql, params)).rows as T[];
+  const exclusive = <T,>(fn: () => Promise<T> | T): Promise<T> => {
+    const next = chain.then(fn);
+    chain = next.catch(() => {});
+    return next;
+  };
+
   return {
-    query,
-    tx(fn) {
-      // PGlite is single-connection: serialise transactions.
-      const run = chain.then(() => lite.transaction((t) => fn(async <T,>(sql: string, params: unknown[] = []) => (await t.query(sql, params)).rows as T[])));
-      chain = run.catch(() => {});
-      return run;
-    },
-    close: () => lite.close(),
+    query: <T,>(sql: string, params: unknown[] = []) => exclusive(() => run<T>(sql, params)),
+    tx: <T,>(fn: (q: Db['query']) => Promise<T>) => exclusive(async () => {
+      sqlite.exec('BEGIN IMMEDIATE');
+      try {
+        const out = await fn(async <U,>(sql: string, params: unknown[] = []) => run<U>(sql, params));
+        sqlite.exec('COMMIT');
+        return out;
+      } catch (e) {
+        try { sqlite.exec('ROLLBACK'); } catch { /* already rolled back */ }
+        throw e;
+      }
+    }),
+    close: async () => { await chain; sqlite.close(); },
   };
 }
 
+const TS = `TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))`;
+
 const MIGRATIONS: string[] = [
-  `CREATE TABLE settings (key text PRIMARY KEY, value jsonb NOT NULL);
+  `CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
    CREATE TABLE threads (
-     id text PRIMARY KEY, title text NOT NULL DEFAULT '', song_id text, kind text NOT NULL DEFAULT 'normal',
-     created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+     id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', song_id TEXT, kind TEXT NOT NULL DEFAULT 'normal',
+     created_at ${TS}, updated_at ${TS});
    CREATE TABLE runs (
-     id text PRIMARY KEY, thread_id text, song_id text, task text NOT NULL, status text NOT NULL,
-     client_key text UNIQUE, model text, effort text, prompt_version text,
-     request jsonb NOT NULL, result jsonb, error jsonb, usage jsonb, cost_usd numeric, reserved_usd numeric,
-     request_id text, live boolean NOT NULL DEFAULT true,
-     created_at timestamptz NOT NULL DEFAULT now(), finished_at timestamptz);
+     id TEXT PRIMARY KEY, thread_id TEXT, song_id TEXT, task TEXT NOT NULL, status TEXT NOT NULL,
+     client_key TEXT UNIQUE, model TEXT, effort TEXT, prompt_version TEXT,
+     request TEXT NOT NULL, result TEXT, error TEXT, usage TEXT, cost_usd REAL, reserved_usd REAL,
+     request_id TEXT, live INTEGER NOT NULL DEFAULT 1,
+     created_at ${TS}, finished_at TEXT);
    CREATE INDEX runs_thread ON runs(thread_id, created_at);
    CREATE INDEX runs_day ON runs(created_at);
    CREATE TABLE messages (
-     id text PRIMARY KEY, thread_id text NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
-     role text NOT NULL, text text NOT NULL, run_id text, payload jsonb,
-     created_at timestamptz NOT NULL DEFAULT now());
+     id TEXT PRIMARY KEY, thread_id TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+     role TEXT NOT NULL, text TEXT NOT NULL, run_id TEXT, payload TEXT,
+     created_at ${TS});
    CREATE INDEX messages_thread ON messages(thread_id, created_at);
    CREATE TABLE ideas (
-     id text PRIMARY KEY, kind text NOT NULL, title text NOT NULL DEFAULT '', concept text NOT NULL DEFAULT '',
-     lines jsonb NOT NULL DEFAULT '[]', notes text NOT NULL DEFAULT '', starred boolean NOT NULL DEFAULT false,
-     original jsonb NOT NULL, source_run_id text, source_key text UNIQUE, motif int NOT NULL DEFAULT 0,
-     archived boolean NOT NULL DEFAULT false,
-     created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+     id TEXT PRIMARY KEY, kind TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', concept TEXT NOT NULL DEFAULT '',
+     lines TEXT NOT NULL DEFAULT '[]', notes TEXT NOT NULL DEFAULT '', starred INTEGER NOT NULL DEFAULT 0,
+     original TEXT NOT NULL, source_run_id TEXT, source_key TEXT UNIQUE, motif INTEGER NOT NULL DEFAULT 0,
+     archived INTEGER NOT NULL DEFAULT 0, created_at ${TS}, updated_at ${TS});
    CREATE TABLE songs (
-     id text PRIMARY KEY, title text NOT NULL DEFAULT '', brief text NOT NULL DEFAULT '',
-     current_rev int NOT NULL DEFAULT 1, locks jsonb NOT NULL DEFAULT '[]', idea_id text,
-     notes text NOT NULL DEFAULT '', starred boolean NOT NULL DEFAULT false, motif int NOT NULL DEFAULT 0,
-     suno jsonb, archived boolean NOT NULL DEFAULT false, kind text NOT NULL DEFAULT 'normal',
-     created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+     id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', brief TEXT NOT NULL DEFAULT '',
+     current_rev INTEGER NOT NULL DEFAULT 1, locks TEXT NOT NULL DEFAULT '[]', idea_id TEXT,
+     notes TEXT NOT NULL DEFAULT '', starred INTEGER NOT NULL DEFAULT 0, motif INTEGER NOT NULL DEFAULT 0,
+     suno TEXT, archived INTEGER NOT NULL DEFAULT 0, kind TEXT NOT NULL DEFAULT 'normal',
+     created_at ${TS}, updated_at ${TS});
    CREATE TABLE song_revisions (
-     song_id text NOT NULL REFERENCES songs(id) ON DELETE CASCADE, rev int NOT NULL,
-     sections jsonb NOT NULL, source text NOT NULL, note text NOT NULL DEFAULT '', run_id text,
-     created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (song_id, rev));
+     song_id TEXT NOT NULL REFERENCES songs(id) ON DELETE CASCADE, rev INTEGER NOT NULL,
+     sections TEXT NOT NULL, source TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', run_id TEXT,
+     created_at ${TS}, PRIMARY KEY (song_id, rev));
    CREATE TABLE voice_examples (
-     id text PRIMARY KEY, direction text NOT NULL DEFAULT '', text text NOT NULL,
-     created_at timestamptz NOT NULL DEFAULT now());
+     id TEXT PRIMARY KEY, direction TEXT NOT NULL DEFAULT '', text TEXT NOT NULL, created_at ${TS});
    CREATE TABLE eval_results (
-     id text PRIMARY KEY, batch text NOT NULL, brief_id text NOT NULL, run_id text, result jsonb NOT NULL,
-     vote text, created_at timestamptz NOT NULL DEFAULT now());`,
+     id TEXT PRIMARY KEY, batch TEXT NOT NULL, brief_id TEXT NOT NULL, run_id TEXT, result TEXT NOT NULL,
+     vote TEXT, created_at ${TS})`,
 ];
 
 export async function migrate(db: Db): Promise<void> {
-  await db.query(`CREATE TABLE IF NOT EXISTS schema_migrations (version int PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`);
+  await db.query(`CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at ${TS})`);
   const done = new Set((await db.query<{ version: number }>(`SELECT version FROM schema_migrations`)).map((r) => Number(r.version)));
   for (let i = 0; i < MIGRATIONS.length; i++) {
     if (done.has(i + 1)) continue;
     await db.tx(async (q) => {
-      for (const stmt of MIGRATIONS[i].split(';').map((s) => s.trim()).filter(Boolean)) await q(stmt);
+      for (const stmt of MIGRATIONS[i].split(/;\s*\n/).map((s) => s.trim()).filter(Boolean)) await q(stmt);
       await q(`INSERT INTO schema_migrations(version) VALUES ($1)`, [i + 1]);
     });
   }
