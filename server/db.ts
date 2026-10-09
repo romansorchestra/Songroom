@@ -13,7 +13,10 @@ export async function openDb(url: string | undefined, dataDir?: string): Promise
   if (url) {
     const pool = new pg.Pool({
       connectionString: url,
-      ssl: /localhost|127\.0\.0\.1/.test(url) ? undefined : { rejectUnauthorized: false },
+      // Render's internal URL (host without a dot) is a private network: no TLS.
+      // External hosts get TLS; an explicit sslmode in the URL is left to pg.
+      ssl: /sslmode=/.test(url) ? undefined
+        : (() => { const host = new URL(url).hostname; return host.includes('.') && host !== '127.0.0.1' ? { rejectUnauthorized: false } : undefined; })(),
       max: 5,
     });
     const query = async <T,>(sql: string, params: unknown[] = []) => (await pool.query(sql, params)).rows as T[];
