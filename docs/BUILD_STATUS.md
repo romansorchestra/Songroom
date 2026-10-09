@@ -8,8 +8,10 @@
 - Settings: model and thinking level, spend caps and receipts, taste notes and example lyrics, 12-brief test pack with judging, JSON + Markdown export, sign out.
 - Tests: 24 automated (lyric safety, locks, conflicts, duplicates, spend cap, Suno verbatim, no-writer state). Full browser flow at iPhone size, light and dark, plus desktop, using the labelled stand-in writer.
 
+## Live
+- https://songroom-qyvq.onrender.com (Render, $7.25/mo). Test pack run on real Opus 5.5 on 9 Oct: 12/12 succeeded, every hard check passed, $0.33 total. Results are in Settings → Test pack for Sam to judge.
+
 ## Not yet verified
-- **Anything involving real writing quality.** Needs the live build with the API key; first job after deploy is the test pack on real Opus 5.5.
 - Real iPhone Safari (keyboard, selection, home-screen install).
 
 ## Deferred

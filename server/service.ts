@@ -28,7 +28,7 @@ export type Settings = {
 const DEFAULTS: Settings = {
   model: 'claude-opus-5-5',
   effortCreative: 'high',
-  effortEdit: 'medium',
+  effortEdit: 'high',
   dailyCapUsd: 10,
   monthlyCapUsd: 150,
   taste: '',
