@@ -40,6 +40,14 @@ export async function openDb(url: string | undefined, dataDir?: string): Promise
     };
   }
   const { PGlite } = await import('@electric-sql/pglite');
+  if (dataDir) {
+    const { mkdirSync } = await import('node:fs');
+    try {
+      mkdirSync(dataDir, { recursive: true });
+    } catch (e) {
+      throw new Error(`Cannot create the data folder ${dataDir}: ${(e as Error).message}. On Render, check the disk is mounted at /var/data.`);
+    }
+  }
   const lite = new PGlite(dataDir);
   let chain: Promise<unknown> = Promise.resolve();
   const query = async <T,>(sql: string, params: unknown[] = []) => (await lite.query(sql, params)).rows as T[];
