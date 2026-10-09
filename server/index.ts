@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { openDb, migrate } from './db.js';
 import { Service } from './service.js';
 import { createApp } from './app.js';
@@ -11,7 +12,11 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
   const env = process.env;
-  const db = await openDb(env.DB_PATH ?? path.join(process.cwd(), '.data', 'songroom.db'));
+  // On Render the disk is mounted at /var/data; never fall back to the
+  // container's own folder there, which is wiped on every deploy.
+  const dbPath = env.DB_PATH ?? (existsSync('/var/data') ? '/var/data/songroom.db' : path.join(process.cwd(), '.data', 'songroom.db'));
+  console.log(`Database: ${dbPath}`);
+  const db = await openDb(dbPath);
   await migrate(db);
 
   let writer: Writer | null = null;
