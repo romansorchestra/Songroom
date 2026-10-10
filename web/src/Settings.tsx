@@ -217,9 +217,9 @@ function Experiments() {
   const load = () => Promise.all([api('GET', '/experiments').then(setData), api('GET', '/experiments/tally').then(setTally)]).catch((e) => setErr(e.message));
   useEffect(() => { void load(); }, []);
   useEffect(() => { if (!data?.running) return; const t = setInterval(load, 5000); return () => clearInterval(t); }, [data?.running]);
-  const batches = [...new Set((data?.trials ?? []).map((r: any) => String(r.batch)))] as string[];
-  const latest: string | undefined = batches[0];
-  const shown = (data?.trials ?? []).filter((r: any) => r.batch === latest).sort((a: any, b: any) => (a.repeat - b.repeat) || (a.briefId.localeCompare(b.briefId, undefined, { numeric: true })));
+  // All trials, oldest batch first, so a comparison finished over several runs reads as one set.
+  const shown = [...(data?.trials ?? [])].sort((a: any, b: any) => (a.briefId.localeCompare(b.briefId, undefined, { numeric: true })) || a.createdAt.localeCompare(b.createdAt));
+  const latest: string | undefined = data?.trials?.[0]?.batch;
   const judged = shown.filter((r: any) => r.vote).length;
   const p = data?.progress;
   return (
@@ -241,7 +241,7 @@ function Experiments() {
           <div className="muted">A handful of picks is a lean, not proof.</div>
         </div>
       )}
-      {latest && <p className="small muted" style={{ marginTop: 10 }}>Latest run: {new Date(latest).toLocaleString()} · {judged}/{shown.length} judged</p>}
+      {latest && <p className="small muted" style={{ marginTop: 10 }}>Latest run: {new Date(latest).toLocaleString()} · {judged}/{shown.length} judged. (A deploy restarts the app and ends a running batch; finished trials are kept.)</p>}
       <div className="stack" style={{ marginTop: 10 }}>
         {shown.map((r: any) => <Trial key={r.id} r={r} onJudge={async (vote, stars) => { await api('POST', `/experiments/${r.id}/judge`, { vote, stars }); await load(); }} />)}
       </div>
@@ -277,7 +277,7 @@ function Trial({ r, onJudge }: { r: any; onJudge: (vote: string | null, stars: n
   const done = r.positions.every((p: any) => p.status === 'succeeded');
   return (
     <details>
-      <summary style={{ cursor: 'pointer' }}>{r.briefId} {r.label} (run {r.repeat}): {r.vote ? `you picked ${r.vote}` : done ? 'not judged' : 'incomplete'}</summary>
+      <summary style={{ cursor: 'pointer' }}>{r.briefId} {r.label} · {new Date(r.createdAt).toLocaleDateString()} {new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}: {r.vote ? `you picked ${r.vote}` : done ? 'not judged' : 'incomplete'}</summary>
       <div className="stack" style={{ marginTop: 8 }}>
         {r.context && <div className="small muted">{r.context}</div>}
         {r.lyric && <div className="code">{r.lyric}</div>}
