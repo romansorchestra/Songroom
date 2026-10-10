@@ -98,7 +98,7 @@ card("C09",
  "Charli XCX (Song Exploder, Camera, 2026) says rhyme requires a bit of premeditation, which made it wrong for an embarrassing inner monologue, because it makes a line sound like a thought she is going back to rather than one happening now; she adds that a good melody is all about conviction, even on one note.",
  ["PB-F10"], ["PB-S41"], "documented_statement",
  "Unrhymed lines in a confessional section sound unplanned and present-tense; the listener overhears rather than is addressed.",
- ["interior_monologue","rhyme","confession","delivery","conversational"], ["pop","dance"], ["lines","edit","draft"],
+ ["interior_monologue","confession","delivery","stream_of_consciousness"], ["pop","dance"], ["lines","edit","draft"],
  "A choice for one song; she does not say rhyme is wrong for conversational pop in general. A chorus that needs to be sung back by a crowd usually wants its rhyme.",
  "medium", "Whether the same move suits a mid-tempo radio chorus is untested.", ["C10","C43"])
 
@@ -565,6 +565,16 @@ card("C60",
  ["plainness","chorus","cut_lines","devotion","confidence"], ["pop"], ["edit","lines","reply"],
  "One hit does not mean every doubted song should be kept; the report on Birds of a Feather doesn't say whether the trouble was words or delivery.",
  "medium", "", ["C03","C12"])
+
+card("C61",
+ "A line has to get from one thing to the next (a verse line before the chorus, a join between two images) and every draft is trying to be a highlight.",
+ "Write the connective line to be invisible: plain, short, in the narrator's ordinary voice, carrying one fact or one small shift of time. It should not introduce a second image, pre-empt the chorus or tell the listener how to feel.",
+ "Justin Tranter and Emily Warren split the song into a universal chorus and specific verses; Max Martin says a dense passage needs a sparse one after it so the listener can take it in. The analyst's extension: a verse made only of highlights has no place for the chorus to land, and a 'brilliant' connective line steals the chorus's surprise (see the original pair E15).",
+ ["CT-F13","CT-F6","CT-F8"], ["CT-S33","CT-S11","CT-S14"], "analytical_inference",
+ "The listener arrives at the chorus with attention to spend; the plain line makes the next line feel bigger.",
+ ["structure","transitions","connective","verse","chorus","plainness","density"], ["any"], ["lines","edit","draft"],
+ "A song with no highlights in the verses is dull; the point is rationing, not banning. In a fast rhythmic section every line may need to be a picture (C13).",
+ "medium", "No writer describes 'connective lines' in these words; the principle is assembled from chorus/verse statements and Martin's density remark.", ["C43","C13","C47"])
 
 with open('pack/cards.jsonl','w') as f:
     for c in C:

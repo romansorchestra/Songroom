@@ -7,6 +7,7 @@ import { Service } from './service.js';
 import { createApp } from './app.js';
 import { AnthropicWriter, type Writer } from './engine/writer.js';
 import { StandInWriter } from './engine/standin.js';
+import { loadPack } from './engine/pack.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,7 +24,9 @@ async function main() {
   if (env.ANTHROPIC_API_KEY) writer = new AnthropicWriter(env.ANTHROPIC_API_KEY, env.ANTHROPIC_WORKSPACE_ID || undefined);
   else if (env.SONGROOM_STANDIN === '1' && env.NODE_ENV !== 'production') writer = new StandInWriter();
 
-  const svc = new Service(db, writer);
+  const pack = loadPack();
+  console.log(pack ? `Research pack ${pack.version}: ${pack.cards.length} cards, ${pack.profiles.length} profiles, ${pack.pairs.length} pairs` : 'Research pack: not found (craft notes unavailable)');
+  const svc = new Service(db, writer, pack);
   const interrupted = await svc.recoverInterrupted();
   if (interrupted) console.log(`Marked ${interrupted} interrupted run(s).`);
 

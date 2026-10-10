@@ -13,7 +13,7 @@ export interface Db {
 }
 
 /** Columns holding JSON text. They are parsed when read. */
-const JSON_COLS = new Set(['value', 'request', 'result', 'error', 'usage', 'payload', 'lines', 'original', 'locks', 'suno', 'sections']);
+const JSON_COLS = new Set(['value', 'request', 'result', 'error', 'usage', 'payload', 'lines', 'original', 'locks', 'suno', 'sections', 'trial']);
 
 function toParam(v: unknown): null | number | bigint | string | Uint8Array {
   if (v === undefined || v === null) return null;
@@ -113,6 +113,12 @@ const MIGRATIONS: string[] = [
    CREATE TABLE eval_results (
      id TEXT PRIMARY KEY, batch TEXT NOT NULL, brief_id TEXT NOT NULL, run_id TEXT, result TEXT NOT NULL,
      vote TEXT, created_at ${TS})`,
+  // 2 (10 Oct 2026): blind prompt/research experiments. One row per (batch, brief, repeat); the
+  // three outputs and their hidden conditions live in `trial`; `vote` is a position, 'none' or 'tie'.
+  `CREATE TABLE experiments (
+     id TEXT PRIMARY KEY, batch TEXT NOT NULL, brief_id TEXT NOT NULL, repeat INTEGER NOT NULL DEFAULT 1,
+     trial TEXT NOT NULL, vote TEXT, stars TEXT, note TEXT, created_at ${TS});
+   CREATE INDEX experiments_batch ON experiments(batch, created_at)`,
 ];
 
 export async function migrate(db: Db): Promise<void> {

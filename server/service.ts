@@ -9,8 +9,12 @@ import {
 } from './engine/lyrics.js';
 import { type Constraints, type Check, checkCandidate, extractConstraints, mergeConstraints, containsWord, endsWithPhrase, startsWithPhrase } from './engine/validate.js';
 import { writeSchema, writeZ, editSchema, editZ, sunoSchema, sunoZ } from './engine/schemas.js';
-import { SYSTEM_CORE, PROMPT_VERSION, tasteBlock, writePrompt, editPrompt, sunoPrompt, type Turn, type VoiceExample, type SongContext } from './engine/prompts.js';
+import { systemCore, PROMPT_VERSION, type PromptVariant, tasteBlock, writePrompt, editPrompt, sunoPrompt, type Turn, type VoiceExample, type SongContext } from './engine/prompts.js';
 import { type Writer, type Effort, type Usage, WriterError, costOf, worstCaseCost, RATES } from './engine/writer.js';
+import { type Pack, type PackTask, selectPack, renderPack, inferTask } from './engine/pack.js';
+
+/** How one request should be prompted. Experiments set this explicitly; normal use follows Settings. */
+export type PromptPlan = { variant: PromptVariant; pack: boolean };
 
 export class AppError extends Error {
   constructor(public status: number, public code: string, message: string, public extra?: Record<string, unknown>) { super(message); }
@@ -23,6 +27,7 @@ export type Settings = {
   dailyCapUsd: number;
   monthlyCapUsd: number;
   taste: string;
+  craftPack: boolean;
 };
 
 const DEFAULTS: Settings = {
@@ -32,6 +37,8 @@ const DEFAULTS: Settings = {
   dailyCapUsd: 10,
   monthlyCapUsd: 150,
   taste: '',
+  // Research craft notes stay off until Sam has judged them in Settings → Experiments.
+  craftPack: false,
 };
 
 const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000 };
@@ -43,7 +50,14 @@ export class Service {
   private budgetLock: Promise<unknown> = Promise.resolve();
   private pending = new Set<Promise<unknown>>();
 
-  constructor(public db: Db, public writer: Writer | null) {}
+  constructor(public db: Db, public writer: Writer | null, public pack: Pack | null = null) {}
+
+  /** Craft notes for one request: a few retrieved records rendered as one block, or nothing. */
+  private craftFor(plan: PromptPlan, input: { text: string; brief?: string; reference?: string | null; task: PackTask }) {
+    if (!plan.pack || !this.pack) return { block: '', record: null as null | { version: string; cards: string[]; profiles: string[]; pair: string | null } };
+    const sel = selectPack(this.pack, input);
+    return { block: renderPack(sel), record: { version: sel.version, cards: sel.cards.map((c) => c.id), profiles: sel.profiles.map((p) => p.id), pair: sel.pair?.id ?? null } };
+  }
 
   /** Await all background runs (used by tests and graceful shutdown). */
   async idle(): Promise<void> {
@@ -73,6 +87,7 @@ export class Service {
       if ((k === 'effortCreative' || k === 'effortEdit') && !efforts.includes(v as string)) throw new AppError(400, 'bad_effort', 'Unknown effort.');
       if ((k === 'dailyCapUsd' || k === 'monthlyCapUsd') && !(typeof v === 'number' && v >= 0 && v <= 5000)) throw new AppError(400, 'bad_cap', 'Cap must be between $0 and $5000.');
       if (k === 'taste' && !(typeof v === 'string' && v.length <= 8000)) throw new AppError(400, 'bad_taste', 'Taste notes are too long.');
+      if (k === 'craftPack' && typeof v !== 'boolean') throw new AppError(400, 'bad_flag', 'craftPack must be true or false.');
       await this.db.query(`INSERT INTO settings(key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`, [k, JSON.stringify(v)]);
     }
     return this.settings();
@@ -130,7 +145,7 @@ export class Service {
    */
   async startRun(opts: {
     task: Task; threadId: string | null; songId: string | null; clientKey: string | null;
-    request: Record<string, unknown>; inputChars: number; effort: Effort;
+    request: Record<string, unknown>; inputChars: number; effort: Effort; promptVersion?: string;
     exec: (signal: AbortSignal, model: string) => Promise<{ result: Record<string, unknown>; usage: Usage; requestId: string | null; model: string; live: boolean }>;
     onSuccess: (runId: string, result: Record<string, unknown>) => Promise<void>;
   }): Promise<{ id: string; status: string; reused: boolean }> {
@@ -157,7 +172,7 @@ export class Service {
       await this.db.query(
         `INSERT INTO runs(id, thread_id, song_id, task, status, client_key, model, effort, prompt_version, request, reserved_usd, live)
          VALUES ($1,$2,$3,$4,'running',$5,$6,$7,$8,$9,$10,$11)`,
-        [id, opts.threadId, opts.songId, opts.task, opts.clientKey, model, opts.effort, PROMPT_VERSION, JSON.stringify(opts.request), reserve, this.writer.live],
+        [id, opts.threadId, opts.songId, opts.task, opts.clientKey, model, opts.effort, opts.promptVersion ?? PROMPT_VERSION, JSON.stringify(opts.request), reserve, this.writer.live],
       );
     } catch (e) {
       if ((e as { code?: string }).code === '23505' && opts.clientKey) {
@@ -262,7 +277,7 @@ export class Service {
     return { title: song.title, brief: song.brief, lyrics: renderLyrics(rev.sections), sections: rev.sections, rev: song.current_rev, locks: song.locks ?? [] };
   }
 
-  async sendMessage(input: { threadId: string | null; songId?: string | null; text: string; reference?: string | null; focus?: string | null; clientKey: string | null; threadKind?: 'normal' | 'eval' }) {
+  async sendMessage(input: { threadId: string | null; songId?: string | null; text: string; reference?: string | null; focus?: string | null; clientKey: string | null; threadKind?: 'normal' | 'eval'; plan?: PromptPlan }) {
     const text = input.text.trim();
     if (!text) throw new AppError(400, 'empty', 'Type a request first.');
     if (text.length > 20000) throw new AppError(400, 'too_long', 'That message is too long.');
@@ -292,14 +307,17 @@ export class Service {
 
     const song = songId ? await this.songContext(songId) : null;
     const taste = await this.tasteFor(text + ' ' + (reference ?? ''));
-    const system = SYSTEM_CORE + (taste ? `\n\n${taste}` : '');
-    const user = writePrompt({ request: text, reference, turns, song, focus });
     const s = await this.settings();
+    const plan: PromptPlan = input.plan ?? { variant: PROMPT_VERSION, pack: s.craftPack };
+    const craft = this.craftFor(plan, { text, brief: song?.brief, reference, task: inferTask(text, !!song) });
+    const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
+    const user = writePrompt({ request: text, reference, turns, song, focus, craft: craft.block, variant: plan.variant });
     const det = extractConstraints(text);
     try {
       const run = await this.startRun({
         task: 'write', threadId, songId, clientKey: input.clientKey, effort: s.effortCreative,
-        request: { text, reference, focus, songRev: song?.rev ?? null }, inputChars: system.length + user.length,
+        promptVersion: plan.variant + (craft.record ? '+pack' : ''),
+        request: { text, reference, focus, songRev: song?.rev ?? null, pack: craft.record }, inputChars: system.length + user.length,
         exec: async (signal, model) => {
           const r = await this.call('write', system, user, writeSchema, s.effortCreative, signal, model);
           const parsed = writeZ.safeParse(r.json);
@@ -524,7 +542,7 @@ export class Service {
   }
 
   // ---------------- edits ----------------
-  async edit(songId: string, input: { baseRev: number; targets: Target[]; instruction: string; clientKey: string | null; count?: number }) {
+  async edit(songId: string, input: { baseRev: number; targets: Target[]; instruction: string; clientKey: string | null; count?: number; plan?: PromptPlan }) {
     const instruction = input.instruction.trim();
     if (!instruction) throw new AppError(400, 'empty', 'Say what should change.');
     const ctx = await this.songContext(songId);
@@ -570,15 +588,18 @@ export class Service {
     const count = Math.min(Math.max(input.count ?? det.count ?? 3, 1), 8);
     const turns = await this.recentTurns(threadId);
     const taste = await this.tasteFor(instruction);
-    const system = SYSTEM_CORE + (taste ? `\n\n${taste}` : '');
-    const user = editPrompt({ request: instruction, song: ctx, annotated, targets: targetDescs, count, turns });
     const s = await this.settings();
+    const plan: PromptPlan = input.plan ?? { variant: PROMPT_VERSION, pack: s.craftPack };
+    const craft = this.craftFor(plan, { text: instruction, brief: ctx.brief, task: 'edit' });
+    const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
+    const user = editPrompt({ request: instruction, song: ctx, annotated, targets: targetDescs, count, turns, craft: craft.block, variant: plan.variant });
     const userMsgId = newId('m_');
     await this.db.query(`INSERT INTO messages(id, thread_id, role, text, payload) VALUES ($1,$2,'user',$3,$4)`,
       [userMsgId, threadId, instruction, JSON.stringify({ selection: selectionText, edit: true })]);
     const run = await this.startRun({
       task: 'edit', threadId, songId, clientKey: input.clientKey, effort: s.effortEdit,
-      request: { instruction, baseRev: ctx.rev, targets }, inputChars: system.length + user.length,
+      promptVersion: plan.variant + (craft.record ? '+pack' : ''),
+      request: { instruction, baseRev: ctx.rev, targets, pack: craft.record }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.call('edit', system, user, editSchema, s.effortEdit, signal, model);
         const parsed = editZ.safeParse(r.json);
@@ -607,7 +628,7 @@ export class Service {
     if (!lines.length) throw new AppError(400, 'empty', 'Add some lyrics before building a Suno prompt.');
     const sections = ctx.sections.map((sec, index) => ({ index, label: sec.label, text: sec.lines.map((l) => l.text).join('\n') }));
     const s = await this.settings();
-    const system = SYSTEM_CORE;
+    const system = systemCore();
     const user = sunoPrompt({ song: ctx, sections, hint: input.hint ?? '', taste: s.taste });
     const run = await this.startRun({
       task: 'suno', threadId: null, songId, clientKey: input.clientKey, effort: s.effortEdit,

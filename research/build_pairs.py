@@ -141,7 +141,7 @@ pair("E15",
  ["the calendar's a crime scene now"],
  ["It's been a while. I'm doing fine."],
  "A is the better line in isolation and the wrong one here: it is a second image competing with the chorus and it tells the listener how to feel before the chorus shows them. B is deliberately ordinary ('I'm doing fine') so that 'I still set two alarms' can contradict it. Connective lines should be invisible; a song full of A-lines is exhausting.",
- "B. The quality of A is exactly what makes it a bad connective line.", "high", ["C43", "C13", "C47"])
+ "B. The quality of A is exactly what makes it a bad connective line.", "high", ["C61", "C43", "C13"])
 
 pair("E16",
  "Concept versus angle (ideas task). Topic given: jealousy of a partner's ex.",

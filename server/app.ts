@@ -5,6 +5,7 @@ import { Service, AppError } from './service.js';
 import { type AuthConfig, requireAuth, checkPassword, makeSession, setSessionCookie, validSession, readCookie } from './auth.js';
 import { MODELS, RATES } from './engine/writer.js';
 import { startBatch, latestResults, vote } from './evals.js';
+import { startExperiment, listExperiments, judge, tally } from './experiments.js';
 
 const targetZ = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('line'), lineId: z.string().max(40), expected: z.string().max(2000) }),
@@ -120,7 +121,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   // Settings
   api.patch('/settings', h(async (req) => {
     const b = z.object({ model: z.string().optional(), effortCreative: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(), effortEdit: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(),
-      dailyCapUsd: z.number().optional(), monthlyCapUsd: z.number().optional(), taste: z.string().optional() }).parse(req.body);
+      dailyCapUsd: z.number().optional(), monthlyCapUsd: z.number().optional(), taste: z.string().optional(), craftPack: z.boolean().optional() }).parse(req.body);
     return svc.updateSettings(b);
   }));
   api.get('/receipts', h(async () => svc.receipts()));
@@ -141,6 +142,19 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
     const b = z.object({ vote: z.enum(['use', 'maybe', 'no']).nullable() }).parse(req.body);
     return vote(svc, String(req.params.id), b.vote);
   }));
+
+  // Blind experiments (prompt versions and the research pack)
+  api.get('/experiments', h(async () => listExperiments(svc)));
+  api.get('/experiments/tally', h(async () => tally(svc)));
+  api.post('/experiments/run', h(async (req) => {
+    const b = z.object({ ids: z.array(z.string().max(4)).max(20).default([]), repeats: z.number().int().min(1).max(4).default(2) }).parse(req.body);
+    return startExperiment(svc, b);
+  }));
+  api.post('/experiments/:id/judge', h(async (req) => {
+    const b = z.object({ vote: z.enum(['1', '2', '3', 'none', 'tie']).nullable(), stars: z.array(z.number().int().min(1).max(3)).max(3).optional(), note: z.string().max(2000).optional() }).parse(req.body);
+    return judge(svc, String(req.params.id), b);
+  }));
+  api.get('/pack', h(async () => svc.pack ? { version: svc.pack.version, built: svc.pack.built, cards: svc.pack.cards.length, profiles: svc.pack.profiles.length, pairs: svc.pack.pairs.length } : { version: null }));
 
   // Export
   api.get('/export.json', async (_req, res, next) => {

@@ -10,8 +10,9 @@ Private songwriting app for Sam (single user). Spec: `docs/PRODUCT_SPEC.md` (ame
 - Sam's preferences: plain English, no technical detail unless a decision is needed, manual steps batched into one idiot-proof block.
 
 ## Layout
-- `server/engine/` writer adapter, prompts (bump `PROMPT_VERSION` on change), schemas, validators, lyric model
-- `server/service.ts` all domain operations; `server/app.ts` routes; `server/evals.ts` the 12-brief test pack
+- `server/engine/` writer adapter, prompts (versioned; bump `PROMPT_VERSION` on change, keep old variants verbatim), schemas, validators, lyric model, `pack.ts` (research pack loader + retriever)
+- `server/service.ts` all domain operations; `server/app.ts` routes; `server/evals.ts` the 12-brief test pack; `server/experiments.ts` blind prompt/research comparison
+- `research/` the songwriting-craft research: `PLAN.md` (audit), `SCHEMA.md`, `pack/` (the retrievable collection: cards, profiles, pairs, sources, manifest), `raw/` (agent findings), `SUMMARY.md`, `INTEGRATION.md`. Rebuild the pack with `python3 -I research/build_cards.py` etc. Never quote lyrics into it.
 - `web/src/` React app (Write, Journal, Song page, Settings)
 - `tests/` vitest: lyric safety + HTTP end-to-end with deliberately badly-behaved writer doubles
 

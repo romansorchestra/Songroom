@@ -36,11 +36,17 @@ export function Settings({ section }: { section?: string }) {
             </label>
           </div>
           <p className="small muted">More thinking costs more and takes longer. It isn't proven to write better lyrics; judge by results.</p>
+          <label className="row" style={{ gap: 10, cursor: 'pointer' }}>
+            <input type="checkbox" checked={!!s.craftPack} onChange={(e) => void set({ craftPack: e.target.checked })} />
+            <span>Use craft notes from the research pack</span>
+          </label>
+          <p className="small muted">Off until you've judged it in Experiments below. When on, the writer gets at most two short notes from working writers that fit the request, plus a reference profile when you name one it knows. Never the research itself.</p>
         </div>
       </section>
 
       <section id="spending"><Spending /></section>
       <section id="voice"><Voice taste={s.taste} onSaveTaste={(taste) => set({ taste })} /></section>
+      <section id="experiments"><Experiments /></section>
       <section id="tests"><TestPack /></section>
 
       <section id="backup">
@@ -197,6 +203,98 @@ function EvalResult({ r, onVote }: { r: any; onVote: (v: string | null) => void 
         <div className="small muted">Look for: {x.judge}</div>
         <div className="row">
           {['use', 'maybe', 'no'].map((v) => <button key={v} className={`btn sm ${r.vote === v ? '' : 'quiet'}`} onClick={() => onVote(r.vote === v ? null : v)}>{v === 'use' ? 'Would use' : v === 'maybe' ? 'Maybe' : 'No'}</button>)}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function Experiments() {
+  const [data, setData] = useState<any | null>(null);
+  const [tally, setTally] = useState<any | null>(null);
+  const [err, setErr] = useState('');
+  const [repeats, setRepeats] = useState(2);
+  const load = () => Promise.all([api('GET', '/experiments').then(setData), api('GET', '/experiments/tally').then(setTally)]).catch((e) => setErr(e.message));
+  useEffect(() => { void load(); }, []);
+  useEffect(() => { if (!data?.running) return; const t = setInterval(load, 5000); return () => clearInterval(t); }, [data?.running]);
+  const batches = [...new Set((data?.trials ?? []).map((r: any) => String(r.batch)))] as string[];
+  const latest: string | undefined = batches[0];
+  const shown = (data?.trials ?? []).filter((r: any) => r.batch === latest).sort((a: any, b: any) => (a.repeat - b.repeat) || (a.briefId.localeCompare(b.briefId, undefined, { numeric: true })));
+  const judged = shown.filter((r: any) => r.vote).length;
+  const p = data?.progress;
+  return (
+    <>
+      <h2>Experiments</h2>
+      <p className="small muted">The same brief answered three ways: the old prompt, the corrected prompt, and the corrected prompt with research craft notes. The three answers are shuffled; which is which is shown only after you pick. Eleven fresh briefs × 2 repeats ≈ $2. Pick the one you'd use or develop; star anything exceptional.</p>
+      <div className="row">
+        <button className="btn quiet sm" disabled={data?.running} onClick={async () => { try { await api('POST', '/experiments/run', { ids: [], repeats }); await load(); } catch (e) { setErr((e as Error).message); } }}>{data?.running ? `Running… ${p?.done ?? 0}/${p?.total ?? 0}` : 'Run the comparison'}</button>
+        <label className="small muted">repeats <select value={repeats} onChange={(e) => setRepeats(Number(e.target.value))}>{[1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
+        {p?.stopped && <span className="small error">{p.stopped}</span>}
+      </div>
+      {err && <div className="error">{err}</div>}
+      {tally && tally.judged > 0 && (
+        <div className="small" style={{ marginTop: 10 }}>
+          <div>Judged so far: {tally.judged} (none: {tally.none}, tie: {tally.tie})</div>
+          {(['A', 'B', 'C'] as const).map((c) => (
+            <div key={c}>{data?.conditions?.[c]?.label ?? c}: <b>{tally.conditions[c].wins}</b> picked{tally.conditions[c].stars ? `, ${tally.conditions[c].stars} starred` : ''}{tally.conditions[c].costTotal ? `, $${tally.conditions[c].costTotal.toFixed(2)}` : ''}</div>
+          ))}
+          <div className="muted">A handful of picks is a lean, not proof.</div>
+        </div>
+      )}
+      {latest && <p className="small muted" style={{ marginTop: 10 }}>Latest run: {new Date(latest).toLocaleString()} · {judged}/{shown.length} judged</p>}
+      <div className="stack" style={{ marginTop: 10 }}>
+        {shown.map((r: any) => <Trial key={r.id} r={r} onJudge={async (vote, stars) => { await api('POST', `/experiments/${r.id}/judge`, { vote, stars }); await load(); }} />)}
+      </div>
+    </>
+  );
+}
+
+function Output({ res }: { res: any }) {
+  if (!res) return <div className="muted small">No output.</div>;
+  return (
+    <div className="stack">
+      {res.reply && <div className="reply small">{res.reply}</div>}
+      {(res.ideas ?? []).map((i: any, n: number) => (
+        <article key={n} className="sheet"><h3 className="title">{i.title}</h3>{i.concept && <p className="concept">{i.concept}</p>}<div className="lyrics">{i.lines.join('\n')}</div><Checks checks={i.checks} /></article>
+      ))}
+      {res.kind !== 'edit' && (res.options ?? []).map((o: any, n: number) => (
+        <article key={n} className="sheet"><div className="lyrics">{o.lines.join('\n')}</div><Checks checks={o.checks} /></article>
+      ))}
+      {res.kind === 'edit' && (res.options ?? []).map((o: any, n: number) => (
+        <article key={n} className="sheet diff">
+          {o.invalid ? <div className="error small">{o.invalid}</div> : o.diff.map((d: any) => <div key={d.lineId} className="pair lyric"><div className="before">{d.before}</div><div className="after">{d.after}</div></div>)}
+          <Checks checks={o.checks} />
+        </article>
+      ))}
+      {res.draft && res.draft.sections.map((sec: any, n: number) => <article key={n} className="sheet"><div className="label">{sec.label}</div><div className="lyrics">{sec.lines.join('\n')}</div></article>)}
+    </div>
+  );
+}
+
+function Trial({ r, onJudge }: { r: any; onJudge: (vote: string | null, stars: number[]) => void }) {
+  const [stars, setStars] = useState<number[]>(r.stars ?? []);
+  useEffect(() => setStars(r.stars ?? []), [r.stars]);
+  const done = r.positions.every((p: any) => p.status === 'succeeded');
+  return (
+    <details>
+      <summary style={{ cursor: 'pointer' }}>{r.briefId} {r.label} (run {r.repeat}): {r.vote ? `you picked ${r.vote}` : done ? 'not judged' : 'incomplete'}</summary>
+      <div className="stack" style={{ marginTop: 8 }}>
+        {r.context && <div className="small muted">{r.context}</div>}
+        {r.lyric && <div className="code">{r.lyric}</div>}
+        <div className="small muted">{r.request}</div>
+        {r.positions.map((p: any) => (
+          <div key={p.position} style={{ borderTop: '1px solid var(--stone-2)', paddingTop: 10 }}>
+            <div className="row" style={{ justifyContent: 'space-between' }}>
+              <b>Option {p.position}</b>
+              <span className="small muted">{p.conditionLabel ?? (r.vote ? '' : 'hidden until you pick')}{p.cost ? ` · $${Number(p.cost).toFixed(3)}` : ''}</span>
+            </div>
+            {p.error ? <div className="error small">{p.error.message}</div> : <Output res={p.result} />}
+            <button className={`btn sm ${stars.includes(p.position) ? 'ink on' : 'ink'}`} style={{ marginTop: 6 }} onClick={() => { const next = stars.includes(p.position) ? stars.filter((x) => x !== p.position) : [...stars, p.position]; setStars(next); if (r.vote) onJudge(r.vote, next); }}>{stars.includes(p.position) ? '★ exceptional' : '☆ exceptional'}</button>
+          </div>
+        ))}
+        <div className="row" style={{ borderTop: '1px solid var(--stone-2)', paddingTop: 10 }}>
+          <span className="small muted">I'd use or develop:</span>
+          {['1', '2', '3', 'tie', 'none'].map((v) => <button key={v} className={`btn sm ${r.vote === v ? '' : 'quiet'}`} onClick={() => onJudge(r.vote === v ? null : v, stars)}>{v === 'tie' ? 'Tie' : v === 'none' ? 'None' : v}</button>)}
         </div>
       </div>
     </details>
