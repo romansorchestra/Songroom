@@ -1,0 +1,28 @@
+{
+  "pack_version": "pilot-1",
+  "built": "2026-10-10",
+  "research_cutoff": "2026-10-10",
+  "discovery_window": "2024-10-01..2026-10-10 plus enduring examples and Sam's references",
+  "counts": {
+    "sources": 552,
+    "cards": 55,
+    "profiles": 16,
+    "pairs": 16
+  },
+  "sources_by_access": {
+    "fetched_partial": 43,
+    "fetched_full": 406,
+    "blocked": 88,
+    "not_found": 8,
+    "snippet_only": 7
+  },
+  "evidence_labels": [
+    "documented_statement",
+    "observable_feature",
+    "analytical_inference",
+    "sam_judgment"
+  ],
+  "audio": "none; all rhythmic/phonetic notes provisional",
+  "lyrics_reproduced": "none beyond titles and identifying phrases",
+  "notes": "Pilot collection. cards/profiles/pairs are retrievable; sources is provenance only. See research/SUMMARY.md and INTEGRATION.md."
+}
