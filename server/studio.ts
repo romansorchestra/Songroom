@@ -522,7 +522,9 @@ export class Studio {
     const scraps = await this.db.query<FragmentRow>(
       `SELECT id, idea_id, song_id, text, saved, source, created_at, saved_at FROM fragments WHERE song_id=$1 OR (idea_id IS NOT NULL AND idea_id=$2) ORDER BY created_at, rowid`, [songId, song.idea_id ?? '']);
     const sets = await this.suggestionSets(songId, 15);
+    const [seedRev] = await this.db.query<{ rev: number }>(`SELECT rev FROM song_revisions WHERE song_id=$1 AND source='insert:seed' LIMIT 1`, [songId]);
     return {
+      seedAdded: !!seedRev,
       ...song, palette: (song.palette ?? idea?.palette ?? PALETTES[song.motif % 3]) as Palette, context,
       idea: idea ? { ...idea, title_parts: idea.title_parts } : null,
       scraps: scraps.map((f) => ({ ...f, saved: !!f.saved })), sets,

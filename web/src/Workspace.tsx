@@ -24,7 +24,7 @@ type Ctx = {
 type WS = {
   id: string; title: string; brief: string; notes: string; current_rev: number; locks: string[]; sections: Section[]; palette: string;
   context: Ctx; idea: { id: string; title: string; concept: string; lines: Array<{ id: string; text: string }>; title_parts: string[] | null } | null;
-  scraps: Fragment[]; sets: SetRow[]; suno: { style: string; exclude: string; lyrics: string; rev: number; warnings: string[]; createdAt: string; hint: string } | null;
+  scraps: Fragment[]; sets: SetRow[]; seedAdded?: boolean; suno: { style: string; exclude: string; lyrics: string; rev: number; warnings: string[]; createdAt: string; hint: string } | null;
 };
 
 export const render = (sections: Section[]) => sections.map((s) => (s.label ? `[${s.label}]\n` : '') + s.lines.map((l) => l.text).join('\n')).join('\n\n');
@@ -298,6 +298,11 @@ export function Workspace({ id }: { id: string }) {
   if (!ws || !saved) return <Pending text="Opening the song…" />;
 
   const c = ws.context;
+  // The seed is "in your lyrics" if he added it and some of it is still there (so editing a line of it
+  // doesn't relabel it, but undoing the add does), or if every line of it is there anyway.
+  const lyricLines = new Set(text.split('\n').map((l) => l.trim()));
+  const seedHits = ws.idea?.lines.filter((l) => lyricLines.has(l.text.trim())).length ?? 0;
+  const seedInLyric = !!ws.idea?.lines.length && (seedHits === ws.idea.lines.length || (!!ws.seedAdded && seedHits > 0));
   const lockedLines = ws.locks.map((l) => lineById(l)).filter(Boolean) as Array<{ id: string; text: string }>;
   const cursorLine = selInfo && !selInfo.stale ? (selInfo.targets[0]?.lineId ?? selInfo.afterLineId) : null;
 
@@ -334,7 +339,7 @@ export function Workspace({ id }: { id: string }) {
         </div>
         <div className="ask-row">
           <textarea rows={1} value={instruction} aria-label="What should change"
-            placeholder={targetLabel?.kind === 'add' ? 'Ask for new lines, e.g. a pre-chorus that turns it' : 'e.g. keep the rhythm, rhyme with mine, less sincere'}
+            placeholder={targetLabel?.kind === 'add' ? 'e.g. a pre-chorus that turns it' : 'e.g. keep the rhythm, less sincere'}
             onChange={(e) => { setInstruction(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(false); } }} />
           <button className="tb" disabled={!instruction.trim() || asking} onClick={() => ask(false)}>{asking ? '…' : 'Suggest'}</button>
@@ -375,10 +380,12 @@ export function Workspace({ id }: { id: string }) {
 
       {/* starting points */}
       <div style={{ marginTop: 26 }}>
-        <div className="eyebrow">Starting points · not yet in your lyrics</div>
+        <div className="eyebrow">{seedInLyric ? 'Starting points' : 'Starting points · not yet in your lyrics'}</div>
         {ws.idea && !!ws.idea.lines.length && (
           <Seed label="" lines={ws.idea.lines.map((l) => l.text)}>
-            <div className="seed-actions"><button className="tb" onClick={() => addToLyrics(ws.idea!.lines.map((l) => l.text).join('\n'), 'seed', `seed:${ws.idea!.id}`)}>Add to lyrics ↗</button></div>
+            <div className="seed-actions">{seedInLyric
+              ? <span className="small muted">In your lyrics</span>
+              : <button className="tb" onClick={() => addToLyrics(ws.idea!.lines.map((l) => l.text).join('\n'), 'seed', `seed:${ws.idea!.id}`)}>Add to lyrics ↗</button>}</div>
           </Seed>
         )}
         <div className="hand" style={{ marginTop: ws.idea ? 0 : 14 }}>Your scraps, still here</div>

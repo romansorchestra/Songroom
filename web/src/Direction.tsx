@@ -25,6 +25,7 @@ export function RefChecker({ value, onChange }: { value: Ref | null; onChange: (
   const [query, setQuery] = useState('');
   const [ref, setRef] = useState<Ref | null>(value);
   const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
   const [want, setWant] = useState(value?.want ?? '');
   useEffect(() => { setRef(value); setWant(value?.want ?? ''); }, [value?.id]);
 
@@ -42,9 +43,11 @@ export function RefChecker({ value, onChange }: { value: Ref | null; onChange: (
   }, [ref?.id, ref?.status]);
 
   async function check() {
-    setErr('');
+    if (busy) return;
+    setErr(''); setBusy(true);
     try { const r = await api<Ref>('POST', '/references/resolve', { query, clientKey: clientKey() }); setRef(r); setQuery(''); if (r.status !== 'pending') onChange(r); }
     catch (e) { setErr((e as Error).message); }
+    setBusy(false);
   }
   async function reject() {
     if (!ref) return;
@@ -66,7 +69,7 @@ export function RefChecker({ value, onChange }: { value: Ref | null; onChange: (
         <label className="fld">Reference: an artist, song, link, or paste a few lines
           <div style={{ display: 'flex', gap: 6 }}>
             <input className="line" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. ADÉLA, Prima" aria-label="Reference" />
-            <button type="button" className="secondary" style={{ flex: '0 0 auto' }} disabled={!query.trim()} onClick={check}>Check</button>
+            <button type="button" className="secondary" style={{ flex: '0 0 auto' }} disabled={!query.trim() || busy} onClick={check}>{busy ? 'Checking…' : 'Check'}</button>
           </div>
         </label>
       )}

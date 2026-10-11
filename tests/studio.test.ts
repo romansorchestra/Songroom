@@ -173,6 +173,7 @@ describe('start writing', () => {
     expect(ws.palette).toBe(sb.current.palette);
     expect(ws.scraps.map((s: any) => s.text)).toEqual(['a scrap']);
     expect(ws.idea.lines.length).toBeGreaterThan(0);
+    expect(ws.seedAdded).toBe(false);
     // Add to lyrics: once per tap, source scrap preserved
     const add = { baseRev: ws.current_rev, afterLineId: null, text: ws.idea.lines.map((l: any) => l.text).join('\n'), clientKey: 'add1', source: 'seed' };
     const r1 = await api('POST', `/songs/${ws.id}/add`, add);
@@ -181,6 +182,8 @@ describe('start writing', () => {
     const after = (await api('GET', `/songs/${ws.id}`)).body;
     expect(after.sections.flatMap((s: any) => s.lines).length).toBe(ws.idea.lines.length);
     expect(after.scraps.length).toBe(1);
+    // live 10 Oct: the starting point still said "not yet in your lyrics" after it was added
+    expect(after.seedAdded).toBe(true);
     const j = (await api('GET', '/journal?filter=songs')).body.entries;
     expect(j.map((e: any) => e.id)).toEqual([ws.id]);
   });
