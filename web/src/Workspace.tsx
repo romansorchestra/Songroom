@@ -3,7 +3,7 @@
 // Another / Keep. Browsing never touches the lyric; only Keep does, and the
 // server enforces the selected span. Starting points stay separate until added.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError, clientKey, copy, draftStore, type Section } from './api';
 import { TitleStrips, Seed, FragmentList, Composer, Pending, Overlay, palClass, type Fragment } from './paper';
 import { RefChecker, refSummary, type Ref } from './Direction';
@@ -83,9 +83,12 @@ export function Workspace({ id }: { id: string }) {
   const timer = useRef<number>(0);
   const editor = useRef<HTMLTextAreaElement>(null);
   const sel = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+  const askRef = useRef<HTMLTextAreaElement | null>(null);
   const touched = useRef(false); // has he put the cursor in the lyric yet? If not, new lines go at the end.
   const [selInfo, setSelInfo] = useState<ReturnType<typeof mapSelection> | null>(null);
   const [instruction, setInstruction] = useState('');
+  // grow to fit whatever is in it: typed, restored after a reload, or cleared
+  useLayoutEffect(() => { const el = askRef.current; if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; } });
   const [chain, setChain] = useState<SetRow[]>([]);
   const [pos, setPos] = useState<{ set: number; item: number }>({ set: 0, item: 0 });
   const [asking, setAsking] = useState(false);
@@ -338,9 +341,9 @@ export function Workspace({ id }: { id: string }) {
           {touched.current && cursorLine && <button className="tb under" style={{ minHeight: 32, padding: '2px 8px' }} onClick={toggleLock}>{ws.locks.includes(cursorLine) ? 'Unlock line' : 'Lock line'}</button>}
         </div>
         <div className="ask-row">
-          <textarea rows={1} value={instruction} aria-label="What should change"
+          <textarea rows={1} ref={askRef} value={instruction} aria-label="What should change"
             placeholder={targetLabel?.kind === 'add' ? 'e.g. a pre-chorus that turns it' : 'e.g. keep the rhythm, less sincere'}
-            onChange={(e) => { setInstruction(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }}
+            onChange={(e) => setInstruction(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(false); } }} />
           <button className="tb" disabled={!instruction.trim() || asking} onClick={() => ask(false)}>{asking ? '…' : 'Suggest'}</button>
         </div>
