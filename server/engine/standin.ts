@@ -19,6 +19,12 @@ export class StandInWriter implements Writer {
   private fake(req: WriterRequest): unknown {
     const props = (req.schema as { properties: Record<string, unknown> }).properties;
     const c = { count: null, linesPerOption: null, mustStartWith: null, mustEndWith: null, forbidden: [] };
+    if ('titleParts' in props && 'note' in props) {
+      return { title: '[stand-in] Reworked title', titleParts: ['[stand-in] Reworked', 'title'], concept: '[stand-in] Reworked concept. Placeholder, not real writing.', lines: ['[stand-in] reworked line one', '[stand-in] reworked line two'], note: '' };
+    }
+    if ('lines' in props && 'note' in props && Object.keys(props).length === 2) {
+      return { note: '', lines: [1, 2, 3, 4, 5, 6].map((n) => `[stand-in] page line ${n}`) };
+    }
     if ('ideas' in props && !('kind' in props)) {
       const n = Number((req.user.match(/Give (\d+) distinct/) ?? [])[1] ?? 3);
       const stamp = Math.random().toString(36).slice(2, 6);

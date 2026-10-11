@@ -1,0 +1,243 @@
+{
+ "source": "Spotify US daily chart (kworb.net snapshots via the Internet Archive), 388 snapshots 2023-10-01..2026-10-05; songs that reached the top 50; hits = in the top 50 in 10+ snapshots (about a month or more)",
+ "built": "2026-10-11",
+ "genres": {
+  "pop": {
+   "subject": {
+    "desire": 0.186,
+    "relationship_trouble": 0.171,
+    "breakup_heartbreak": 0.163,
+    "romantic_love": 0.147,
+    "self_confidence": 0.109,
+    "longing_unrequited": 0.062,
+    "party_nightlife": 0.054,
+    "struggle_inner": 0.047,
+    "story_character": 0.039,
+    "family_friends": 0.008,
+    "flex_money_status": 0.008,
+    "lifestyle_place": 0.008
+   },
+   "perspective": {
+    "I_to_you": 0.597,
+    "I_about_me": 0.209,
+    "we": 0.109,
+    "I_about_them": 0.07,
+    "story_third_person": 0.016
+   },
+   "explicitness": {
+    "clean": 0.543,
+    "suggestive": 0.419,
+    "explicit": 0.039
+   },
+   "title_device": {
+    "plain_phrase": 0.605,
+    "metaphor_image": 0.233,
+    "other": 0.062,
+    "name_or_brand": 0.047,
+    "place": 0.039,
+    "number_or_date": 0.016
+   },
+   "concept_scale": {
+    "everyday": 0.496,
+    "twisted_everyday": 0.419,
+    "high_concept": 0.085
+   },
+   "n": 129,
+   "relationship": 0.752
+  },
+  "country": {
+   "subject": {
+    "breakup_heartbreak": 0.273,
+    "relationship_trouble": 0.182,
+    "struggle_inner": 0.152,
+    "party_nightlife": 0.091,
+    "longing_unrequited": 0.091,
+    "desire": 0.061,
+    "romantic_love": 0.061,
+    "nostalgia_hometown": 0.03,
+    "family_friends": 0.03,
+    "story_character": 0.03
+   },
+   "perspective": {
+    "I_about_me": 0.424,
+    "I_to_you": 0.364,
+    "we": 0.152,
+    "I_about_them": 0.03,
+    "story_third_person": 0.03
+   },
+   "explicitness": {
+    "clean": 0.727,
+    "suggestive": 0.273
+   },
+   "title_device": {
+    "plain_phrase": 0.576,
+    "metaphor_image": 0.152,
+    "place": 0.152,
+    "number_or_date": 0.091,
+    "other": 0.03
+   },
+   "concept_scale": {
+    "everyday": 0.667,
+    "twisted_everyday": 0.333
+   },
+   "n": 33,
+   "relationship": 0.697
+  },
+  "hiphop": {
+   "subject": {
+    "flex_money_status": 0.642,
+    "desire": 0.132,
+    "relationship_trouble": 0.075,
+    "self_confidence": 0.038,
+    "romantic_love": 0.038,
+    "struggle_inner": 0.038,
+    "family_friends": 0.019,
+    "breakup_heartbreak": 0.019
+   },
+   "perspective": {
+    "I_about_me": 0.642,
+    "I_about_them": 0.17,
+    "I_to_you": 0.17,
+    "we": 0.019
+   },
+   "explicitness": {
+    "explicit": 0.868,
+    "suggestive": 0.094,
+    "clean": 0.038
+   },
+   "title_device": {
+    "plain_phrase": 0.528,
+    "metaphor_image": 0.189,
+    "other": 0.189,
+    "name_or_brand": 0.075,
+    "place": 0.019
+   },
+   "concept_scale": {
+    "everyday": 0.868,
+    "twisted_everyday": 0.132
+   },
+   "n": 53,
+   "relationship": 0.264
+  },
+  "latin": {
+   "subject": {
+    "desire": 0.28,
+    "lifestyle_place": 0.16,
+    "breakup_heartbreak": 0.16,
+    "relationship_trouble": 0.12,
+    "flex_money_status": 0.08,
+    "party_nightlife": 0.08,
+    "romantic_love": 0.04,
+    "nostalgia_hometown": 0.04,
+    "family_friends": 0.04
+   },
+   "perspective": {
+    "I_to_you": 0.32,
+    "I_about_them": 0.24,
+    "I_about_me": 0.2,
+    "we": 0.2,
+    "story_third_person": 0.04
+   },
+   "explicitness": {
+    "suggestive": 0.48,
+    "clean": 0.28,
+    "explicit": 0.24
+   },
+   "title_device": {
+    "plain_phrase": 0.44,
+    "other": 0.28,
+    "metaphor_image": 0.12,
+    "place": 0.08,
+    "name_or_brand": 0.08
+   },
+   "concept_scale": {
+    "everyday": 0.72,
+    "twisted_everyday": 0.28
+   },
+   "n": 25,
+   "relationship": 0.64
+  },
+  "rock_alt": {
+   "subject": {
+    "relationship_trouble": 0.24,
+    "romantic_love": 0.2,
+    "breakup_heartbreak": 0.16,
+    "struggle_inner": 0.16,
+    "longing_unrequited": 0.08,
+    "nostalgia_hometown": 0.04,
+    "party_nightlife": 0.04,
+    "social_political": 0.04,
+    "family_friends": 0.04
+   },
+   "perspective": {
+    "I_to_you": 0.56,
+    "I_about_me": 0.44
+   },
+   "explicitness": {
+    "clean": 0.84,
+    "suggestive": 0.12,
+    "explicit": 0.04
+   },
+   "title_device": {
+    "plain_phrase": 0.52,
+    "metaphor_image": 0.4,
+    "name_or_brand": 0.04,
+    "other": 0.04
+   },
+   "concept_scale": {
+    "everyday": 0.6,
+    "twisted_everyday": 0.36,
+    "high_concept": 0.04
+   },
+   "n": 25,
+   "relationship": 0.72
+  },
+  "all": {
+   "subject": {
+    "relationship_trouble": 0.152,
+    "desire": 0.148,
+    "breakup_heartbreak": 0.144,
+    "flex_money_status": 0.137,
+    "romantic_love": 0.107,
+    "struggle_inner": 0.067,
+    "self_confidence": 0.059,
+    "party_nightlife": 0.048,
+    "longing_unrequited": 0.048,
+    "story_character": 0.022,
+    "family_friends": 0.019,
+    "lifestyle_place": 0.019,
+    "nostalgia_hometown": 0.015,
+    "other": 0.007,
+    "faith_spiritual": 0.004,
+    "social_political": 0.004
+   },
+   "perspective": {
+    "I_to_you": 0.444,
+    "I_about_me": 0.348,
+    "we": 0.1,
+    "I_about_them": 0.093,
+    "story_third_person": 0.015
+   },
+   "explicitness": {
+    "clean": 0.478,
+    "suggestive": 0.307,
+    "explicit": 0.215
+   },
+   "title_device": {
+    "plain_phrase": 0.559,
+    "metaphor_image": 0.219,
+    "other": 0.107,
+    "place": 0.048,
+    "name_or_brand": 0.048,
+    "number_or_date": 0.019
+   },
+   "concept_scale": {
+    "everyday": 0.626,
+    "twisted_everyday": 0.33,
+    "high_concept": 0.044
+   },
+   "n": 270,
+   "relationship": 0.622
+  }
+ }
+}

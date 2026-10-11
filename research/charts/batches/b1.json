@@ -1,0 +1,986 @@
+[
+{
+"artist": "21 Savage",
+"title": "should've wore a bonnet (w/ Brent Faiyaz)",
+"first_top50": "2024-01-12",
+"best": 13,
+"snapshots_in_top50": 2,
+"id": 123
+},
+{
+"artist": "21 Savage",
+"title": "american dream",
+"first_top50": "2024-01-12",
+"best": 15,
+"snapshots_in_top50": 1,
+"id": 124
+},
+{
+"artist": "21 Savage",
+"title": "letter to my brudda",
+"first_top50": "2024-01-12",
+"best": 17,
+"snapshots_in_top50": 1,
+"id": 125
+},
+{
+"artist": "21 Savage",
+"title": "prove it (w/ Summer Walker)",
+"first_top50": "2024-01-12",
+"best": 18,
+"snapshots_in_top50": 1,
+"id": 126
+},
+{
+"artist": "21 Savage",
+"title": "see the real",
+"first_top50": "2024-01-12",
+"best": 21,
+"snapshots_in_top50": 1,
+"id": 127
+},
+{
+"artist": "21 Savage",
+"title": "red sky",
+"first_top50": "2024-01-12",
+"best": 23,
+"snapshots_in_top50": 1,
+"id": 128
+},
+{
+"artist": "21 Savage",
+"title": "just like me (w/ Burna Boy, Metro Boomin)",
+"first_top50": "2024-01-12",
+"best": 26,
+"snapshots_in_top50": 1,
+"id": 129
+},
+{
+"artist": "21 Savage",
+"title": "dark days (w/ Mariah the Scientist)",
+"first_top50": "2024-01-12",
+"best": 35,
+"snapshots_in_top50": 1,
+"id": 130
+},
+{
+"artist": "4batz",
+"title": "act ii: date @ 8",
+"first_top50": "2024-01-18",
+"best": 25,
+"snapshots_in_top50": 28,
+"id": 131
+},
+{
+"artist": "Benson Boone",
+"title": "Beautiful Things",
+"first_top50": "2024-01-20",
+"best": 1,
+"snapshots_in_top50": 242,
+"id": 132
+},
+{
+"artist": "Megan Thee Stallion",
+"title": "HISS",
+"first_top50": "2024-01-26",
+"best": 1,
+"snapshots_in_top50": 10,
+"id": 133
+},
+{
+"artist": "Ice Spice",
+"title": "Think U The Shit (Fart)",
+"first_top50": "2024-01-26",
+"best": 14,
+"snapshots_in_top50": 9,
+"id": 134
+},
+{
+"artist": "Morgan Wallen",
+"title": "Spin You Around (1/24)",
+"first_top50": "2024-01-26",
+"best": 23,
+"snapshots_in_top50": 7,
+"id": 135
+},
+{
+"artist": "Justin Timberlake",
+"title": "Selfish",
+"first_top50": "2024-01-26",
+"best": 31,
+"snapshots_in_top50": 2,
+"id": 136
+},
+{
+"artist": "Nicki Minaj",
+"title": "Big Foot",
+"first_top50": "2024-01-29",
+"best": 10,
+"snapshots_in_top50": 2,
+"id": 137
+},
+{
+"artist": "Rich Amiri",
+"title": "ONE CALL",
+"first_top50": "2024-01-29",
+"best": 14,
+"snapshots_in_top50": 44,
+"id": 138
+},
+{
+"artist": "Good Neighbours",
+"title": "Home",
+"first_top50": "2024-01-31",
+"best": 27,
+"snapshots_in_top50": 31,
+"id": 139
+},
+{
+"artist": "Don Toliver",
+"title": "Bandit",
+"first_top50": "2024-02-04",
+"best": 19,
+"snapshots_in_top50": 26,
+"id": 140
+},
+{
+"artist": "YG Marley",
+"title": "Praise Jah In The Moonlight",
+"first_top50": "2024-02-04",
+"best": 23,
+"snapshots_in_top50": 22,
+"id": 141
+},
+{
+"artist": "Toby Keith",
+"title": "Should've Been A Cowboy",
+"first_top50": "2024-02-07",
+"best": 15,
+"snapshots_in_top50": 4,
+"id": 142
+},
+{
+"artist": "Toby Keith",
+"title": "Courtesy Of The Red, White And Blue (The Angry American)",
+"first_top50": "2024-02-07",
+"best": 1,
+"snapshots_in_top50": 7,
+"id": 143
+},
+{
+"artist": "Toby Keith",
+"title": "As Good As I Once Was",
+"first_top50": "2024-02-07",
+"best": 48,
+"snapshots_in_top50": 1,
+"id": 144
+},
+{
+"artist": "Noah Kahan",
+"title": "Forever",
+"first_top50": "2024-02-09",
+"best": 3,
+"snapshots_in_top50": 5,
+"id": 145
+},
+{
+"artist": "Kacey Musgraves",
+"title": "Deeper Well",
+"first_top50": "2024-02-09",
+"best": 28,
+"snapshots_in_top50": 2,
+"id": 146
+},
+{
+"artist": "¥$",
+"title": "Talking / Once Again (w/ Kanye West, Ty Dolla $ign, North West)",
+"first_top50": "2024-02-09",
+"best": 33,
+"snapshots_in_top50": 1,
+"id": 147
+},
+{
+"artist": "Noah Kahan",
+"title": "Dial Drunk",
+"first_top50": "2024-02-09",
+"best": 41,
+"snapshots_in_top50": 1,
+"id": 148
+},
+{
+"artist": "Kanye West",
+"title": "CARNIVAL (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-10",
+"best": 1,
+"snapshots_in_top50": 3,
+"id": 149
+},
+{
+"artist": "Kanye West",
+"title": "FUK SUMN (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-10",
+"best": 3,
+"snapshots_in_top50": 3,
+"id": 150
+},
+{
+"artist": "Kanye West",
+"title": "BACK TO ME (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-10",
+"best": 6,
+"snapshots_in_top50": 3,
+"id": 151
+},
+{
+"artist": "Kanye West",
+"title": "STARS (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-10",
+"best": 8,
+"snapshots_in_top50": 3,
+"id": 152
+},
+{
+"artist": "Kanye West",
+"title": "TALKING (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-10",
+"best": 6,
+"snapshots_in_top50": 3,
+"id": 153
+},
+{
+"artist": "Kanye West",
+"title": "PAID (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-10",
+"best": 14,
+"snapshots_in_top50": 3,
+"id": 154
+},
+{
+"artist": "Kanye West",
+"title": "KEYS TO MY LIFE (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-10",
+"best": 20,
+"snapshots_in_top50": 3,
+"id": 155
+},
+{
+"artist": "Beyoncé",
+"title": "TEXAS HOLD 'EM",
+"first_top50": "2024-02-12",
+"best": 2,
+"snapshots_in_top50": 36,
+"id": 156
+},
+{
+"artist": "Kanye West",
+"title": "BURN (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-12",
+"best": 4,
+"snapshots_in_top50": 2,
+"id": 157
+},
+{
+"artist": "USHER",
+"title": "Yeah! (w/ Lil Jon, Ludacris)",
+"first_top50": "2024-02-12",
+"best": 9,
+"snapshots_in_top50": 3,
+"id": 158
+},
+{
+"artist": "Kanye West",
+"title": "DO IT (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-12",
+"best": 13,
+"snapshots_in_top50": 2,
+"id": 159
+},
+{
+"artist": "Beyoncé",
+"title": "16 CARRIAGES",
+"first_top50": "2024-02-12",
+"best": 16,
+"snapshots_in_top50": 4,
+"id": 160
+},
+{
+"artist": "Kanye West",
+"title": "VULTURES (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-12",
+"best": 21,
+"snapshots_in_top50": 2,
+"id": 161
+},
+{
+"artist": "USHER",
+"title": "My Boo (w/ Alicia Keys)",
+"first_top50": "2024-02-12",
+"best": 22,
+"snapshots_in_top50": 2,
+"id": 162
+},
+{
+"artist": "Kanye West",
+"title": "PAPERWORK (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-12",
+"best": 23,
+"snapshots_in_top50": 2,
+"id": 163
+},
+{
+"artist": "Kanye West",
+"title": "BEG FORGIVENESS (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-12",
+"best": 25,
+"snapshots_in_top50": 2,
+"id": 164
+},
+{
+"artist": "Kanye West",
+"title": "HOODRAT (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-12",
+"best": 27,
+"snapshots_in_top50": 2,
+"id": 165
+},
+{
+"artist": "Kanye West",
+"title": "PROBLEMATIC (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-12",
+"best": 31,
+"snapshots_in_top50": 2,
+"id": 166
+},
+{
+"artist": "Kanye West",
+"title": "GOOD (DON'T DIE) (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-12",
+"best": 36,
+"snapshots_in_top50": 2,
+"id": 167
+},
+{
+"artist": "USHER",
+"title": "DJ Got Us Fallin' In Love (w/ Pitbull)",
+"first_top50": "2024-02-12",
+"best": 39,
+"snapshots_in_top50": 1,
+"id": 168
+},
+{
+"artist": "USHER",
+"title": "Hey Daddy (Daddy's Home)",
+"first_top50": "2024-02-12",
+"best": 40,
+"snapshots_in_top50": 1,
+"id": 169
+},
+{
+"artist": "USHER",
+"title": "Love in This Club (w/ Jeezy)",
+"first_top50": "2024-02-12",
+"best": 41,
+"snapshots_in_top50": 1,
+"id": 170
+},
+{
+"artist": "Kanye West",
+"title": "KING (w/ Ty Dolla $ign)",
+"first_top50": "2024-02-12",
+"best": 46,
+"snapshots_in_top50": 1,
+"id": 171
+},
+{
+"artist": "¥$",
+"title": "CARNIVAL (w/ Kanye West, Ty Dolla $ign)",
+"first_top50": "2024-02-15",
+"best": 1,
+"snapshots_in_top50": 48,
+"id": 172
+},
+{
+"artist": "¥$",
+"title": "BURN (w/ Kanye West, Ty Dolla $ign)",
+"first_top50": "2024-02-15",
+"best": 8,
+"snapshots_in_top50": 11,
+"id": 173
+},
+{
+"artist": "¥$",
+"title": "FUK SUMN (w/ Kanye West, Ty Dolla $ign)",
+"first_top50": "2024-02-15",
+"best": 11,
+"snapshots_in_top50": 6,
+"id": 174
+},
+{
+"artist": "¥$",
+"title": "BACK TO ME (w/ Kanye West, Ty Dolla $ign)",
+"first_top50": "2024-02-15",
+"best": 13,
+"snapshots_in_top50": 3,
+"id": 175
+},
+{
+"artist": "¥$",
+"title": "STARS (w/ Kanye West, Ty Dolla $ign)",
+"first_top50": "2024-02-15",
+"best": 25,
+"snapshots_in_top50": 1,
+"id": 176
+},
+{
+"artist": "¥$",
+"title": "DO IT (w/ Kanye West, Ty Dolla $ign)",
+"first_top50": "2024-02-15",
+"best": 29,
+"snapshots_in_top50": 1,
+"id": 177
+},
+{
+"artist": "¥$",
+"title": "TALKING (w/ Kanye West, Ty Dolla $ign)",
+"first_top50": "2024-02-15",
+"best": 32,
+"snapshots_in_top50": 1,
+"id": 178
+},
+{
+"artist": "¥$",
+"title": "PAID (w/ Kanye West, Ty Dolla $ign)",
+"first_top50": "2024-02-15",
+"best": 47,
+"snapshots_in_top50": 1,
+"id": 179
+},
+{
+"artist": "¥$",
+"title": "VULTURES (w/ Kanye West, Ty Dolla $ign)",
+"first_top50": "2024-02-15",
+"best": 49,
+"snapshots_in_top50": 1,
+"id": 180
+},
+{
+"artist": "Djo",
+"title": "End of Beginning",
+"first_top50": "2024-02-19",
+"best": 1,
+"snapshots_in_top50": 120,
+"id": 181
+},
+{
+"artist": "Yeat",
+"title": "Breathe",
+"first_top50": "2024-02-19",
+"best": 14,
+"snapshots_in_top50": 21,
+"id": 182
+},
+{
+"artist": "Bryson Tiller",
+"title": "Whatever She Wants",
+"first_top50": "2024-02-19",
+"best": 4,
+"snapshots_in_top50": 36,
+"id": 183
+},
+{
+"artist": "Dua Lipa",
+"title": "Training Season",
+"first_top50": "2024-02-19",
+"best": 32,
+"snapshots_in_top50": 4,
+"id": 184
+},
+{
+"artist": "SZA",
+"title": "Saturn",
+"first_top50": "2024-02-23",
+"best": 3,
+"snapshots_in_top50": 61,
+"id": 185
+},
+{
+"artist": "Frank Ocean",
+"title": "Thinkin Bout You",
+"first_top50": "2024-02-23",
+"best": 36,
+"snapshots_in_top50": 2,
+"id": 186
+},
+{
+"artist": "Richy Mitch & The Coal Miners",
+"title": "Evergreen",
+"first_top50": "2024-02-27",
+"best": 32,
+"snapshots_in_top50": 26,
+"id": 187
+},
+{
+"artist": "Michael Marcagi",
+"title": "Scared To Start",
+"first_top50": "2024-03-01",
+"best": 13,
+"snapshots_in_top50": 48,
+"id": 188
+},
+{
+"artist": "Travis Scott",
+"title": "MY EYES",
+"first_top50": "2024-03-01",
+"best": 39,
+"snapshots_in_top50": 4,
+"id": 189
+},
+{
+"artist": "Pharrell Williams",
+"title": "Doctor (Work It Out) (w/ Miley Cyrus)",
+"first_top50": "2024-03-01",
+"best": 45,
+"snapshots_in_top50": 1,
+"id": 190
+},
+{
+"artist": "Twenty One Pilots",
+"title": "Overcompensate",
+"first_top50": "2024-03-01",
+"best": 48,
+"snapshots_in_top50": 1,
+"id": 191
+},
+{
+"artist": "Ariana Grande",
+"title": "bye",
+"first_top50": "2024-03-08",
+"best": 2,
+"snapshots_in_top50": 9,
+"id": 192
+},
+{
+"artist": "Ariana Grande",
+"title": "we can't be friends (wait for your love)",
+"first_top50": "2024-03-08",
+"best": 1,
+"snapshots_in_top50": 54,
+"id": 193
+},
+{
+"artist": "Ariana Grande",
+"title": "the boy is mine",
+"first_top50": "2024-03-08",
+"best": 4,
+"snapshots_in_top50": 14,
+"id": 194
+},
+{
+"artist": "Ariana Grande",
+"title": "eternal sunshine",
+"first_top50": "2024-03-08",
+"best": 5,
+"snapshots_in_top50": 9,
+"id": 195
+},
+{
+"artist": "Ariana Grande",
+"title": "don't wanna break up again",
+"first_top50": "2024-03-08",
+"best": 7,
+"snapshots_in_top50": 8,
+"id": 196
+},
+{
+"artist": "Ariana Grande",
+"title": "intro (end of the world)",
+"first_top50": "2024-03-08",
+"best": 8,
+"snapshots_in_top50": 6,
+"id": 197
+},
+{
+"artist": "Ariana Grande",
+"title": "supernatural",
+"first_top50": "2024-03-08",
+"best": 9,
+"snapshots_in_top50": 8,
+"id": 198
+},
+{
+"artist": "Ariana Grande",
+"title": "true story",
+"first_top50": "2024-03-08",
+"best": 11,
+"snapshots_in_top50": 5,
+"id": 199
+},
+{
+"artist": "4batz",
+"title": "act ii: date @ 8 (w/ Drake)",
+"first_top50": "2024-03-08",
+"best": 16,
+"snapshots_in_top50": 9,
+"id": 200
+},
+{
+"artist": "Ariana Grande",
+"title": "Saturn Returns Interlude",
+"first_top50": "2024-03-08",
+"best": 19,
+"snapshots_in_top50": 4,
+"id": 201
+},
+{
+"artist": "Ariana Grande",
+"title": "i wish i hated you",
+"first_top50": "2024-03-08",
+"best": 19,
+"snapshots_in_top50": 5,
+"id": 202
+},
+{
+"artist": "Ariana Grande",
+"title": "imperfect for you",
+"first_top50": "2024-03-08",
+"best": 22,
+"snapshots_in_top50": 5,
+"id": 203
+},
+{
+"artist": "Ariana Grande",
+"title": "ordinary things (w/ Nonna)",
+"first_top50": "2024-03-08",
+"best": 28,
+"snapshots_in_top50": 4,
+"id": 204
+},
+{
+"artist": "Dasha",
+"title": "Austin",
+"first_top50": "2024-03-12",
+"best": 14,
+"snapshots_in_top50": 67,
+"id": 205
+},
+{
+"artist": "Cardi B",
+"title": "Enough (Miami)",
+"first_top50": "2024-03-15",
+"best": 28,
+"snapshots_in_top50": 4,
+"id": 206
+},
+{
+"artist": "Ivan Cornejo",
+"title": "Baby Please",
+"first_top50": "2024-03-15",
+"best": 46,
+"snapshots_in_top50": 1,
+"id": 207
+},
+{
+"artist": "Dropkick Murphys",
+"title": "I'm Shipping Up To Boston",
+"first_top50": "2024-03-17",
+"best": 48,
+"snapshots_in_top50": 1,
+"id": 208
+},
+{
+"artist": "BigXthaPlug",
+"title": "Mmhmm",
+"first_top50": "2024-03-17",
+"best": 31,
+"snapshots_in_top50": 20,
+"id": 209
+},
+{
+"artist": "Future",
+"title": "Like That (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 1,
+"snapshots_in_top50": 67,
+"id": 210
+},
+{
+"artist": "Hozier",
+"title": "Too Sweet",
+"first_top50": "2024-03-22",
+"best": 1,
+"snapshots_in_top50": 123,
+"id": 211
+},
+{
+"artist": "Future",
+"title": "Type Shit (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 3,
+"snapshots_in_top50": 36,
+"id": 212
+},
+{
+"artist": "Future",
+"title": "Cinderella (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 5,
+"snapshots_in_top50": 15,
+"id": 213
+},
+{
+"artist": "Future",
+"title": "We Don't Trust You (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 4,
+"snapshots_in_top50": 6,
+"id": 214
+},
+{
+"artist": "Olivia Rodrigo",
+"title": "obsessed",
+"first_top50": "2024-03-22",
+"best": 9,
+"snapshots_in_top50": 15,
+"id": 215
+},
+{
+"artist": "Future",
+"title": "Young Metro (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 6,
+"snapshots_in_top50": 6,
+"id": 216
+},
+{
+"artist": "Benson Boone",
+"title": "Slow It Down",
+"first_top50": "2024-03-22",
+"best": 19,
+"snapshots_in_top50": 56,
+"id": 217
+},
+{
+"artist": "Future",
+"title": "Ice Attack (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 8,
+"snapshots_in_top50": 4,
+"id": 218
+},
+{
+"artist": "Olivia Rodrigo",
+"title": "so american",
+"first_top50": "2024-03-22",
+"best": 20,
+"snapshots_in_top50": 4,
+"id": 219
+},
+{
+"artist": "Future",
+"title": "Slimed In (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 13,
+"snapshots_in_top50": 4,
+"id": 220
+},
+{
+"artist": "Peso Pluma",
+"title": "LA PEOPLE II (w/ Tito Double P, Joel De La P)",
+"first_top50": "2024-03-22",
+"best": 42,
+"snapshots_in_top50": 2,
+"id": 221
+},
+{
+"artist": "Future",
+"title": "Claustrophobic (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 14,
+"snapshots_in_top50": 3,
+"id": 222
+},
+{
+"artist": "Future",
+"title": "Magic Don Juan (Princess Diana) (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 15,
+"snapshots_in_top50": 3,
+"id": 223
+},
+{
+"artist": "Future",
+"title": "Fried (She a Vibe) (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 21,
+"snapshots_in_top50": 3,
+"id": 224
+},
+{
+"artist": "Future",
+"title": "Runnin Outta Time (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 17,
+"snapshots_in_top50": 2,
+"id": 225
+},
+{
+"artist": "Future",
+"title": "Everyday Hustle (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 24,
+"snapshots_in_top50": 2,
+"id": 226
+},
+{
+"artist": "Hozier",
+"title": "Wildflower and Barley (w/ Allison Russell)",
+"first_top50": "2024-03-22",
+"best": 16,
+"snapshots_in_top50": 2,
+"id": 227
+},
+{
+"artist": "Future",
+"title": "Ain't No Love (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 27,
+"snapshots_in_top50": 2,
+"id": 228
+},
+{
+"artist": "Future",
+"title": "GTA (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 28,
+"snapshots_in_top50": 2,
+"id": 229
+},
+{
+"artist": "Hozier",
+"title": "Empire Now",
+"first_top50": "2024-03-22",
+"best": 26,
+"snapshots_in_top50": 2,
+"id": 230
+},
+{
+"artist": "Olivia Rodrigo",
+"title": "girl i’ve always been",
+"first_top50": "2024-03-22",
+"best": 29,
+"snapshots_in_top50": 1,
+"id": 231
+},
+{
+"artist": "Olivia Rodrigo",
+"title": "stranger",
+"first_top50": "2024-03-22",
+"best": 30,
+"snapshots_in_top50": 1,
+"id": 232
+},
+{
+"artist": "Olivia Rodrigo",
+"title": "scared of my guitar",
+"first_top50": "2024-03-22",
+"best": 32,
+"snapshots_in_top50": 1,
+"id": 233
+},
+{
+"artist": "Hozier",
+"title": "Fare Well",
+"first_top50": "2024-03-22",
+"best": 35,
+"snapshots_in_top50": 1,
+"id": 234
+},
+{
+"artist": "Future",
+"title": "Seen it All (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 39,
+"snapshots_in_top50": 1,
+"id": 235
+},
+{
+"artist": "Future",
+"title": "WTFYM (w/ Metro Boomin)",
+"first_top50": "2024-03-22",
+"best": 40,
+"snapshots_in_top50": 1,
+"id": 236
+},
+{
+"artist": "Artemas",
+"title": "i like the way you kiss me",
+"first_top50": "2024-03-26",
+"best": 3,
+"snapshots_in_top50": 43,
+"id": 237
+},
+{
+"artist": "Sexyy Red",
+"title": "Get It Sexyy",
+"first_top50": "2024-03-27",
+"best": 26,
+"snapshots_in_top50": 24,
+"id": 238
+},
+{
+"artist": "Beyoncé",
+"title": "II MOST WANTED (w/ Miley Cyrus)",
+"first_top50": "2024-03-29",
+"best": 4,
+"snapshots_in_top50": 8,
+"id": 239
+},
+{
+"artist": "Beyoncé",
+"title": "BODYGUARD",
+"first_top50": "2024-03-29",
+"best": 8,
+"snapshots_in_top50": 5,
+"id": 240
+},
+{
+"artist": "Beyoncé",
+"title": "LEVII'S JEANS (w/ Post Malone)",
+"first_top50": "2024-03-29",
+"best": 10,
+"snapshots_in_top50": 4,
+"id": 241
+},
+{
+"artist": "Beyoncé",
+"title": "JOLENE",
+"first_top50": "2024-03-29",
+"best": 3,
+"snapshots_in_top50": 4,
+"id": 242
+},
+{
+"artist": "Beyoncé",
+"title": "AMERIICAN REQUIEM",
+"first_top50": "2024-03-29",
+"best": 6,
+"snapshots_in_top50": 1,
+"id": 243
+},
+{
+"artist": "Beyoncé",
+"title": "BLACKBIIRD (w/ Tanner Adell, Brittney Spencer, Tiera Kennedy, Reyna Roberts)",
+"first_top50": "2024-03-29",
+"best": 7,
+"snapshots_in_top50": 1,
+"id": 244
+},
+{
+"artist": "Beyoncé",
+"title": "DAUGHTER",
+"first_top50": "2024-03-29",
+"best": 13,
+"snapshots_in_top50": 1,
+"id": 245
+}
+]

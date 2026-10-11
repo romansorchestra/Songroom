@@ -193,6 +193,8 @@ export function sunoPrompt(input: { song: SongContext; sections: Array<{ index: 
 // experiment votes. Runs record `${variant}/ws1`.
 // ---------------------------------------------------------------------------
 export const WORKSPACE_TEMPLATE = 'ws1';
+/** 11 Oct 2026: ideas get an engine-chosen subject from the chart barometer; rework and page lines. */
+export const IDEA_TEMPLATE = 'ws2';
 
 export type RefForPrompt = { name: string; identity: string; source: string; characteristics: string[]; want: string; pastedText?: string };
 
@@ -297,4 +299,79 @@ Answer with one JSON object and nothing else:
 {"status":"resolved"|"ambiguous"|"not_found",
  "candidates":[{"name":"...","kind":"artist"|"song"|"album","identity":"one line: who/what it is, year, key release","characteristics":["up to 5 short notes on how the writing works (stance, diction, humour, structure, title habits), only from what the sources say"]}]}
 For "resolved" give exactly one candidate. For "ambiguous" give two to four. For "not_found" give none.`;
+}
+
+// ---------------------------------------------------------------------------
+// ws2 — 11 Oct 2026. Sam, after using the springboard: the ideas were too high
+// concept ("would maybe work for deep country"), and one ("Tamagotchi") read as a
+// teen novelty. He asked for subjects grounded in what actually charts on Spotify
+// US. The engine now assigns each idea its subject from research/charts (see
+// engine/barometer.ts); this template tells the writer how charting songs are
+// told. sparkPrompt (ws1) above is kept verbatim.
+// ---------------------------------------------------------------------------
+export function sparkPromptV2(input: { direction: string; genreLabel: string; references: string; avoidTitles: string[]; subjects: string[]; shape: string; craft?: string }): string {
+  const blocks: string[] = [];
+  blocks.push(input.direction.trim() ? `His direction for these ideas (this overrides anything below):\n${input.direction.trim()}` : `He gave no direction beyond the genre: ${input.genreLabel}.`);
+  if (input.references) blocks.push(input.references);
+  if (input.shape) blocks.push(input.shape);
+  blocks.push(`Subjects for this batch, one per idea, in order (chosen from that chart mix; if his direction names a subject, his direction wins):\n${input.subjects.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
+  if (input.avoidTitles.length) blocks.push(`Ideas he has already seen (don't repeat these titles or their angles):\n${input.avoidTitles.map((t) => `- ${t}`).join('\n')}`);
+  if (input.craft) blocks.push(input.craft);
+  blocks.push(`How these ideas should feel
+- A grown-up life: an adult narrator, adult relationships and adult nights. No school, homework, parents' rules or childhood props unless he asks.
+- An everyday situation a listener has actually been in, said plainly, or with one clever angle. Not a conceit: don't build an idea on an unusual object, gadget, toy or extended metaphor. If the concept needs explaining, choose a simpler one.
+- Mostly sung to "you", in the moment, as something you'd actually say to that person.
+- Desire can be frank and suggestive, the way pop is; keep it suggestive rather than graphic unless he asks.
+- Titles are mostly a plain phrase people say out loud; an image title is fine now and then.
+
+How to answer
+- Give ${input.subjects.length} distinct song ideas, one per subject above. He sees them one at a time, so each must stand on its own.
+- "title": something he'd sing.
+- "titleParts": the title split into one or two natural phrase chunks that join back into the title exactly (word for word, same punctuation). Split where a singer would breathe or where the hook turns. One chunk is fine for a short title.
+- "concept": the situation and the angle in one or two plain sentences, at most 45 words.
+- "lines": two to four lyric lines from inside the song. Lines only, no labels.
+- "note": empty unless something needs saying in one short line.`);
+  return blocks.join('\n\n');
+}
+
+/** One idea, reworked to his note. What he marked to keep comes back word for word. */
+export function reworkPrompt(input: {
+  idea: { title: string; concept: string; lines: string[] };
+  feedback: string; keepTitle: boolean; keepConcept: boolean; keepLines: string[]; changeLines: string[];
+  direction: string; shape: string; references: string;
+}): string {
+  const blocks: string[] = [];
+  blocks.push(`An idea he is reacting to:\nTitle: ${input.idea.title}\nConcept: ${input.idea.concept}\nLines:\n${input.idea.lines.map((l) => `- ${l}`).join('\n')}`);
+  if (input.direction.trim()) blocks.push(`His general direction for ideas:\n${input.direction.trim()}`);
+  if (input.references) blocks.push(input.references);
+  if (input.shape) blocks.push(input.shape);
+  const keep: string[] = [];
+  if (input.keepTitle) keep.push('- the title, exactly');
+  if (input.keepConcept) keep.push('- the concept, as it is');
+  for (const l of input.keepLines) keep.push(`- the line "${l}", word for word`);
+  if (keep.length) blocks.push(`He likes these. Keep them exactly:\n${keep.join('\n')}`);
+  if (input.changeLines.length) blocks.push(`He wants these lines changed:\n${input.changeLines.map((l) => `- "${l}"`).join('\n')}`);
+  blocks.push(`His note:\n${input.feedback.trim() || '(no note: rework what he did not mark to keep)'}`);
+  blocks.push(`How to answer
+- Rework this one idea to his note. Keep what he marked; change what he asked; leave the rest as it is unless his note reaches it.
+- An adult narrator and an everyday situation, unless his note says otherwise.
+- "title", "titleParts" (one or two chunks that join back into the title exactly), "concept" (at most 45 words), "lines" (two to four lyric lines; kept lines included, in their places).
+- "note": empty unless something needs saying in one short line.`);
+  return blocks.join('\n\n');
+}
+
+/** More lines for a song page: things he can tap into his draft. */
+export function moreLinesPrompt(input: { title: string; concept: string; onPage: string[]; draft: string; ask: string; avoid: string[]; references: string }): string {
+  const blocks: string[] = [];
+  blocks.push(`The song: "${input.title}"${input.concept ? `\nWhat it's about: ${input.concept}` : ''}`);
+  if (input.onPage.length) blocks.push(`Lines and fragments already on his page:\n${input.onPage.map((l) => `- ${l}`).join('\n')}`);
+  if (input.draft.trim()) blocks.push(`His draft so far:\n${input.draft.trim()}`);
+  if (input.references) blocks.push(input.references);
+  if (input.avoid.length) blocks.push(`Lines you've already offered (don't repeat them or near-copies):\n${input.avoid.map((l) => `- ${l}`).join('\n')}`);
+  blocks.push(`What he wants now:\n${input.ask.trim() || 'More lines for this song: ones he could build a chorus or a verse around.'}`);
+  blocks.push(`How to answer
+- Give six lyric lines for this song, each one usable on its own, in the narrator's voice. Lines only, no labels. If he asks for a couplet or a chorus, a line can be one of the lines of it; keep them in singing order.
+- Vary them: a blunt admission, a concrete detail, a hook-shaped line, a line that answers one already on the page.
+- "note": empty unless something needs saying in one short line.`);
+  return blocks.join('\n\n');
 }

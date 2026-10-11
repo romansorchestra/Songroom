@@ -80,6 +80,14 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
     return studio.patchIdea(String(req.params.id), b);
   }));
   api.post('/ideas/:id/start', h(async (req) => studio.startWriting(String(req.params.id))));
+  api.post('/ideas/:id/rework', h(async (req) => {
+    const b = z.object({
+      feedback: z.string().max(2000).default(''), keepTitle: z.boolean().default(false), keepConcept: z.boolean().default(false),
+      keepLineIds: z.array(z.string().max(40)).max(12).default([]), changeLineIds: z.array(z.string().max(40)).max(12).default([]),
+      applyToNew: z.boolean().default(false), clientKey: key,
+    }).parse(req.body);
+    return studio.rework(String(req.params.id), { ...b, clientKey: b.clientKey ?? null });
+  }));
   api.delete('/ideas/:id', h(async (req) => svc.deleteIdea(String(req.params.id))));
 
   // Songs
@@ -124,7 +132,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   // Springboard (approved design, 10 Oct 2026)
   api.get('/springboard', h(async () => studio.springboard()));
   api.put('/springboard/direction', h(async (req) => {
-    const b = z.object({ text: z.string().max(2000).optional(), refId: z.string().max(40).nullable().optional() }).parse(req.body);
+    const b = z.object({ text: z.string().max(2000).optional(), refId: z.string().max(40).nullable().optional(), genre: z.string().max(20).optional() }).parse(req.body);
     return studio.setDirection(b);
   }));
   api.post('/springboard/next', h(async (req) => studio.sparkNext(z.object({ clientKey: key }).parse(req.body).clientKey ?? null)));
@@ -156,6 +164,10 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   api.post('/songs/:id/keep', h(async (req) => {
     const b = z.object({ setId: z.string().max(40), index: z.number().int().min(0).max(20), clientKey: key }).parse(req.body);
     return studio.keep(String(req.params.id), { ...b, clientKey: b.clientKey ?? null });
+  }));
+  api.post('/songs/:id/lines', h(async (req) => {
+    const b = z.object({ ask: z.string().max(1000).default(''), clientKey: key }).parse(req.body);
+    return studio.moreLines(String(req.params.id), { ask: b.ask, clientKey: b.clientKey ?? null });
   }));
   api.post('/songs/:id/add', h(async (req) => {
     const b = z.object({ baseRev: z.number().int(), afterLineId: z.string().max(40).nullable(), text: z.string().max(8000), clientKey: key, source: z.enum(['seed', 'scrap']) }).parse(req.body);

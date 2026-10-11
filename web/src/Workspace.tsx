@@ -4,8 +4,8 @@
 // server enforces the selected span. Starting points stay separate until added.
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { api, ApiError, clientKey, copy, draftStore, type Section } from './api';
-import { TitleStrips, Seed, FragmentList, Composer, Pending, Overlay, palClass, type Fragment } from './paper';
+import { api, ApiError, clientKey, copy, draftStore, waitForRun, type Section } from './api';
+import { TitleStrips, FragmentList, Composer, Pending, Overlay, palClass, type Fragment } from './paper';
 import { RefChecker, refSummary, type Ref } from './Direction';
 import { lyricLinesOf } from '../../shared/lyricShape';
 import { go, useApp } from './App';
@@ -265,13 +265,31 @@ export function Workspace({ id }: { id: string }) {
     const el = editor.current;
     const w = await refresh(false);
     const m = el && touched.current ? mapSelection(el.value, sel.current.end, sel.current.end, w.sections) : null;
-    const after = m && !m.stale ? m.afterLineId : null;
+    // where his cursor is if he put it in the draft; otherwise the end of the draft, in its last section
+    const lastLine = w.sections.at(-1)?.lines.at(-1)?.id ?? null;
+    const after = m && !m.stale ? (m.afterLineId ?? lastLine) : lastLine;
     try {
       const before = w.current_rev;
       const r = await api<{ rev: number }>('POST', `/songs/${id}/add`, { baseRev: w.current_rev, afterLineId: after, text, source, clientKey: `${key}:${before}` });
       await refresh(true);
-      setStatus({ text: 'Added to your lyrics.', undo: { rev: before, base: r.rev } });
+      setStatus({ text: 'Added to your draft.', undo: { rev: before, base: r.rev } });
     } catch (e) { setStatus({ text: (e as Error).message, err: true }); }
+  }
+  const [moreAsk, setMoreAsk] = useState(() => draftStore.get(`more:${id}`));
+  const [moreRun, setMoreRun] = useState<string | null>(null);
+  const [moreErr, setMoreErr] = useState('');
+  async function moreLines() {
+    if (moreRun) return;
+    setMoreErr('');
+    try {
+      const r = await api<{ runId: string }>('POST', `/songs/${id}/lines`, { ask: moreAsk, clientKey: clientKey() });
+      setMoreRun(r.runId);
+      const run = await waitForRun(r.runId);
+      if (run.status !== 'succeeded') setMoreErr(run.error?.message ?? 'That didn’t work. Your page is unchanged.');
+      else { setMoreAsk(''); draftStore.set(`more:${id}`, ''); }
+      await refresh(false);
+    } catch (e) { setMoreErr((e as Error).message); }
+    setMoreRun(null);
   }
   async function saveScrap(f: Fragment) {
     if (f.saved) return;
@@ -301,13 +319,21 @@ export function Workspace({ id }: { id: string }) {
   if (!ws || !saved) return <Pending text="Opening the song…" />;
 
   const c = ws.context;
-  // The seed is "in your lyrics" if he added it and some of it is still there (so editing a line of it
-  // doesn't relabel it, but undoing the add does), or if every line of it is there anyway.
   const lyricLines = new Set(text.split('\n').map((l) => l.trim()));
-  const seedHits = ws.idea?.lines.filter((l) => lyricLines.has(l.text.trim())).length ?? 0;
-  const seedInLyric = !!ws.idea?.lines.length && (seedHits === ws.idea.lines.length || (!!ws.seedAdded && seedHits > 0));
   const lockedLines = ws.locks.map((l) => lineById(l)).filter(Boolean) as Array<{ id: string; text: string }>;
   const cursorLine = selInfo && !selInfo.stale ? (selInfo.targets[0]?.lineId ?? selInfo.afterLineId) : null;
+
+  const inDraft = (t: string) => lyricLines.has(t.trim());
+  const typed = ws.scraps.filter((f) => f.source !== 'writer');
+  const fromWriter = ws.scraps.filter((f) => f.source === 'writer');
+  const groups: Array<{ ask: string; items: Fragment[] }> = [];
+  for (const f of fromWriter) {
+    const ask = f.ask ?? '';
+    const g = groups.at(-1);
+    if (g && g.ask === ask) g.items.push(f); else groups.push({ ask, items: [f] });
+  }
+  const hasDraft = ws.sections.some((sec) => sec.lines.length);
+  const tap = (t: string, key: string) => addToLyrics(t, 'scrap', key);
 
   return (
     <div className={palClass(ws.palette)}>
@@ -315,26 +341,61 @@ export function Workspace({ id }: { id: string }) {
         {ws.idea ? <a className="tb under" style={{ paddingLeft: 0 }} href={`#/idea/${ws.idea.id}`}>← Idea</a> : <a className="tb under" style={{ paddingLeft: 0 }} href="#/journal">← Journal</a>}
         <button className="tb" onClick={() => setPanel('menu')} aria-label="Song menu">More ⋯</button>
       </div>
-      <div className="topline"><span className="eyebrow">Song in progress</span></div>
+      <div className="topline"><span className="eyebrow">Song page</span></div>
       <TitleStrips title={ws.title || 'Untitled'} parts={ws.idea && ws.idea.title === ws.title ? ws.idea.title_parts : null} />
-      {ws.brief && <p className="concept">{ws.brief}</p>}
+      {(ws.idea?.concept || ws.brief) && <p className="concept">{ws.idea?.concept || ws.brief}</p>}
 
+      {/* the page: lines to pick from */}
+      <section className="page-lines" aria-label="Lines on this page">
+        <div className="hand">Tap a line to put it in your draft</div>
+        {ws.idea && !!ws.idea.lines.length && (
+          <div className="seed">
+            <div className="eyebrow">From the idea</div>
+            <div className="seed-lines markable-lines">
+              {ws.idea.lines.map((l) => <PageLine key={l.id} text={l.text} done={inDraft(l.text)} onTap={() => tap(l.text, `seedline:${l.id}`)} />)}
+            </div>
+          </div>
+        )}
+        {groups.map((g, gi) => (
+          <div className="page-group" key={gi}>
+            <div className="eyebrow">{g.ask ? `You asked: ${g.ask}` : 'More lines'}</div>
+            {g.items.map((f) => <PageLine key={f.id} text={f.text} done={inDraft(f.text)} onTap={() => tap(f.text, `scrap:${f.id}`)} onRemove={() => removeScrap(f)} />)}
+          </div>
+        ))}
+        <div className="more-lines">
+          <Composer value={moreAsk} onChange={(v) => { setMoreAsk(v); draftStore.set(`more:${id}`, v); }} onSubmit={moreLines} busy={!!moreRun}
+            placeholder="More lines… e.g. a sexier chorus line, more about the car" label="Ask for more lines for this page" submitLabel={moreRun ? 'Writing…' : 'More lines'} submitAria="Get more lines" />
+          {!moreAsk.trim() && !moreRun && <button className="tb under" style={{ paddingLeft: 0 }} onClick={moreLines}>Just give me more lines</button>}
+          {moreRun && <div style={{ marginTop: 6 }}><Pending text="Writing more lines for this page…" /></div>}
+          {moreErr && <div className="status err" role="alert">{moreErr}</div>}
+        </div>
+        {!!typed.length && <div className="hand" style={{ marginTop: 18 }}>Your scraps</div>}
+        <FragmentList items={typed} onAdd={(f) => addToLyrics(f.text, 'scrap', `scrap:${f.id}`)} onSave={saveScrap} onRemove={removeScrap} />
+        <Composer value={scrap} onChange={(v) => { setScrap(v); draftStore.set(`scrap:${id}`, v); }} onSubmit={addScrap}
+          placeholder="Your own scrap: a phrase, a memory, half a line…" label="Add a scrap to this song" submitAria="Add scrap" />
+      </section>
+
+      <div className={`status ${status?.err ? 'err' : ''}`} role="status" aria-live="polite">
+        {status?.text}{status?.undo && <button className="tb under" onClick={() => undo(status.undo!)}>Undo</button>}
+      </div>
+
+      {/* the draft: what he has picked, growing into a lyric sheet */}
       <div className="editor-label">
-        <label className="eyebrow" htmlFor="lyric-editor">Your lyrics</label>
+        <label className="eyebrow" htmlFor="lyric-editor">Your draft</label>
         <span className={`small ${saveState.s === 'error' ? '' : 'muted'}`} role="status" aria-live="polite" style={saveState.s === 'error' ? { color: 'var(--warn)' } : undefined}>
           {saveState.s === 'saving' ? 'Saving…' : saveState.s === 'saved' ? 'Saved' : saveState.s === 'error' ? saveState.msg : ''}
           {saveState.s === 'error' && <button className="tb under" style={{ minHeight: 32 }} onClick={() => { dirtyRef.current = true; void flush(); }}>Retry</button>}
         </span>
       </div>
-      <textarea id="lyric-editor" ref={editor} className="lyric-editor" value={text} placeholder={'Start anywhere…\n\n[Verse], [Chorus] on their own line start a section.'}
+      <textarea id="lyric-editor" ref={editor} className="lyric-editor" value={text} placeholder={'Empty for now. Tap lines above and they land here, or type.'}
         onChange={(e) => onEdit(e.target.value)} onSelect={trackSelection} onKeyUp={trackSelection} onMouseUp={trackSelection} onTouchEnd={trackSelection}
-        onBlur={() => { trackSelection(); void flush(); }} rows={Math.min(24, Math.max(8, text.split('\n').length + 2))} spellCheck />
+        onBlur={() => { trackSelection(); void flush(); }} rows={Math.min(24, Math.max(hasDraft ? 6 : 3, text.split('\n').length + 1))} spellCheck />
       {!!lockedLines.length && <div className="locks">Locked: {lockedLines.map((l, i) => <span key={l.id}>{i ? ' · ' : ''}“{l.text}”</span>)}</div>}
 
-      {/* ask */}
-      <div className="ask">
+      {/* change something in the draft */}
+      {hasDraft && <div className="ask">
         <div className="target" aria-live="polite">
-          {(!targetLabel || !touched.current) && (ws.sections.length ? 'Select words or a line to change them, or put the cursor where new lines should go.' : 'Ask for lines, or add a starting point below.')}
+          {(!targetLabel || !touched.current) && 'Select words or a line in your draft to change them, or put the cursor where new lines should go.'}
           {touched.current && targetLabel?.kind === 'span' && <>Changing <b>{targetLabel.mark}</b> in “{targetLabel.before}<b>{targetLabel.mark}</b>{targetLabel.after}”</>}
           {touched.current && targetLabel?.kind === 'lines' && <>Changing <b>{targetLabel.text}</b></>}
           {touched.current && targetLabel?.kind === 'add' && targetLabel.text}
@@ -350,7 +411,7 @@ export function Workspace({ id }: { id: string }) {
         <ContextRow c={c} onEdit={() => setPanel('context')} onPatch={patchContext} />
         {asking && <div style={{ marginTop: 10 }}><Pending text="Finding options…" /></div>}
         {askErr && <div className="status err" role="alert">{askErr}</div>}
-      </div>
+      </div>}
 
       {/* one proposal at a time */}
       {activeSet && activeItem && (
@@ -376,27 +437,9 @@ export function Workspace({ id }: { id: string }) {
           </div>
         </section>
       )}
-      <div className={`status ${status?.err ? 'err' : ''}`} role="status" aria-live="polite">
-        {status?.text}{status?.undo && <button className="tb under" onClick={() => undo(status.undo!)}>Undo</button>}
-      </div>
       <EarlierSets sets={ws.sets.filter((s) => !chain.some((c) => c.id === s.id))} onShow={(s) => { setChain([s]); setPos({ set: 0, item: 0 }); window.scrollTo({ top: editor.current?.offsetTop ?? 0 }); }} />
 
-      {/* starting points */}
-      <div style={{ marginTop: 26 }}>
-        <div className="eyebrow">{seedInLyric ? 'Starting points' : 'Starting points · not yet in your lyrics'}</div>
-        {ws.idea && !!ws.idea.lines.length && (
-          <Seed label="" lines={ws.idea.lines.map((l) => l.text)}>
-            <div className="seed-actions">{seedInLyric
-              ? <span className="small muted">In your lyrics</span>
-              : <button className="tb" onClick={() => addToLyrics(ws.idea!.lines.map((l) => l.text).join('\n'), 'seed', `seed:${ws.idea!.id}`)}>Add to lyrics ↗</button>}</div>
-          </Seed>
-        )}
-        <div className="hand" style={{ marginTop: ws.idea ? 0 : 14 }}>Your scraps, still here</div>
-        <FragmentList items={ws.scraps} onAdd={(f) => addToLyrics(f.text, 'scrap', `scrap:${f.id}`)} onSave={saveScrap} onRemove={removeScrap} />
-        <Composer value={scrap} onChange={(v) => { setScrap(v); draftStore.set(`scrap:${id}`, v); }} onSubmit={addScrap}
-          placeholder="A phrase, a memory, half a line…" label="Add a scrap to this song" submitAria="Add scrap" />
-      </div>
-      <div className="actions">
+      <div className="actions" style={{ marginTop: 22 }}>
         {ws.idea ? <button className="secondary" onClick={() => go(`/idea/${ws.idea!.id}`)}>← Back to idea</button> : null}
         <button className="secondary" onClick={() => go('/journal')}>Journal</button>
       </div>
@@ -415,6 +458,17 @@ export function Workspace({ id }: { id: string }) {
       {panel === 'notes' && <NotesPanel ws={ws} onClose={() => setPanel(null)} onSaved={() => refresh(false)} />}
       {panel === 'history' && <HistoryPanel ws={ws} onClose={() => setPanel(null)} onRestored={async () => { await refresh(true); setPanel(null); }} />}
       {panel === 'suno' && <SunoPanel ws={ws} onClose={() => setPanel(null)} onBuilt={() => refresh(false)} />}
+    </div>
+  );
+}
+
+function PageLine({ text, done, onTap, onRemove }: { text: string; done: boolean; onTap: () => void; onRemove?: () => void }) {
+  return (
+    <div className={`page-line ${done ? 'is-in' : ''}`}>
+      <button type="button" className="line-mark" onClick={onTap} aria-label={done ? `${text}. Already in your draft; tap to add it again` : `Add “${text}” to your draft`}>
+        <span className="t">{text}</span><span className="mark-tag">{done ? 'in draft' : '+ draft'}</span>
+      </button>
+      {onRemove && <button type="button" className="tb" onClick={onRemove} aria-label="Remove this line from the page">×</button>}
     </div>
   );
 }

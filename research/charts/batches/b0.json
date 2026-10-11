@@ -1,0 +1,986 @@
+[
+{
+"artist": "Jung Kook",
+"title": "3D (w/ Jack Harlow)",
+"first_top50": "2023-09-30",
+"best": 12,
+"snapshots_in_top50": 5,
+"id": 0
+},
+{
+"artist": "Thomas Rhett",
+"title": "Mamaw's House (w/ Morgan Wallen)",
+"first_top50": "2023-09-30",
+"best": 47,
+"snapshots_in_top50": 1,
+"id": 1
+},
+{
+"artist": "Drake",
+"title": "First Person Shooter (w/ J. Cole)",
+"first_top50": "2023-10-06",
+"best": 1,
+"snapshots_in_top50": 54,
+"id": 2
+},
+{
+"artist": "Drake",
+"title": "Virginia Beach",
+"first_top50": "2023-10-06",
+"best": 2,
+"snapshots_in_top50": 11,
+"id": 3
+},
+{
+"artist": "Drake",
+"title": "IDGAF (w/ Yeat)",
+"first_top50": "2023-10-06",
+"best": 1,
+"snapshots_in_top50": 61,
+"id": 4
+},
+{
+"artist": "Drake",
+"title": "Calling For You (w/ 21 Savage)",
+"first_top50": "2023-10-06",
+"best": 4,
+"snapshots_in_top50": 5,
+"id": 5
+},
+{
+"artist": "Drake",
+"title": "Fear Of Heights",
+"first_top50": "2023-10-06",
+"best": 5,
+"snapshots_in_top50": 5,
+"id": 6
+},
+{
+"artist": "Drake",
+"title": "Daylight",
+"first_top50": "2023-10-06",
+"best": 6,
+"snapshots_in_top50": 5,
+"id": 7
+},
+{
+"artist": "Drake",
+"title": "Amen (w/ Teezo Touchdown)",
+"first_top50": "2023-10-06",
+"best": 7,
+"snapshots_in_top50": 5,
+"id": 8
+},
+{
+"artist": "Drake",
+"title": "7969 Santa",
+"first_top50": "2023-10-06",
+"best": 9,
+"snapshots_in_top50": 5,
+"id": 9
+},
+{
+"artist": "Drake",
+"title": "Bahamas Promises",
+"first_top50": "2023-10-06",
+"best": 10,
+"snapshots_in_top50": 5,
+"id": 10
+},
+{
+"artist": "Drake",
+"title": "Gently (w/ Bad Bunny)",
+"first_top50": "2023-10-06",
+"best": 8,
+"snapshots_in_top50": 7,
+"id": 11
+},
+{
+"artist": "Drake",
+"title": "Tried Our Best",
+"first_top50": "2023-10-06",
+"best": 12,
+"snapshots_in_top50": 5,
+"id": 12
+},
+{
+"artist": "Drake",
+"title": "8am in Charlotte",
+"first_top50": "2023-10-06",
+"best": 13,
+"snapshots_in_top50": 5,
+"id": 13
+},
+{
+"artist": "Drake",
+"title": "Rich Baby Daddy (w/ Sexyy Red, SZA)",
+"first_top50": "2023-10-06",
+"best": 10,
+"snapshots_in_top50": 70,
+"id": 14
+},
+{
+"artist": "Drake",
+"title": "What Would Pluto Do",
+"first_top50": "2023-10-06",
+"best": 15,
+"snapshots_in_top50": 5,
+"id": 15
+},
+{
+"artist": "Drake",
+"title": "Drew A Picasso",
+"first_top50": "2023-10-06",
+"best": 16,
+"snapshots_in_top50": 3,
+"id": 16
+},
+{
+"artist": "Drake",
+"title": "All The Parties (w/ Chief Keef)",
+"first_top50": "2023-10-06",
+"best": 17,
+"snapshots_in_top50": 3,
+"id": 17
+},
+{
+"artist": "Drake",
+"title": "Members Only (w/ PARTYNEXTDOOR)",
+"first_top50": "2023-10-06",
+"best": 18,
+"snapshots_in_top50": 3,
+"id": 18
+},
+{
+"artist": "Drake",
+"title": "Another Late Night (w/ Lil Yachty)",
+"first_top50": "2023-10-06",
+"best": 19,
+"snapshots_in_top50": 5,
+"id": 19
+},
+{
+"artist": "Drake",
+"title": "Screw The World - Interlude",
+"first_top50": "2023-10-06",
+"best": 21,
+"snapshots_in_top50": 1,
+"id": 20
+},
+{
+"artist": "Drake",
+"title": "Away From Home",
+"first_top50": "2023-10-06",
+"best": 23,
+"snapshots_in_top50": 2,
+"id": 21
+},
+{
+"artist": "Drake",
+"title": "BBL Love - Interlude",
+"first_top50": "2023-10-06",
+"best": 24,
+"snapshots_in_top50": 2,
+"id": 22
+},
+{
+"artist": "Drake",
+"title": "Polar Opposites",
+"first_top50": "2023-10-06",
+"best": 26,
+"snapshots_in_top50": 2,
+"id": 23
+},
+{
+"artist": "Noah Kahan",
+"title": "She Calls Me Back (w/ Kacey Musgraves)",
+"first_top50": "2023-10-06",
+"best": 46,
+"snapshots_in_top50": 1,
+"id": 24
+},
+{
+"artist": "Bad Bunny",
+"title": "MONACO",
+"first_top50": "2023-10-14",
+"best": 2,
+"snapshots_in_top50": 25,
+"id": 25
+},
+{
+"artist": "Bad Bunny",
+"title": "PERRO NEGRO (w/ Feid)",
+"first_top50": "2023-10-14",
+"best": 8,
+"snapshots_in_top50": 11,
+"id": 26
+},
+{
+"artist": "Bad Bunny",
+"title": "FINA (w/ Young Miko)",
+"first_top50": "2023-10-14",
+"best": 3,
+"snapshots_in_top50": 2,
+"id": 27
+},
+{
+"artist": "Bad Bunny",
+"title": "HIBIKI (w/ Mora)",
+"first_top50": "2023-10-14",
+"best": 10,
+"snapshots_in_top50": 1,
+"id": 28
+},
+{
+"artist": "Bad Bunny",
+"title": "MR. OCTOBER",
+"first_top50": "2023-10-14",
+"best": 12,
+"snapshots_in_top50": 1,
+"id": 29
+},
+{
+"artist": "Bad Bunny",
+"title": "NADIE SABE",
+"first_top50": "2023-10-14",
+"best": 13,
+"snapshots_in_top50": 1,
+"id": 30
+},
+{
+"artist": "Bad Bunny",
+"title": "CYBERTRUCK",
+"first_top50": "2023-10-14",
+"best": 16,
+"snapshots_in_top50": 1,
+"id": 31
+},
+{
+"artist": "Bad Bunny",
+"title": "TELEFONO NUEVO (w/ Luar La L)",
+"first_top50": "2023-10-14",
+"best": 17,
+"snapshots_in_top50": 1,
+"id": 32
+},
+{
+"artist": "Bad Bunny",
+"title": "BABY NUEVA",
+"first_top50": "2023-10-14",
+"best": 18,
+"snapshots_in_top50": 1,
+"id": 33
+},
+{
+"artist": "Bad Bunny",
+"title": "SEDA (w/ Bryant Myers)",
+"first_top50": "2023-10-14",
+"best": 19,
+"snapshots_in_top50": 1,
+"id": 34
+},
+{
+"artist": "Bad Bunny",
+"title": "GRACIAS POR NADA",
+"first_top50": "2023-10-14",
+"best": 23,
+"snapshots_in_top50": 1,
+"id": 35
+},
+{
+"artist": "Bad Bunny",
+"title": "VOU 787",
+"first_top50": "2023-10-14",
+"best": 24,
+"snapshots_in_top50": 1,
+"id": 36
+},
+{
+"artist": "Offset",
+"title": "SAY MY GRACE (w/ Travis Scott)",
+"first_top50": "2023-10-14",
+"best": 28,
+"snapshots_in_top50": 1,
+"id": 37
+},
+{
+"artist": "Bad Bunny",
+"title": "MERCEDES CAROTA (w/ YOVNGCHIMI)",
+"first_top50": "2023-10-14",
+"best": 31,
+"snapshots_in_top50": 1,
+"id": 38
+},
+{
+"artist": "Bad Bunny",
+"title": "LOS PITS",
+"first_top50": "2023-10-14",
+"best": 33,
+"snapshots_in_top50": 1,
+"id": 39
+},
+{
+"artist": "Bad Bunny",
+"title": "NO ME QUIERO CASAR",
+"first_top50": "2023-10-14",
+"best": 39,
+"snapshots_in_top50": 1,
+"id": 40
+},
+{
+"artist": "Bad Bunny",
+"title": "VUELVE CANDY B",
+"first_top50": "2023-10-14",
+"best": 41,
+"snapshots_in_top50": 1,
+"id": 41
+},
+{
+"artist": "Bad Bunny",
+"title": "ACHO PR (w/ Arcángel, De La Ghetto, Ñengo Flow)",
+"first_top50": "2023-10-14",
+"best": 44,
+"snapshots_in_top50": 1,
+"id": 42
+},
+{
+"artist": "Bad Bunny",
+"title": "BATICANO",
+"first_top50": "2023-10-14",
+"best": 45,
+"snapshots_in_top50": 1,
+"id": 43
+},
+{
+"artist": "Bad Bunny",
+"title": "THUNDER Y LIGHTNING (w/ Eladio Carrion)",
+"first_top50": "2023-10-14",
+"best": 46,
+"snapshots_in_top50": 1,
+"id": 44
+},
+{
+"artist": "Tyla",
+"title": "Water",
+"first_top50": "2023-10-20",
+"best": 11,
+"snapshots_in_top50": 20,
+"id": 45
+},
+{
+"artist": "Troye Sivan",
+"title": "One Of Your Girls",
+"first_top50": "2023-10-20",
+"best": 30,
+"snapshots_in_top50": 1,
+"id": 46
+},
+{
+"artist": "beabadoobee",
+"title": "A Night To Remember (w/ Laufey)",
+"first_top50": "2023-10-20",
+"best": 32,
+"snapshots_in_top50": 1,
+"id": 47
+},
+{
+"artist": "The Kid LAROI",
+"title": "TOO MUCH (w/ Jung Kook, Central Cee)",
+"first_top50": "2023-10-20",
+"best": 33,
+"snapshots_in_top50": 1,
+"id": 48
+},
+{
+"artist": "blink-182",
+"title": "ANTHEM PART 3",
+"first_top50": "2023-10-20",
+"best": 40,
+"snapshots_in_top50": 1,
+"id": 49
+},
+{
+"artist": "Taylor Swift",
+"title": "Cruel Summer - Live from TS | The Eras Tour",
+"first_top50": "2023-10-20",
+"best": 46,
+"snapshots_in_top50": 1,
+"id": 50
+},
+{
+"artist": "Taylor Swift",
+"title": "Is It Over Now? (Taylor's Version) (From The Vault)",
+"first_top50": "2023-10-27",
+"best": 1,
+"snapshots_in_top50": 34,
+"id": 51
+},
+{
+"artist": "Taylor Swift",
+"title": "Now That We Don't Talk (Taylor's Version) (From The Vault)",
+"first_top50": "2023-10-27",
+"best": 2,
+"snapshots_in_top50": 13,
+"id": 52
+},
+{
+"artist": "Taylor Swift",
+"title": "\"Slut!\" (Taylor's Version) (From The Vault)",
+"first_top50": "2023-10-27",
+"best": 1,
+"snapshots_in_top50": 11,
+"id": 53
+},
+{
+"artist": "Taylor Swift",
+"title": "Say Don't Go (Taylor's Version) (From The Vault)",
+"first_top50": "2023-10-27",
+"best": 3,
+"snapshots_in_top50": 9,
+"id": 54
+},
+{
+"artist": "Taylor Swift",
+"title": "Style (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 5,
+"snapshots_in_top50": 8,
+"id": 55
+},
+{
+"artist": "Taylor Swift",
+"title": "Suburban Legends (Taylor's Version) (From The Vault)",
+"first_top50": "2023-10-27",
+"best": 5,
+"snapshots_in_top50": 8,
+"id": 56
+},
+{
+"artist": "Taylor Swift",
+"title": "Blank Space (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 7,
+"snapshots_in_top50": 6,
+"id": 57
+},
+{
+"artist": "Taylor Swift",
+"title": "Out Of The Woods (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 7,
+"snapshots_in_top50": 6,
+"id": 58
+},
+{
+"artist": "Taylor Swift",
+"title": "Welcome To New York (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 6,
+"snapshots_in_top50": 4,
+"id": 59
+},
+{
+"artist": "Taylor Swift",
+"title": "All You Had To Do Was Stay (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 10,
+"snapshots_in_top50": 4,
+"id": 60
+},
+{
+"artist": "Taylor Swift",
+"title": "New Romantics (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 12,
+"snapshots_in_top50": 4,
+"id": 61
+},
+{
+"artist": "Taylor Swift",
+"title": "I Wish You Would (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 13,
+"snapshots_in_top50": 4,
+"id": 62
+},
+{
+"artist": "Taylor Swift",
+"title": "Clean (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 14,
+"snapshots_in_top50": 4,
+"id": 63
+},
+{
+"artist": "Taylor Swift",
+"title": "Shake It Off (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 12,
+"snapshots_in_top50": 3,
+"id": 64
+},
+{
+"artist": "Taylor Swift",
+"title": "How You Get The Girl (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 16,
+"snapshots_in_top50": 3,
+"id": 65
+},
+{
+"artist": "Taylor Swift",
+"title": "Bad Blood (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 14,
+"snapshots_in_top50": 3,
+"id": 66
+},
+{
+"artist": "Taylor Swift",
+"title": "I Know Places (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 18,
+"snapshots_in_top50": 3,
+"id": 67
+},
+{
+"artist": "Taylor Swift",
+"title": "Wonderland (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 19,
+"snapshots_in_top50": 3,
+"id": 68
+},
+{
+"artist": "Taylor Swift",
+"title": "This Love (Taylor’s Version)",
+"first_top50": "2023-10-27",
+"best": 20,
+"snapshots_in_top50": 3,
+"id": 69
+},
+{
+"artist": "Taylor Swift",
+"title": "You Are In Love (Taylor's Version)",
+"first_top50": "2023-10-27",
+"best": 21,
+"snapshots_in_top50": 3,
+"id": 70
+},
+{
+"artist": "Taylor Swift",
+"title": "Bad Blood (w/ Kendrick Lamar)",
+"first_top50": "2023-10-27",
+"best": 23,
+"snapshots_in_top50": 3,
+"id": 71
+},
+{
+"artist": "Bobby \"Boris\" Pickett & The Crypt-Kickers",
+"title": "Monster Mash",
+"first_top50": "2023-10-28",
+"best": 4,
+"snapshots_in_top50": 2,
+"id": 72
+},
+{
+"artist": "Disney Characters",
+"title": "This Is Halloween",
+"first_top50": "2023-10-28",
+"best": 47,
+"snapshots_in_top50": 1,
+"id": 73
+},
+{
+"artist": "Jung Kook",
+"title": "Standing Next to You",
+"first_top50": "2023-11-03",
+"best": 17,
+"snapshots_in_top50": 5,
+"id": 74
+},
+{
+"artist": "Olivia Rodrigo",
+"title": "Can’t Catch Me Now - from The Hunger Games: The Ballad of Songbirds & Snakes",
+"first_top50": "2023-11-03",
+"best": 19,
+"snapshots_in_top50": 18,
+"id": 75
+},
+{
+"artist": "The Beatles",
+"title": "Now And Then",
+"first_top50": "2023-11-03",
+"best": 24,
+"snapshots_in_top50": 1,
+"id": 76
+},
+{
+"artist": "Fuerza Regida",
+"title": "HARLEY QUINN (w/ Marshmello)",
+"first_top50": "2023-11-03",
+"best": 20,
+"snapshots_in_top50": 24,
+"id": 77
+},
+{
+"artist": "Megan Thee Stallion",
+"title": "Cobra",
+"first_top50": "2023-11-03",
+"best": 45,
+"snapshots_in_top50": 2,
+"id": 78
+},
+{
+"artist": "Noah Kahan",
+"title": "Northern Attitude (w/ Hozier)",
+"first_top50": "2023-11-10",
+"best": 2,
+"snapshots_in_top50": 1,
+"id": 79
+},
+{
+"artist": "Jack Harlow",
+"title": "Lovin On Me",
+"first_top50": "2023-11-10",
+"best": 1,
+"snapshots_in_top50": 71,
+"id": 80
+},
+{
+"artist": "Dua Lipa",
+"title": "Houdini",
+"first_top50": "2023-11-10",
+"best": 8,
+"snapshots_in_top50": 4,
+"id": 81
+},
+{
+"artist": "Chris Stapleton",
+"title": "White Horse",
+"first_top50": "2023-11-10",
+"best": 36,
+"snapshots_in_top50": 1,
+"id": 82
+},
+{
+"artist": "Tate McRae",
+"title": "exes",
+"first_top50": "2023-11-19",
+"best": 15,
+"snapshots_in_top50": 28,
+"id": 83
+},
+{
+"artist": "Drake",
+"title": "You Broke My Heart",
+"first_top50": "2023-11-19",
+"best": 12,
+"snapshots_in_top50": 4,
+"id": 84
+},
+{
+"artist": "Drake",
+"title": "Evil Ways (w/ J. Cole)",
+"first_top50": "2023-11-19",
+"best": 40,
+"snapshots_in_top50": 2,
+"id": 85
+},
+{
+"artist": "¥$",
+"title": "Vultures (w/ Kanye West, Ty Dolla $ign, Bump J)",
+"first_top50": "2023-11-22",
+"best": 34,
+"snapshots_in_top50": 1,
+"id": 86
+},
+{
+"artist": "Nat King Cole",
+"title": "Deck The Hall",
+"first_top50": "2023-11-25",
+"best": 22,
+"snapshots_in_top50": 11,
+"id": 87
+},
+{
+"artist": "Bing Crosby",
+"title": "Mele Kalikimaka - New mono-to-stereo mix (w/ The Andrews Sisters)",
+"first_top50": "2023-11-25",
+"best": 23,
+"snapshots_in_top50": 3,
+"id": 88
+},
+{
+"artist": "Taylor Swift",
+"title": "You’re Losing Me (From The Vault)",
+"first_top50": "2023-11-30",
+"best": 1,
+"snapshots_in_top50": 1,
+"id": 89
+},
+{
+"artist": "Nicki Minaj",
+"title": "FTCU",
+"first_top50": "2023-12-22",
+"best": 6,
+"snapshots_in_top50": 25,
+"id": 90
+},
+{
+"artist": "JID",
+"title": "Surround Sound (w/ 21 Savage, Baby Tate)",
+"first_top50": "2023-12-22",
+"best": 9,
+"snapshots_in_top50": 49,
+"id": 91
+},
+{
+"artist": "Vince Guaraldi Trio",
+"title": "Christmas Time Is Here - Vocal - Album Version",
+"first_top50": "2023-12-22",
+"best": 25,
+"snapshots_in_top50": 11,
+"id": 92
+},
+{
+"artist": "Kelly Clarkson",
+"title": "Santa, Can’t You Hear Me (w/ Ariana Grande)",
+"first_top50": "2023-12-22",
+"best": 39,
+"snapshots_in_top50": 8,
+"id": 93
+},
+{
+"artist": "Laufey",
+"title": "Winter Wonderland - Spotify Singles Holiday",
+"first_top50": "2023-12-22",
+"best": 21,
+"snapshots_in_top50": 4,
+"id": 94
+},
+{
+"artist": "Frank Sinatra",
+"title": "Have Yourself A Merry Little Christmas - Remastered",
+"first_top50": "2023-12-25",
+"best": 29,
+"snapshots_in_top50": 9,
+"id": 95
+},
+{
+"artist": "Gayla Peevey",
+"title": "I Want a Hippopotamus for Christmas (Hippo the Hero)",
+"first_top50": "2023-12-25",
+"best": 44,
+"snapshots_in_top50": 2,
+"id": 96
+},
+{
+"artist": "Perry Como",
+"title": "(There's No Place Like) Home for the Holidays - 1959 Version",
+"first_top50": "2023-12-25",
+"best": 45,
+"snapshots_in_top50": 1,
+"id": 97
+},
+{
+"artist": "Bing Crosby",
+"title": "Do You Hear What I Hear",
+"first_top50": "2023-12-25",
+"best": 48,
+"snapshots_in_top50": 1,
+"id": 98
+},
+{
+"artist": "Elvis Presley",
+"title": "Here Comes Santa Claus (Right Down Santa Claus Lane)",
+"first_top50": "2023-12-25",
+"best": 49,
+"snapshots_in_top50": 1,
+"id": 99
+},
+{
+"artist": "Xavi",
+"title": "La Diabla",
+"first_top50": "2023-12-26",
+"best": 5,
+"snapshots_in_top50": 58,
+"id": 100
+},
+{
+"artist": "Xavi",
+"title": "La Víctima",
+"first_top50": "2023-12-26",
+"best": 14,
+"snapshots_in_top50": 40,
+"id": 101
+},
+{
+"artist": "Nicki Minaj",
+"title": "Everybody (w/ Lil Uzi Vert)",
+"first_top50": "2023-12-26",
+"best": 23,
+"snapshots_in_top50": 10,
+"id": 102
+},
+{
+"artist": "Peso Pluma",
+"title": "BELLAKEO (w/ Anitta)",
+"first_top50": "2023-12-28",
+"best": 30,
+"snapshots_in_top50": 15,
+"id": 103
+},
+{
+"artist": "The Weeknd",
+"title": "One Of The Girls (w/ JENNIE, Lily-Rose Depp)",
+"first_top50": "2023-12-28",
+"best": 15,
+"snapshots_in_top50": 52,
+"id": 104
+},
+{
+"artist": "Teddy Swims",
+"title": "Lose Control",
+"first_top50": "2023-12-28",
+"best": 5,
+"snapshots_in_top50": 254,
+"id": 105
+},
+{
+"artist": "Juice WRLD",
+"title": "Lace It (w/ Eminem, benny blanco)",
+"first_top50": "2023-12-28",
+"best": 35,
+"snapshots_in_top50": 3,
+"id": 106
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Feather",
+"first_top50": "2023-12-28",
+"best": 19,
+"snapshots_in_top50": 68,
+"id": 107
+},
+{
+"artist": "Peso Pluma",
+"title": "Rompe La Dompe (w/ Junior H, Oscar Maydon)",
+"first_top50": "2023-12-29",
+"best": 32,
+"snapshots_in_top50": 1,
+"id": 108
+},
+{
+"artist": "Paul Russell",
+"title": "Lil Boo Thang",
+"first_top50": "2024-01-01",
+"best": 36,
+"snapshots_in_top50": 1,
+"id": 109
+},
+{
+"artist": "Rihanna",
+"title": "We Found Love (w/ Calvin Harris)",
+"first_top50": "2024-01-01",
+"best": 38,
+"snapshots_in_top50": 2,
+"id": 110
+},
+{
+"artist": "Taylor Swift",
+"title": "New Year’s Day",
+"first_top50": "2024-01-01",
+"best": 39,
+"snapshots_in_top50": 1,
+"id": 111
+},
+{
+"artist": "Flo Milli",
+"title": "Never Lose Me",
+"first_top50": "2024-01-07",
+"best": 5,
+"snapshots_in_top50": 38,
+"id": 112
+},
+{
+"artist": "Sophie Ellis-Bextor",
+"title": "Murder On The Dancefloor",
+"first_top50": "2024-01-07",
+"best": 20,
+"snapshots_in_top50": 15,
+"id": 113
+},
+{
+"artist": "21 Savage",
+"title": "redrum",
+"first_top50": "2024-01-12",
+"best": 1,
+"snapshots_in_top50": 60,
+"id": 114
+},
+{
+"artist": "Ariana Grande",
+"title": "yes, and?",
+"first_top50": "2024-01-12",
+"best": 1,
+"snapshots_in_top50": 26,
+"id": 115
+},
+{
+"artist": "Kali Uchis",
+"title": "Igual Que Un Ángel (w/ Peso Pluma)",
+"first_top50": "2024-01-12",
+"best": 6,
+"snapshots_in_top50": 19,
+"id": 116
+},
+{
+"artist": "21 Savage",
+"title": "née-nah (w/ Travis Scott, Metro Boomin)",
+"first_top50": "2024-01-12",
+"best": 2,
+"snapshots_in_top50": 14,
+"id": 117
+},
+{
+"artist": "21 Savage",
+"title": "n.h.i.e. (w/ Doja Cat)",
+"first_top50": "2024-01-12",
+"best": 5,
+"snapshots_in_top50": 8,
+"id": 118
+},
+{
+"artist": "21 Savage",
+"title": "all of me",
+"first_top50": "2024-01-12",
+"best": 4,
+"snapshots_in_top50": 4,
+"id": 119
+},
+{
+"artist": "21 Savage",
+"title": "pop ur shit (w/ Young Thug, Metro Boomin)",
+"first_top50": "2024-01-12",
+"best": 7,
+"snapshots_in_top50": 2,
+"id": 120
+},
+{
+"artist": "21 Savage",
+"title": "dangerous (w/ Lil Durk, Metro Boomin)",
+"first_top50": "2024-01-12",
+"best": 9,
+"snapshots_in_top50": 2,
+"id": 121
+},
+{
+"artist": "21 Savage",
+"title": "sneaky",
+"first_top50": "2024-01-12",
+"best": 10,
+"snapshots_in_top50": 3,
+"id": 122
+}
+]

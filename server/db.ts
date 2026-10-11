@@ -155,6 +155,12 @@ export const MIGRATIONS: string[] = [
      created_at ${TS}, updated_at ${TS});
    CREATE INDEX refs_norm ON refs(norm);
    CREATE TABLE client_actions (key TEXT PRIMARY KEY, result TEXT NOT NULL, created_at ${TS})`,
+  // 4 (11 Oct 2026): ideas grounded in what charts. An idea records the subject the
+  // engine assigned it and, for a rework, the idea it reworked. Additive only.
+  `ALTER TABLE ideas ADD COLUMN subject TEXT;
+   ALTER TABLE ideas ADD COLUMN parent_id TEXT;
+   ALTER TABLE ideas ADD COLUMN feedback TEXT NOT NULL DEFAULT '';
+   ALTER TABLE fragments ADD COLUMN ask TEXT NOT NULL DEFAULT ''`,
 ];
 
 export async function migrate(db: Db): Promise<void> {

@@ -245,3 +245,26 @@ export const referenceZ = z.object({
     characteristics: z.array(z.string()).default([]),
   })).default([]),
 });
+
+// ---- 11 Oct 2026: one reworked idea; more lines for a song page ----
+export const reworkSchema = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    titleParts: { type: 'array', items: { type: 'string' } },
+    concept: { type: 'string' },
+    lines: { type: 'array', items: { type: 'string' } },
+    note: { type: 'string' },
+  },
+  required: ['title', 'titleParts', 'concept', 'lines', 'note'],
+  additionalProperties: false,
+} as const;
+export const reworkZ = z.object({ title: z.string().min(1), titleParts: z.array(z.string()), concept: z.string(), lines: z.array(z.string()).min(1), note: z.string() });
+
+export const moreLinesSchema = {
+  type: 'object',
+  properties: { lines: { type: 'array', items: { type: 'string' } }, note: { type: 'string' } },
+  required: ['lines', 'note'],
+  additionalProperties: false,
+} as const;
+export const moreLinesZ = z.object({ lines: z.array(z.string()).min(1), note: z.string() });

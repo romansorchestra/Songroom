@@ -382,3 +382,109 @@ describe('upgrading the live database', () => {
     await d.close();
   });
 });
+
+// Sam, 11 Oct, after using it: ideas too high-concept, one read as a teen novelty;
+// ground subjects in what charts; a bigger New idea; react to an idea and have it
+// reworked; a committed idea is a page whose lines tap into the draft.
+describe('ideas grounded in the chart, rework and page lines (11 Oct)', () => {
+  const sparkJson = (n = 3) => ({ note: '', ideas: Array.from({ length: n }, (_, i) => ({ title: `Title ${i}`, titleParts: [`Title ${i}`], concept: `c${i}`, lines: [`line ${i}a`, `line ${i}b`] })) });
+
+  it('each idea in a batch gets its own subject from the chart mix, and the genre chip changes the mix', async () => {
+    const users: string[] = [];
+    await boot(new StandInWriter((req: WriterRequest) => { users.push(req.user); return sparkJson(); }));
+    await firstIdea();
+    expect(users[0]).toContain('Subjects for this batch');
+    expect(users[0]).toMatch(/charted on Spotify US/);
+    expect(users[0]).toContain('adult narrator');
+    const ids = (await db.query<{ subject: string }>(`SELECT subject FROM ideas WHERE origin='spark'`)).map((r) => r.subject);
+    expect(new Set(ids).size).toBe(3);
+    expect(ids.every(Boolean)).toBe(true);
+    await api('PUT', '/springboard/direction', { genre: 'country' });
+    await api('POST', '/springboard/next', { clientKey: 'c1' }); await svc.idle();
+    expect(users.at(-1)).toMatch(/country songs that actually charted/);
+    expect((await api('PUT', '/springboard/direction', { genre: 'polka' })).status).toBe(400);
+  });
+
+  it('the next batch is fetched ahead when the queue runs out, without stealing the screen', async () => {
+    let n = 0;
+    await boot(new StandInWriter(() => { n++; return sparkJson(); }));
+    const first = await firstIdea();
+    await api('POST', '/springboard/next', { clientKey: 'x2' });
+    const third = (await api('POST', '/springboard/next', { clientKey: 'x3' })).body; // the last queued one: starts the next batch
+    await svc.idle();
+    expect(n).toBe(2);
+    const sb = (await api('GET', '/springboard')).body;
+    expect(sb.current.id).toBe(third.current.id); // the batch fetched ahead waits in the queue
+    expect(sb.queued).toBe(3);
+    expect(sb.runId).toBe(null);
+    expect(sb.current.id).not.toBe(first.current.id);
+    const fourth = (await api('POST', '/springboard/next', { clientKey: 'x4' })).body;
+    expect(fourth.shown).toBe(true); // instant, no wait
+  });
+
+  it('a rework keeps what he marked word for word, becomes the idea on screen, and Previous reaches the original', async () => {
+    const users: string[] = [];
+    let mode = 'spark';
+    await boot(new StandInWriter((req: WriterRequest) => {
+      users.push(req.user);
+      if (mode === 'spark') return sparkJson();
+      // a writer that drops the kept line and rewrites the kept title
+      return { title: 'Something Else', titleParts: ['Something Else'], concept: 'more grown-up', lines: ['new one', 'new two'], note: '' };
+    }));
+    const sb = await firstIdea();
+    const idea = sb.current;
+    mode = 'rework';
+    const r = await api('POST', `/ideas/${idea.id}/rework`, { feedback: 'love the title, more mature and sexier', keepTitle: true, keepLineIds: [idea.lines[1].id], clientKey: 'rw1' });
+    const again = await api('POST', `/ideas/${idea.id}/rework`, { feedback: 'love the title, more mature and sexier', keepTitle: true, keepLineIds: [idea.lines[1].id], clientKey: 'rw1' });
+    expect(again.body.runId).toBe(r.body.runId);
+    await svc.idle();
+    expect(users.at(-1)).toContain('love the title, more mature and sexier');
+    expect(users.at(-1)).toContain(`the line "${idea.lines[1].text}", word for word`);
+    const now = (await api('GET', '/springboard')).body;
+    expect(now.current.id).not.toBe(idea.id);
+    expect(now.current.title).toBe(idea.title);
+    expect(now.current.lines.map((l: any) => l.text)).toContain(idea.lines[1].text);
+    expect(now.current.lines.map((l: any) => l.text)).toContain('new one');
+    expect(now.current.parent_id).toBe(idea.id);
+    expect(now.current.feedback).toBe('love the title, more mature and sexier');
+    expect(now.prevId).toBe(idea.id);
+    expect((await api('GET', `/ideas/${idea.id}`)).body.title).toBe(idea.title); // the original is untouched
+    expect((await api('POST', `/ideas/${idea.id}/rework`, {})).status).toBe(400);
+  });
+
+  it('"use for new ideas too" adds the note to the direction', async () => {
+    await boot(new StandInWriter((req: WriterRequest) => ('titleParts' in ((req.schema as any).properties) && 'note' in (req.schema as any).properties
+      ? { title: 'T', titleParts: ['T'], concept: 'c', lines: ['a'], note: '' } : sparkJson())));
+    const sb = await firstIdea();
+    await api('POST', `/ideas/${sb.current.id}/rework`, { feedback: 'more mature', applyToNew: true, clientKey: 'rw2' });
+    await svc.idle();
+    expect((await api('GET', '/springboard')).body.direction.text).toContain('more mature');
+  });
+
+  it('a page asks for more lines; they land on the page, not in the draft, and tap into the draft one at a time', async () => {
+    const users: string[] = [];
+    await boot(new StandInWriter((req: WriterRequest) => {
+      users.push(req.user);
+      if ('lines' in (req.schema as any).properties && Object.keys((req.schema as any).properties).length === 2) return { note: '', lines: ['page one', 'page two', 'page one'] };
+      return sparkJson();
+    }));
+    const sb = await firstIdea();
+    const { body: started } = await api('POST', `/ideas/${sb.current.id}/start`);
+    const r = await api('POST', `/songs/${started.songId}/lines`, { ask: 'a sexier chorus line', clientKey: 'ml1' });
+    expect(r.status).toBe(200);
+    await svc.idle();
+    expect(users.at(-1)).toContain('a sexier chorus line');
+    let ws = (await api('GET', `/songs/${started.songId}`)).body;
+    const fromWriter = ws.scraps.filter((f: any) => f.source === 'writer');
+    expect(fromWriter.map((f: any) => f.text)).toEqual(['page one', 'page two']); // duplicates dropped
+    expect(fromWriter[0].ask).toBe('a sexier chorus line');
+    expect(ws.sections.length).toBe(0); // nothing enters the draft by itself
+    // tap one line, then another: both go to the end of the draft, in one section
+    const a1 = await api('POST', `/songs/${ws.id}/add`, { baseRev: ws.current_rev, afterLineId: null, text: 'page one', clientKey: 't1', source: 'scrap' });
+    ws = (await api('GET', `/songs/${ws.id}`)).body;
+    const last = ws.sections.at(-1).lines.at(-1).id;
+    await api('POST', `/songs/${ws.id}/add`, { baseRev: a1.body.rev, afterLineId: last, text: 'page two', clientKey: 't2', source: 'scrap' });
+    ws = (await api('GET', `/songs/${ws.id}`)).body;
+    expect(text(ws)).toBe('page one\npage two');
+  });
+});

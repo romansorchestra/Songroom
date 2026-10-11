@@ -243,3 +243,44 @@ textarea.lyric-editor:focus { outline: 2px solid var(--ink); outline-offset: 0; 
 .pending { display: inline-flex; gap: 8px; align-items: center; color: var(--sub); font-size: 12px; }
 .pager .tb { white-space: nowrap; }
 @media (max-width: 360px) { .pager .tb { padding: 8px 6px; font-size: 12px; } }
+
+/* ---- 11 Oct: genre chips, the big New idea button, keep/change marks, react box ---- */
+.genres { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; margin: 0 0 6px; }
+.genres .eyebrow { margin-right: 6px; }
+.genres button { font-size: 13px; color: var(--sub); background: none; border: 1px solid transparent; border-radius: 999px; min-height: 36px; padding: 6px 11px; }
+.genres button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
+.big-new { display: block; width: 100%; min-height: 56px; font-size: 17px; margin: 6px 0 14px; letter-spacing: .01em; }
+.markable { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 0; margin: 0; color: inherit; font: inherit; position: relative; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.markable:disabled { cursor: default; }
+.markable.is-keep { outline: 2px dashed var(--accent); outline-offset: 4px; border-radius: 2px; }
+.concept-mark { margin: 0 0 25px; max-width: 360px; }
+.concept-mark .concept { display: block; margin: 0; }
+.title-mark .idea-title { margin-bottom: 18px; }
+.mark-tag { display: inline-block; font-family: var(--sans); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--on); background: var(--accent); padding: 2px 6px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+.title-mark .mark-tag { position: absolute; right: 0; top: -6px; }
+.markable-lines { white-space: normal; }
+.line-mark { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 3px 0; margin: 0; color: inherit; font: inherit; line-height: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.line-mark:disabled { cursor: default; }
+.line-mark.is-keep .t { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.line-mark.is-change .t { text-decoration: line-through; text-decoration-color: var(--accent); color: var(--sub); }
+.line-mark .mark-tag { font-size: 10px; }
+.react { margin: 4px 0 6px; }
+.react .composer { margin: 8px 0 6px; }
+.react-hint { margin: 0 0 4px; max-width: 380px; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--sub); min-height: 40px; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.tb.inline { padding: 0 2px; min-height: 0; font-size: inherit; }
+/* the song page: lines to tap into the draft */
+.page-lines { margin: 4px 0 10px; }
+.page-lines .seed { margin-bottom: 22px; }
+.page-group { margin: 0 0 16px; }
+.page-group .eyebrow { margin-bottom: 4px; }
+.page-line { display: flex; align-items: center; gap: 2px; border-bottom: 1px solid var(--edge); }
+.page-line .line-mark { flex: 1; min-height: 44px; padding: 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.page-group .page-line .t { font-family: var(--serif); font-size: 19px; line-height: 1.35; }
+.page-line .mark-tag { background: none; color: var(--accent); border: 1px solid var(--accent); flex-shrink: 0; }
+.page-line.is-in .t { color: var(--sub); }
+.page-line.is-in .mark-tag { background: var(--accent); color: var(--on); }
+.seed .page-line { border-bottom-color: transparent; }
+.seed .page-line .t { font: inherit; }
+.more-lines .composer { margin: 4px 0 4px; }

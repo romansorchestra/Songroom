@@ -1,5 +1,13 @@
 # Build status (10 Oct 2026)
 
+## Sam's notes after using it (11 Oct)
+He found it "actually pretty cool" and the suggestions "quite good", but the ideas were too high-concept ("Tamagotchi" read as a teen novelty). He asked for subjects grounded in what charts, a bigger New idea button, a way to react to an idea and have it reworked, and for a committed idea to become a page whose lines tap into a draft. Built:
+- **Chart research** (`research/charts/SUMMARY.md`): every song that entered the Spotify US Top 50 from Oct 2023 to Oct 2026 (1,225; 292 hits), sorted by subject. Pop hits: 75% about a relationship, 60% sung to "you", under 10% high-concept.
+- **Ideas**: each idea's subject is picked by the engine from that mix for the genre he chooses (chips on Write: Pop, Country, Hip-hop, Latin, Alt / rock, Any genre); adult narrators, everyday situations (template `p2.0/ws2`). The next batch is fetched ahead when the queue runs out, so New idea is instant.
+- **Write screen**: a big New idea button; tap the title, the idea or a line to keep it (twice to mark a line for change); "What do you think?" reworks the idea to his note, keeps what he marked word for word, and the original stays one tap back; "Use this note for new ideas too" adds it to the direction.
+- **Song page**: "Make it a page" opens a page of lines: the idea's lines, "More lines" on request (grouped by what he asked), his scraps. Tapping a line adds it to the draft below; the draft keeps select-and-change.
+- Checked with the labelled stand-in writer at 320/393/430 wide (no sideways scroll); 59 automated tests. Live real-writer check: see below.
+
 ## The approved design (10 Oct, `docs/design/`)
 Built to `APPROVED_DESIGN_SPEC.md` and `APP_CHANGES_v2.md`. Checked offline with the labelled stand-in writer only: layout at 320, 393, 430, 768 and 1440 wide and dark mode (no sideways scroll, nothing off the edge), and the behaviour tests below. None of this says anything about writing quality; that depends on the model and prompts, which are unchanged pending Sam's blind votes.
 - Write is a springboard: one idea at a time (title strips, short concept, a first thread), his own fragments, Save idea / Start writing, Previous / Recent / Another idea. Ideas come three per paid request; refreshing never spends. He can type his own starting line instead.
@@ -16,7 +24,7 @@ Built to `APPROVED_DESIGN_SPEC.md` and `APP_CHANGES_v2.md`. Checked offline with
 - Suno: style + exclude + per-section tags around exact lyrics; stale warning when lyrics change.
 - Settings: model and thinking level, spend caps and receipts, taste notes and example lyrics, 12-brief test pack with judging, blind Experiments screen (prompt versions and research craft notes; 22 trials judged by Sam on 10 Oct), craft-notes scope (off / edits only / everything, default edits only), JSON + Markdown export, sign out.
 - Research pack (10 Oct): `research/pack` — 552 sources, 56 craft cards, 16 reference profiles, 16 original teaching pairs; loaded at boot; keyword retrieval; see `research/SUMMARY.md` and `research/INTEGRATION.md`.
-- Tests: 54 automated (19 for the redesign in `tests/studio.test.ts`); before that 35 (lyric safety, locks, conflicts, duplicates, spend cap, Suno verbatim, no-writer state). Full browser flow at iPhone size, light and dark, plus desktop, using the labelled stand-in writer.
+- Tests: 59 automated (5 for 11 Oct); 54 automated (19 for the redesign in `tests/studio.test.ts`); before that 35 (lyric safety, locks, conflicts, duplicates, spend cap, Suno verbatim, no-writer state). Full browser flow at iPhone size, light and dark, plus desktop, using the labelled stand-in writer.
 
 ## Live
 - https://songroom-qyvq.onrender.com (Render, $7.25/mo). Test pack run on real Opus 5.5 on 9 Oct: 12/12 succeeded, every hard check passed, $0.33 total. Results are in Settings → Test pack for Sam to judge.

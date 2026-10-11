@@ -10,26 +10,27 @@ import {
   buildReplacements, parseLiteral, literalReplacements, insertLines, EditError,
 } from './engine/lyrics.js';
 import { extractConstraints, mergeConstraints, containsWord, endsWithPhrase, startsWithPhrase, syllables, endWord, type Check } from './engine/validate.js';
-import { sparkSchema, sparkZ, suggestReplaceSchema, suggestReplaceZ, suggestAddSchema, suggestAddZ, referenceZ } from './engine/schemas.js';
+import { sparkSchema, sparkZ, reworkSchema, reworkZ, moreLinesSchema, moreLinesZ, suggestReplaceSchema, suggestReplaceZ, suggestAddSchema, suggestAddZ, referenceZ } from './engine/schemas.js';
 import {
-  systemCore, PROMPT_VERSION, WORKSPACE_TEMPLATE, sparkPrompt, suggestPrompt, contextBlock, referenceBlock,
+  systemCore, PROMPT_VERSION, WORKSPACE_TEMPLATE, IDEA_TEMPLATE, sparkPromptV2, reworkPrompt, moreLinesPrompt, suggestPrompt, contextBlock, referenceBlock,
   REFERENCE_SYSTEM, referencePrompt, type RefForPrompt, type WorkspaceContext,
 } from './engine/prompts.js';
 import { WriterError, type Usage } from './engine/writer.js';
+import { SUBJECTS, GENRES, genreFor, pickSubjects, shapeNote } from './engine/barometer.js';
 
 export const PALETTES = ['ochre', 'sage', 'blue'] as const;
 export type Palette = (typeof PALETTES)[number];
 const SPARK_BATCH = 3;
 const SUGGEST_COUNT = 4;
 
-type Direction = { text: string; refId: string | null };
+type Direction = { text: string; refId: string | null; genre?: string };
 type IdeaRow = {
   id: string; kind: string; title: string; concept: string; lines: Array<{ id: string; text: string }>; notes: string;
   starred: number; original: { title: string; concept: string; lines: string[] }; saved: number; origin: string; state: string;
   shown_at: string | null; palette: string | null; title_parts: string[] | null; steer: Direction | Record<string, never>;
   pending: string; note: string; song_id: string | null; archived: number; created_at: string; updated_at: string; saved_at: string | null;
 };
-type FragmentRow = { id: string; idea_id: string | null; song_id: string | null; text: string; saved: number; source: string; created_at: string; saved_at: string | null };
+type FragmentRow = { id: string; idea_id: string | null; song_id: string | null; text: string; saved: number; source: string; ask?: string; created_at: string; saved_at: string | null };
 type StoredContext = {
   meaning?: string; meaningSource?: 'typed' | 'instruction';
   narrator?: string;
@@ -55,7 +56,8 @@ export function normRef(q: string): string {
   return q.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
-const stableDir = (d: Direction) => JSON.stringify({ text: d.text.trim(), refId: d.refId ?? null });
+// genre joins the key only when set, so directions saved before it existed keep their key
+const stableDir = (d: Direction) => JSON.stringify(d.genre ? { text: d.text.trim(), refId: d.refId ?? null, genre: d.genre } : { text: d.text.trim(), refId: d.refId ?? null });
 
 export class Studio {
   constructor(public svc: Service) {}
@@ -82,12 +84,14 @@ export class Studio {
   // ------------------------------------------------------------ direction
   async direction(): Promise<Direction> {
     const d = await this.kv<Direction>('sb.direction', { text: '', refId: null });
-    return { text: d.text ?? '', refId: d.refId ?? null };
+    return { text: d.text ?? '', refId: d.refId ?? null, genre: d.genre ?? '' };
   }
 
-  async setDirection(input: { text?: string; refId?: string | null }) {
+  async setDirection(input: { text?: string; refId?: string | null; genre?: string }) {
     const cur = await this.direction();
-    const next: Direction = { text: (input.text ?? cur.text).slice(0, 2000), refId: input.refId === undefined ? cur.refId : input.refId };
+    const genre = input.genre === undefined ? cur.genre ?? '' : input.genre;
+    if (genre && !GENRES.some((g) => g.id === genre)) throw new AppError(400, 'bad_genre', 'Unknown genre.');
+    const next: Direction = { text: (input.text ?? cur.text).slice(0, 2000), refId: input.refId === undefined ? cur.refId : input.refId, genre };
     if (next.refId) {
       const [r] = await this.db.query<{ id: string }>(`SELECT id FROM refs WHERE id=$1`, [next.refId]);
       if (!r) throw new AppError(404, 'not_found', 'Reference not found.');
@@ -118,8 +122,12 @@ export class Studio {
     return {
       direction, reference: direction.refId ? await this.ref(direction.refId).catch(() => null) : null,
       current, prevId, nextId, queued: Number(queued), number: Number(number),
-      runId: running?.id ?? null,
-      lastError: lastFail && lastFail.status !== 'succeeded' && lastFail.status !== 'running' ? (lastFail.error?.message ?? 'That request failed.') : null,
+      // a batch fetched ahead is not something he is waiting on; only show the spinner for one he asked for
+      runId: running && (await this.kv<string | null>('sb.waiting', null)) === running.id ? running.id : null,
+      prefetching: !!running,
+      reworkRunId: (await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE task='rework' AND status='running' ORDER BY created_at DESC LIMIT 1`))[0]?.id ?? null,
+      lastError: lastFail && lastFail.status !== 'succeeded' && lastFail.status !== 'running' && (await this.kv<string | null>('sb.waiting', null)) === lastFail.id ? (lastFail.error?.message ?? 'That request failed.') : null,
+      genres: GENRES,
       writer: { connected: !!this.svc.writer, live: !!this.svc.writer?.live },
     };
   }
@@ -127,7 +135,7 @@ export class Studio {
   async idea(id: string) {
     const [row] = await this.db.query<IdeaRow>(`SELECT * FROM ideas WHERE id=$1`, [id]);
     if (!row) throw new AppError(404, 'not_found', 'Idea not found.');
-    const fragments = await this.db.query<FragmentRow>(`SELECT id, idea_id, song_id, text, saved, source, created_at, saved_at FROM fragments WHERE idea_id=$1 ORDER BY created_at, rowid`, [id]);
+    const fragments = await this.db.query<FragmentRow>(`SELECT id, idea_id, song_id, text, saved, source, ask, created_at, saved_at FROM fragments WHERE idea_id=$1 ORDER BY created_at, rowid`, [id]);
     let song: { id: string; title: string } | null = null;
     if (row.song_id) [song] = await this.db.query<{ id: string; title: string }>(`SELECT id, title FROM songs WHERE id=$1 AND NOT archived`, [row.song_id]);
     const legacySongs = await this.db.query<{ id: string; title: string }>(`SELECT id, title FROM songs WHERE idea_id=$1 AND NOT archived AND id<>COALESCE($2,'')`, [id, row.song_id]);
@@ -153,29 +161,50 @@ export class Studio {
   async sparkNext(clientKey: string | null) {
     const direction = await this.direction();
     const [q] = await this.db.query<{ id: string }>(`SELECT id FROM ideas WHERE origin='spark' AND state='queued' AND steer=$1 ORDER BY created_at, rowid LIMIT 1`, [stableDir(direction)]);
-    if (q) return { shown: true, ...(await this.setCurrent(q.id)) };
+    if (q) {
+      const shown = await this.setCurrent(q.id);
+      // Ideas keep coming: when that was the last one waiting, the next batch starts now,
+      // so the next tap has something ready. Never blocks or fails the tap.
+      if (!shown.queued) await this.startBatch(null, false).catch(() => null);
+      return { shown: true, ...shown };
+    }
     if (clientKey) {
       const [r] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE client_key=$1`, [clientKey]);
       if (r) return { shown: false, runId: r.id };
     }
+    const runId = await this.startBatch(clientKey, true); // he is waiting on this one: show its first idea when it lands
+    return { shown: false, runId };
+  }
+
+  /** Start one batch of ideas (or join the one already running). */
+  private async startBatch(clientKey: string | null, waiting: boolean): Promise<string> {
+    const direction = await this.direction();
     const [running] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE task='spark' AND status='running' LIMIT 1`);
-    if (running) return { shown: false, runId: running.id };
+    if (running) { if (waiting) await this.setKv('sb.waiting', running.id); return running.id; }
+    // marked before the run starts, so even a batch that lands at once knows he was waiting
+    const marker = `pending:${newId('w_')}`;
+    if (waiting) await this.setKv('sb.waiting', marker);
     if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected. Add the Anthropic API key in Render to generate ideas.');
 
     const s = await this.svc.settings();
     const plan: PromptPlan = { variant: PROMPT_VERSION, pack: s.craftPack === 'all' }; // ideas: only when notes are on for everything
     const refs = direction.refId ? await this.refsForPrompt([direction.refId]) : [];
-    const recent = await this.db.query<{ title: string }>(`SELECT title FROM ideas WHERE origin='spark' AND state IN ('shown','queued') ORDER BY created_at DESC LIMIT 15`);
+    const recent = await this.db.query<{ title: string; subject: string | null }>(`SELECT title, subject FROM ideas WHERE origin='spark' AND state IN ('shown','queued') ORDER BY created_at DESC LIMIT 15`);
+    const genre = genreFor(direction.genre, direction.text);
+    const subjects = pickSubjects(genre, SPARK_BATCH, recent.slice(0, 3).map((r) => r.subject ?? '').filter(Boolean));
     const craft = this.svc.craftFor(plan, { text: direction.text || 'song ideas', reference: refs.map((r) => r.name).join(', ') || null, task: 'ideas' });
     const taste = await this.svc.tasteFor(direction.text);
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
-    const user = sparkPrompt({ direction: direction.text, references: referenceBlock(refs), avoidTitles: recent.map((r) => r.title), count: SPARK_BATCH, craft: craft.block });
+    const user = sparkPromptV2({
+      direction: direction.text, genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: referenceBlock(refs),
+      avoidTitles: recent.map((r) => r.title), subjects: subjects.map((k) => SUBJECTS[k]), shape: shapeNote(genre), craft: craft.block,
+    });
     const prevCurrent = await this.kv<string | null>('sb.current', null);
     const steer = stableDir(direction);
     const run = await this.svc.startRun({
       task: 'spark', threadId: null, songId: null, clientKey, effort: s.effortCreative,
-      promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${WORKSPACE_TEMPLATE}`,
-      request: { direction, prevCurrent, pack: craft.record }, inputChars: system.length + user.length,
+      promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${IDEA_TEMPLATE}`,
+      request: { direction, genre, subjects, prevCurrent, pack: craft.record }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('spark', system, user, sparkSchema, s.effortCreative, signal, model);
         const parsed = sparkZ.safeParse(r.json);
@@ -187,31 +216,151 @@ export class Studio {
         const [{ n }] = await this.db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ideas WHERE origin='spark'`);
         const ids: string[] = [];
         let k = 0;
-        for (const i of out.ideas.slice(0, SPARK_BATCH)) {
+        for (const [j, i] of out.ideas.slice(0, SPARK_BATCH).entries()) {
           const lines = i.lines.map((t) => t.trim()).filter(Boolean).slice(0, 4);
           if (!i.title.trim() || !lines.length) continue;
           const id = newId('i_');
           const parts = i.titleParts.map((t) => t.trim()).filter(Boolean);
           await this.db.query(
-            `INSERT INTO ideas(id, kind, title, concept, lines, original, source_run_id, motif, saved, origin, state, palette, title_parts, steer, note, batch_id)
-             VALUES ($1,'seed',$2,$3,$4,$5,$6,$7,0,'spark','queued',$8,$9,$10,$11,$6)`,
+            `INSERT INTO ideas(id, kind, title, concept, lines, original, source_run_id, motif, saved, origin, state, palette, title_parts, steer, note, batch_id, subject)
+             VALUES ($1,'seed',$2,$3,$4,$5,$6,$7,0,'spark','queued',$8,$9,$10,$11,$6,$12)`,
             [id, i.title.trim().slice(0, 200), i.concept.trim().slice(0, 600), JSON.stringify(lines.map((t) => ({ id: newId('l_'), text: t }))),
               JSON.stringify({ title: i.title, concept: i.concept, lines }), runId, motifFor(id), PALETTES[(Number(n) + k) % 3],
-              JSON.stringify(parts.length ? parts : null), steer, out.note.trim().slice(0, 300)],
+              JSON.stringify(parts.length ? parts : null), steer, out.note.trim().slice(0, 300), subjects[j] ?? null],
           );
           ids.push(id); k++;
         }
-        // A late batch never replaces an idea he moved to while it was being written.
+        // A late batch never replaces an idea he moved to while it was being written,
+        // and a batch fetched ahead waits in the queue for his next tap.
         const nowCurrent = await this.kv<string | null>('sb.current', null);
         const dirNow = stableDir(await this.direction());
-        if (ids.length && nowCurrent === prevCurrent && dirNow === steer) {
+        const w = await this.kv<string | null>('sb.waiting', null);
+        const waited = waiting && (w === runId || w === marker);
+        if (waited && ids.length && nowCurrent === prevCurrent && dirNow === steer) {
           await this.db.query(`UPDATE ideas SET state='shown', shown_at=$2 WHERE id=$1`, [ids[0], new Date().toISOString()]);
           await this.setKv('sb.current', ids[0]);
         }
         if (dirNow !== steer) await this.db.query(`UPDATE ideas SET state='discarded' WHERE batch_id=$1 AND state='queued'`, [runId]);
       },
     });
-    return { shown: false, runId: run.id };
+    if (waiting && (await this.kv<string | null>('sb.waiting', null)) === marker) await this.setKv('sb.waiting', run.id);
+    return run.id;
+  }
+
+  /**
+   * Rework the idea on screen to his note. What he marked to keep comes back word for
+   * word (the engine puts it back if the writer drifts); the result becomes the idea on
+   * screen, and Previous still reaches the one it came from.
+   */
+  async rework(ideaId: string, input: { feedback: string; keepTitle: boolean; keepConcept: boolean; keepLineIds: string[]; changeLineIds: string[]; applyToNew: boolean; clientKey: string | null }) {
+    if (input.clientKey) {
+      const [r] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE client_key=$1`, [input.clientKey]);
+      if (r) return { runId: r.id };
+    }
+    const [idea] = await this.db.query<IdeaRow & { subject: string | null }>(`SELECT * FROM ideas WHERE id=$1`, [ideaId]);
+    if (!idea) throw new AppError(404, 'not_found', 'That idea no longer exists.');
+    if (!input.feedback.trim() && !input.keepTitle && !input.keepConcept && !input.keepLineIds.length && !input.changeLineIds.length)
+      throw new AppError(400, 'empty', 'Say what you think, or tap what to keep, first.');
+    if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected.');
+    if (input.applyToNew && input.feedback.trim()) {
+      const d = await this.direction();
+      const add = input.feedback.trim().replace(/\s+/g, ' ');
+      if (!d.text.includes(add)) await this.setDirection({ text: [d.text.trim(), add].filter(Boolean).join('\n') });
+    }
+    const direction = await this.direction();
+    const keepLines = idea.lines.filter((l) => input.keepLineIds.includes(l.id));
+    const changeLines = idea.lines.filter((l) => input.changeLineIds.includes(l.id) && !input.keepLineIds.includes(l.id));
+    const refs = direction.refId ? await this.refsForPrompt([direction.refId]) : [];
+    const s = await this.svc.settings();
+    const taste = await this.svc.tasteFor(direction.text);
+    const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
+    const user = reworkPrompt({
+      idea: { title: idea.title, concept: idea.concept, lines: idea.lines.map((l) => l.text) },
+      feedback: input.feedback, keepTitle: input.keepTitle, keepConcept: input.keepConcept,
+      keepLines: keepLines.map((l) => l.text), changeLines: changeLines.map((l) => l.text),
+      direction: direction.text, shape: shapeNote(genreFor(direction.genre, direction.text)), references: referenceBlock(refs),
+    });
+    const prevCurrent = await this.kv<string | null>('sb.current', null);
+    const run = await this.svc.startRun({
+      task: 'rework', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
+      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`,
+      request: { ideaId, feedback: input.feedback, keepTitle: input.keepTitle, keepConcept: input.keepConcept, keepLineIds: input.keepLineIds, changeLineIds: input.changeLineIds },
+      inputChars: system.length + user.length,
+      exec: async (signal, model) => {
+        const r = await this.svc.call('rework', system, user, reworkSchema, s.effortCreative, signal, model);
+        const parsed = reworkZ.safeParse(r.json);
+        if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
+        return { result: parsed.data as unknown as Record<string, unknown>, usage: r.usage, requestId: r.requestId, model: r.model, live: r.live };
+      },
+      onSuccess: async (runId, result) => {
+        const out = result as unknown as { title: string; titleParts: string[]; concept: string; lines: string[]; note: string };
+        const title = input.keepTitle ? idea.title : out.title.trim().slice(0, 200) || idea.title;
+        const concept = input.keepConcept ? idea.concept : out.concept.trim().slice(0, 600);
+        let lines = out.lines.map((t) => t.trim()).filter(Boolean).slice(0, 4);
+        // kept lines are his: every one comes back exactly, at its old place if the writer dropped it
+        for (const k of keepLines) {
+          if (lines.includes(k.text)) continue;
+          const at = Math.min(idea.lines.findIndex((l) => l.id === k.id), lines.length);
+          lines.splice(at < 0 ? lines.length : at, 0, k.text);
+        }
+        lines = lines.slice(0, Math.max(4, keepLines.length));
+        let parts = out.titleParts.map((t) => t.trim()).filter(Boolean);
+        if (input.keepTitle) parts = idea.title_parts ?? [];
+        const id = newId('i_');
+        const now = new Date().toISOString();
+        await this.db.query(
+          `INSERT INTO ideas(id, kind, title, concept, lines, original, source_run_id, motif, saved, origin, state, shown_at, palette, title_parts, steer, note, batch_id, subject, parent_id, feedback)
+           VALUES ($1,'seed',$2,$3,$4,$5,$6,$7,0,'spark','shown',$8,$9,$10,$11,$12,$6,$13,$14,$15)`,
+          [id, title, concept, JSON.stringify(lines.map((t) => ({ id: newId('l_'), text: t }))), JSON.stringify({ title: out.title, concept: out.concept, lines: out.lines }),
+            runId, motifFor(id), now, idea.palette ?? PALETTES[0], JSON.stringify(parts.length ? parts : null), stableDir(direction), out.note.trim().slice(0, 300),
+            idea.subject ?? null, idea.id, input.feedback.trim().slice(0, 1000)],
+        );
+        const nowCurrent = await this.kv<string | null>('sb.current', null);
+        if (nowCurrent === prevCurrent) await this.setKv('sb.current', id);
+      },
+    });
+    return { runId: run.id };
+  }
+
+  /** More lines for a song page, kept on the page as things he can tap into the draft. */
+  async moreLines(songId: string, input: { ask: string; clientKey: string | null }) {
+    if (input.clientKey) {
+      const [r] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE client_key=$1`, [input.clientKey]);
+      if (r) return { runId: r.id };
+    }
+    if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected.');
+    const ws = await this.workspace(songId);
+    const s = await this.svc.settings();
+    const onPage = [...(ws.idea?.lines.map((l) => l.text) ?? []), ...ws.scraps.map((f) => f.text)].slice(-40);
+    const avoid = ws.scraps.filter((f) => f.source === 'writer').map((f) => f.text).slice(-30);
+    const refs = await this.refsForPrompt(ws.context.refs.map((r) => r.id));
+    const taste = await this.svc.tasteFor(input.ask);
+    const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
+    const user = moreLinesPrompt({
+      title: String((ws as Record<string, unknown>).title ?? ''), concept: ws.idea?.concept ?? '', onPage, draft: renderLyrics(ws.sections),
+      ask: input.ask, avoid, references: referenceBlock(refs),
+    });
+    const run = await this.svc.startRun({
+      task: 'lines', threadId: null, songId, clientKey: input.clientKey, effort: s.effortCreative,
+      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { ask: input.ask }, inputChars: system.length + user.length,
+      exec: async (signal, model) => {
+        const r = await this.svc.call('lines', system, user, moreLinesSchema, s.effortCreative, signal, model);
+        const parsed = moreLinesZ.safeParse(r.json);
+        if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
+        return { result: parsed.data as unknown as Record<string, unknown>, usage: r.usage, requestId: r.requestId, model: r.model, live: r.live };
+      },
+      onSuccess: async (runId, result) => {
+        const out = result as unknown as { lines: string[] };
+        const seen = new Set(onPage.map((l) => l.trim().toLowerCase()));
+        for (const [i, t] of out.lines.map((x) => x.trim()).filter(Boolean).slice(0, 8).entries()) {
+          if (seen.has(t.toLowerCase())) continue;
+          seen.add(t.toLowerCase());
+          await this.db.query(`INSERT INTO fragments(id, song_id, text, saved, source, ask, client_key) VALUES ($1,$2,$3,0,'writer',$4,$5)`,
+            [newId('f_'), songId, t.slice(0, 600), input.ask.trim().slice(0, 300), `lines:${runId}:${i}`]);
+        }
+      },
+    });
+    return { runId: run.id };
   }
 
   /** A starting point he types himself: his words become the idea's first thread, exactly. */
@@ -520,7 +669,7 @@ export class Studio {
     let idea: { id: string; title: string; concept: string; lines: Array<{ id: string; text: string }>; palette: string | null; title_parts: string[] | null } | null = null;
     if (song.idea_id) [idea] = await this.db.query(`SELECT id, title, concept, lines, palette, title_parts FROM ideas WHERE id=$1`, [song.idea_id]);
     const scraps = await this.db.query<FragmentRow>(
-      `SELECT id, idea_id, song_id, text, saved, source, created_at, saved_at FROM fragments WHERE song_id=$1 OR (idea_id IS NOT NULL AND idea_id=$2) ORDER BY created_at, rowid`, [songId, song.idea_id ?? '']);
+      `SELECT id, idea_id, song_id, text, saved, source, ask, created_at, saved_at FROM fragments WHERE song_id=$1 OR (idea_id IS NOT NULL AND idea_id=$2) ORDER BY created_at, rowid`, [songId, song.idea_id ?? '']);
     const sets = await this.suggestionSets(songId, 15);
     const [seedRev] = await this.db.query<{ rev: number }>(`SELECT rev FROM song_revisions WHERE song_id=$1 AND source='insert:seed' LIMIT 1`, [songId]);
     return {

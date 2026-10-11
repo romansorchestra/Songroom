@@ -45,9 +45,9 @@ const DEFAULTS: Settings = {
   craftPack: 'edits',
 };
 
-const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, suggest: 12000, reference: 6000 };
+const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000 };
 
-export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'suggest' | 'reference';
+export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'suggest' | 'reference' | 'rework' | 'lines';
 
 export class Service {
   private aborts = new Map<string, AbortController>();

@@ -1,0 +1,986 @@
+[
+{
+"artist": "Childish Gambino",
+"title": "Lithonia",
+"first_top50": "2024-07-02",
+"best": 28,
+"snapshots_in_top50": 3,
+"id": 369
+},
+{
+"artist": "Quavo",
+"title": "Tough (w/ Lana Del Rey)",
+"first_top50": "2024-07-03",
+"best": 15,
+"snapshots_in_top50": 8,
+"id": 370
+},
+{
+"artist": "Megan Thee Stallion",
+"title": "Mamushi (w/ Yuki Chiba)",
+"first_top50": "2024-07-03",
+"best": 25,
+"snapshots_in_top50": 8,
+"id": 371
+},
+{
+"artist": "Zach Bryan",
+"title": "28",
+"first_top50": "2024-07-04",
+"best": 9,
+"snapshots_in_top50": 19,
+"id": 372
+},
+{
+"artist": "Bruce Springsteen",
+"title": "Born in the U.S.A.",
+"first_top50": "2024-07-04",
+"best": 2,
+"snapshots_in_top50": 4,
+"id": 373
+},
+{
+"artist": "Zach Bryan",
+"title": "American Nights",
+"first_top50": "2024-07-04",
+"best": 13,
+"snapshots_in_top50": 4,
+"id": 374
+},
+{
+"artist": "Zach Bryan",
+"title": "The Great American Bar Scene",
+"first_top50": "2024-07-04",
+"best": 14,
+"snapshots_in_top50": 1,
+"id": 375
+},
+{
+"artist": "Zach Bryan",
+"title": "Mechanical Bull",
+"first_top50": "2024-07-04",
+"best": 15,
+"snapshots_in_top50": 1,
+"id": 376
+},
+{
+"artist": "Zach Bryan",
+"title": "Oak Island",
+"first_top50": "2024-07-04",
+"best": 18,
+"snapshots_in_top50": 1,
+"id": 377
+},
+{
+"artist": "Tom Petty and the Heartbreakers",
+"title": "American Girl",
+"first_top50": "2024-07-04",
+"best": 10,
+"snapshots_in_top50": 4,
+"id": 378
+},
+{
+"artist": "Katy Perry",
+"title": "Firework",
+"first_top50": "2024-07-04",
+"best": 13,
+"snapshots_in_top50": 4,
+"id": 379
+},
+{
+"artist": "Zach Bryan",
+"title": "Better Days (w/ John Mayer)",
+"first_top50": "2024-07-04",
+"best": 26,
+"snapshots_in_top50": 3,
+"id": 380
+},
+{
+"artist": "Van Morrison",
+"title": "Brown Eyed Girl",
+"first_top50": "2024-07-04",
+"best": 29,
+"snapshots_in_top50": 1,
+"id": 381
+},
+{
+"artist": "Daryl Hall & John Oates",
+"title": "Rich Girl",
+"first_top50": "2024-07-04",
+"best": 30,
+"snapshots_in_top50": 3,
+"id": 382
+},
+{
+"artist": "Zach Bryan",
+"title": "Lucky Enough (Poem)",
+"first_top50": "2024-07-04",
+"best": 31,
+"snapshots_in_top50": 1,
+"id": 383
+},
+{
+"artist": "Zac Brown Band",
+"title": "Chicken Fried",
+"first_top50": "2024-07-04",
+"best": 6,
+"snapshots_in_top50": 5,
+"id": 384
+},
+{
+"artist": "Zach Bryan",
+"title": "The Way Back",
+"first_top50": "2024-07-04",
+"best": 36,
+"snapshots_in_top50": 1,
+"id": 385
+},
+{
+"artist": "Zach Bryan",
+"title": "Boons",
+"first_top50": "2024-07-04",
+"best": 37,
+"snapshots_in_top50": 1,
+"id": 386
+},
+{
+"artist": "Creedence Clearwater Revival",
+"title": "Fortunate Son",
+"first_top50": "2024-07-04",
+"best": 9,
+"snapshots_in_top50": 4,
+"id": 387
+},
+{
+"artist": "Kenny Chesney",
+"title": "American Kids",
+"first_top50": "2024-07-04",
+"best": 10,
+"snapshots_in_top50": 5,
+"id": 388
+},
+{
+"artist": "Don McLean",
+"title": "American Pie",
+"first_top50": "2024-07-04",
+"best": 7,
+"snapshots_in_top50": 4,
+"id": 389
+},
+{
+"artist": "Zach Bryan",
+"title": "Memphis; The Blues (w/ John Moreland)",
+"first_top50": "2024-07-04",
+"best": 46,
+"snapshots_in_top50": 1,
+"id": 390
+},
+{
+"artist": "Lynyrd Skynyrd",
+"title": "Sweet Home Alabama",
+"first_top50": "2024-07-04",
+"best": 4,
+"snapshots_in_top50": 5,
+"id": 391
+},
+{
+"artist": "Morgan Wallen",
+"title": "Lies Lies Lies",
+"first_top50": "2024-07-09",
+"best": 8,
+"snapshots_in_top50": 20,
+"id": 392
+},
+{
+"artist": "Eminem",
+"title": "Renaissance",
+"first_top50": "2024-07-12",
+"best": 2,
+"snapshots_in_top50": 2,
+"id": 393
+},
+{
+"artist": "Eminem",
+"title": "Habits (w/ White Gold)",
+"first_top50": "2024-07-12",
+"best": 5,
+"snapshots_in_top50": 2,
+"id": 394
+},
+{
+"artist": "Eminem",
+"title": "Brand New Dance",
+"first_top50": "2024-07-12",
+"best": 10,
+"snapshots_in_top50": 2,
+"id": 395
+},
+{
+"artist": "Eminem",
+"title": "Fuel (w/ JID)",
+"first_top50": "2024-07-12",
+"best": 15,
+"snapshots_in_top50": 3,
+"id": 396
+},
+{
+"artist": "Eminem",
+"title": "Trouble",
+"first_top50": "2024-07-12",
+"best": 11,
+"snapshots_in_top50": 2,
+"id": 397
+},
+{
+"artist": "Eminem",
+"title": "Evil",
+"first_top50": "2024-07-12",
+"best": 15,
+"snapshots_in_top50": 2,
+"id": 398
+},
+{
+"artist": "Eminem",
+"title": "Lucifer (w/ Sly Pyper)",
+"first_top50": "2024-07-12",
+"best": 17,
+"snapshots_in_top50": 2,
+"id": 399
+},
+{
+"artist": "Eminem",
+"title": "Antichrist",
+"first_top50": "2024-07-12",
+"best": 18,
+"snapshots_in_top50": 2,
+"id": 400
+},
+{
+"artist": "Eminem",
+"title": "Somebody Save Me (w/ Jelly Roll)",
+"first_top50": "2024-07-12",
+"best": 24,
+"snapshots_in_top50": 3,
+"id": 401
+},
+{
+"artist": "Eminem",
+"title": "Guilty Conscience 2",
+"first_top50": "2024-07-12",
+"best": 21,
+"snapshots_in_top50": 2,
+"id": 402
+},
+{
+"artist": "Eminem",
+"title": "Temporary (w/ Skylar Grey)",
+"first_top50": "2024-07-12",
+"best": 27,
+"snapshots_in_top50": 2,
+"id": 403
+},
+{
+"artist": "Eminem",
+"title": "Road Rage (w/ Dem Jointz, Sly Pyper)",
+"first_top50": "2024-07-12",
+"best": 23,
+"snapshots_in_top50": 2,
+"id": 404
+},
+{
+"artist": "Eminem",
+"title": "Head Honcho (w/ Ez Mil)",
+"first_top50": "2024-07-12",
+"best": 29,
+"snapshots_in_top50": 2,
+"id": 405
+},
+{
+"artist": "Eminem",
+"title": "Bad One (w/ White Gold)",
+"first_top50": "2024-07-12",
+"best": 35,
+"snapshots_in_top50": 2,
+"id": 406
+},
+{
+"artist": "Eminem",
+"title": "Breaking News - skit",
+"first_top50": "2024-07-12",
+"best": 31,
+"snapshots_in_top50": 1,
+"id": 407
+},
+{
+"artist": "KAROL G",
+"title": "Si Antes Te Hubiera Conocido",
+"first_top50": "2024-07-13",
+"best": 43,
+"snapshots_in_top50": 7,
+"id": 408
+},
+{
+"artist": "Jimin",
+"title": "Who",
+"first_top50": "2024-07-19",
+"best": 1,
+"snapshots_in_top50": 75,
+"id": 409
+},
+{
+"artist": "Charli xcx",
+"title": "360",
+"first_top50": "2024-07-19",
+"best": 22,
+"snapshots_in_top50": 6,
+"id": 410
+},
+{
+"artist": "Ice Spice",
+"title": "Did It First (w/ Central Cee)",
+"first_top50": "2024-07-19",
+"best": 39,
+"snapshots_in_top50": 3,
+"id": 411
+},
+{
+"artist": "Chappell Roan",
+"title": "Casual",
+"first_top50": "2024-07-19",
+"best": 33,
+"snapshots_in_top50": 14,
+"id": 412
+},
+{
+"artist": "Hanumankind",
+"title": "Big Dawgs (w/ Kalmi)",
+"first_top50": "2024-08-01",
+"best": 16,
+"snapshots_in_top50": 9,
+"id": 413
+},
+{
+"artist": "Post Malone",
+"title": "Guy For That (Feat. Luke Combs) (w/ Luke Combs)",
+"first_top50": "2024-08-01",
+"best": 12,
+"snapshots_in_top50": 3,
+"id": 414
+},
+{
+"artist": "Charli xcx",
+"title": "Apple",
+"first_top50": "2024-08-01",
+"best": 28,
+"snapshots_in_top50": 5,
+"id": 415
+},
+{
+"artist": "*NSYNC",
+"title": "Bye Bye Bye",
+"first_top50": "2024-08-01",
+"best": 34,
+"snapshots_in_top50": 1,
+"id": 416
+},
+{
+"artist": "Lady Gaga",
+"title": "Die With A Smile (w/ Bruno Mars)",
+"first_top50": "2024-08-19",
+"best": 1,
+"snapshots_in_top50": 177,
+"id": 417
+},
+{
+"artist": "Charli xcx",
+"title": "Guess featuring Billie Eilish (w/ Billie Eilish)",
+"first_top50": "2024-08-19",
+"best": 15,
+"snapshots_in_top50": 11,
+"id": 418
+},
+{
+"artist": "Post Malone",
+"title": "Wrong Ones (Feat. Tim McGraw) (w/ Tim McGraw)",
+"first_top50": "2024-08-19",
+"best": 20,
+"snapshots_in_top50": 2,
+"id": 419
+},
+{
+"artist": "Gracie Abrams",
+"title": "I Love You, I'm Sorry",
+"first_top50": "2024-08-19",
+"best": 13,
+"snapshots_in_top50": 32,
+"id": 420
+},
+{
+"artist": "Post Malone",
+"title": "What Don't Belong To Me",
+"first_top50": "2024-08-19",
+"best": 25,
+"snapshots_in_top50": 2,
+"id": 421
+},
+{
+"artist": "Post Malone",
+"title": "Finer Things (Feat. Hank Williams Jr.) (w/ Hank Williams, Jr.)",
+"first_top50": "2024-08-19",
+"best": 34,
+"snapshots_in_top50": 1,
+"id": 422
+},
+{
+"artist": "Post Malone",
+"title": "Losers (Feat. Jelly Roll) (w/ Jelly Roll)",
+"first_top50": "2024-08-19",
+"best": 36,
+"snapshots_in_top50": 1,
+"id": 423
+},
+{
+"artist": "Post Malone",
+"title": "California Sober (Feat. Chris Stapleton) (w/ Chris Stapleton)",
+"first_top50": "2024-08-19",
+"best": 41,
+"snapshots_in_top50": 1,
+"id": 424
+},
+{
+"artist": "Post Malone",
+"title": "Nosedive (Feat. Lainey Wilson) (w/ Lainey Wilson)",
+"first_top50": "2024-08-19",
+"best": 42,
+"snapshots_in_top50": 1,
+"id": 425
+},
+{
+"artist": "Post Malone",
+"title": "Goes Without Saying (Feat. Brad Paisley) (w/ Brad Paisley)",
+"first_top50": "2024-08-19",
+"best": 50,
+"snapshots_in_top50": 1,
+"id": 426
+},
+{
+"artist": "Gigi Perez",
+"title": "Sailor Song",
+"first_top50": "2024-08-21",
+"best": 4,
+"snapshots_in_top50": 180,
+"id": 427
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Taste",
+"first_top50": "2024-08-28",
+"best": 1,
+"snapshots_in_top50": 82,
+"id": 428
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Bed Chem",
+"first_top50": "2024-08-28",
+"best": 6,
+"snapshots_in_top50": 14,
+"id": 429
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Good Graces",
+"first_top50": "2024-08-28",
+"best": 8,
+"snapshots_in_top50": 9,
+"id": 430
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Juno",
+"first_top50": "2024-08-28",
+"best": 11,
+"snapshots_in_top50": 9,
+"id": 431
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Sharpest Tool",
+"first_top50": "2024-08-28",
+"best": 13,
+"snapshots_in_top50": 3,
+"id": 432
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Coincidence",
+"first_top50": "2024-08-28",
+"best": 15,
+"snapshots_in_top50": 3,
+"id": 433
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Slim Pickins",
+"first_top50": "2024-08-28",
+"best": 17,
+"snapshots_in_top50": 2,
+"id": 434
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Don’t Smile",
+"first_top50": "2024-08-28",
+"best": 20,
+"snapshots_in_top50": 2,
+"id": 435
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Dumb & Poetic",
+"first_top50": "2024-08-28",
+"best": 23,
+"snapshots_in_top50": 2,
+"id": 436
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "Lie To Girls",
+"first_top50": "2024-08-28",
+"best": 30,
+"snapshots_in_top50": 1,
+"id": 437
+},
+{
+"artist": "Linkin Park",
+"title": "The Emptiness Machine",
+"first_top50": "2024-09-11",
+"best": 24,
+"snapshots_in_top50": 4,
+"id": 438
+},
+{
+"artist": "Megan Thee Stallion",
+"title": "Neva Play (w/ RM)",
+"first_top50": "2024-09-11",
+"best": 44,
+"snapshots_in_top50": 1,
+"id": 439
+},
+{
+"artist": "Playboi Carti",
+"title": "ALL RED",
+"first_top50": "2024-09-15",
+"best": 5,
+"snapshots_in_top50": 5,
+"id": 440
+},
+{
+"artist": "Tate McRae",
+"title": "It's ok I'm ok",
+"first_top50": "2024-09-15",
+"best": 18,
+"snapshots_in_top50": 8,
+"id": 441
+},
+{
+"artist": "Peso Pluma",
+"title": "LA PATRULLA (w/ Neton Vega)",
+"first_top50": "2024-09-15",
+"best": 38,
+"snapshots_in_top50": 6,
+"id": 442
+},
+{
+"artist": "Unknown Artist",
+"title": "Unknown Title",
+"first_top50": "2024-09-15",
+"best": 30,
+"snapshots_in_top50": 1,
+"id": 443
+},
+{
+"artist": "The Weeknd",
+"title": "Dancing In The Flames",
+"first_top50": "2024-09-16",
+"best": 26,
+"snapshots_in_top50": 1,
+"id": 444
+},
+{
+"artist": "Future",
+"title": "TEFLON DON",
+"first_top50": "2024-09-21",
+"best": 27,
+"snapshots_in_top50": 2,
+"id": 445
+},
+{
+"artist": "Future",
+"title": "LIL DEMON",
+"first_top50": "2024-09-21",
+"best": 39,
+"snapshots_in_top50": 2,
+"id": 446
+},
+{
+"artist": "Earth, Wind & Fire",
+"title": "September",
+"first_top50": "2024-09-21",
+"best": 17,
+"snapshots_in_top50": 2,
+"id": 447
+},
+{
+"artist": "Future",
+"title": "SKI",
+"first_top50": "2024-09-21",
+"best": 44,
+"snapshots_in_top50": 1,
+"id": 448
+},
+{
+"artist": "Future",
+"title": "TOO FAST",
+"first_top50": "2024-09-21",
+"best": 50,
+"snapshots_in_top50": 1,
+"id": 449
+},
+{
+"artist": "The Weeknd",
+"title": "Timeless (w/ Playboi Carti)",
+"first_top50": "2024-09-30",
+"best": 1,
+"snapshots_in_top50": 159,
+"id": 450
+},
+{
+"artist": "Fuerza Regida",
+"title": "NEL",
+"first_top50": "2024-09-30",
+"best": 48,
+"snapshots_in_top50": 1,
+"id": 451
+},
+{
+"artist": "The Marías",
+"title": "No One Noticed",
+"first_top50": "2024-09-30",
+"best": 4,
+"snapshots_in_top50": 181,
+"id": 452
+},
+{
+"artist": "Addison Rae",
+"title": "Diet Pepsi",
+"first_top50": "2024-10-10",
+"best": 35,
+"snapshots_in_top50": 1,
+"id": 453
+},
+{
+"artist": "NLE Choppa",
+"title": "Or What (w/ 41)",
+"first_top50": "2024-10-10",
+"best": 39,
+"snapshots_in_top50": 1,
+"id": 454
+},
+{
+"artist": "Gracie Abrams",
+"title": "That’s So True",
+"first_top50": "2024-11-19",
+"best": 1,
+"snapshots_in_top50": 92,
+"id": 455
+},
+{
+"artist": "ROSÉ",
+"title": "APT. (w/ Bruno Mars)",
+"first_top50": "2024-11-19",
+"best": 6,
+"snapshots_in_top50": 78,
+"id": 456
+},
+{
+"artist": "Tyler, The Creator",
+"title": "Sticky (w/ GloRilla, Sexyy Red, Lil Wayne)",
+"first_top50": "2024-11-19",
+"best": 2,
+"snapshots_in_top50": 51,
+"id": 457
+},
+{
+"artist": "Tyler, The Creator",
+"title": "Like Him (w/ Lola Young)",
+"first_top50": "2024-11-19",
+"best": 7,
+"snapshots_in_top50": 55,
+"id": 458
+},
+{
+"artist": "Don Toliver",
+"title": "No Pole",
+"first_top50": "2024-11-19",
+"best": 20,
+"snapshots_in_top50": 73,
+"id": 459
+},
+{
+"artist": "GloRilla",
+"title": "WHATCHU KNO ABOUT ME (w/ Sexyy Red)",
+"first_top50": "2024-11-19",
+"best": 24,
+"snapshots_in_top50": 6,
+"id": 460
+},
+{
+"artist": "Tyler, The Creator",
+"title": "St. Chroma (w/ Daniel Caesar)",
+"first_top50": "2024-11-19",
+"best": 8,
+"snapshots_in_top50": 1,
+"id": 461
+},
+{
+"artist": "Oscar Maydon",
+"title": "Tu Boda (w/ Fuerza Regida)",
+"first_top50": "2024-11-19",
+"best": 19,
+"snapshots_in_top50": 1,
+"id": 462
+},
+{
+"artist": "Tyler, The Creator",
+"title": "Darling, I (w/ Teezo Touchdown)",
+"first_top50": "2024-11-19",
+"best": 22,
+"snapshots_in_top50": 1,
+"id": 463
+},
+{
+"artist": "Morgan Wallen",
+"title": "Love Somebody",
+"first_top50": "2024-11-19",
+"best": 13,
+"snapshots_in_top50": 84,
+"id": 464
+},
+{
+"artist": "Tyler, The Creator",
+"title": "Rah Tah Tah",
+"first_top50": "2024-11-19",
+"best": 32,
+"snapshots_in_top50": 1,
+"id": 465
+},
+{
+"artist": "Rauw Alejandro",
+"title": "Qué Pasaría... (w/ Bad Bunny)",
+"first_top50": "2024-11-19",
+"best": 8,
+"snapshots_in_top50": 17,
+"id": 466
+},
+{
+"artist": "Tyler, The Creator",
+"title": "Thought I Was Dead (w/ ScHoolboy Q, Santigold)",
+"first_top50": "2024-11-19",
+"best": 43,
+"snapshots_in_top50": 1,
+"id": 467
+},
+{
+"artist": "Tate McRae",
+"title": "2 hands",
+"first_top50": "2024-11-19",
+"best": 43,
+"snapshots_in_top50": 2,
+"id": 468
+},
+{
+"artist": "Tyler, The Creator",
+"title": "Balloon (w/ Doechii)",
+"first_top50": "2024-11-19",
+"best": 50,
+"snapshots_in_top50": 1,
+"id": 469
+},
+{
+"artist": "Kendrick Lamar",
+"title": "luther",
+"first_top50": "2024-12-02",
+"best": 1,
+"snapshots_in_top50": 151,
+"id": 470
+},
+{
+"artist": "Kendrick Lamar",
+"title": "tv off (w/ Lefty Gunplay)",
+"first_top50": "2024-12-02",
+"best": 1,
+"snapshots_in_top50": 99,
+"id": 471
+},
+{
+"artist": "Kendrick Lamar",
+"title": "squabble up",
+"first_top50": "2024-12-02",
+"best": 3,
+"snapshots_in_top50": 69,
+"id": 472
+},
+{
+"artist": "Juice WRLD",
+"title": "Empty Out Your Pockets",
+"first_top50": "2024-12-02",
+"best": 17,
+"snapshots_in_top50": 5,
+"id": 473
+},
+{
+"artist": "Kendrick Lamar",
+"title": "hey now (w/ Dody6)",
+"first_top50": "2024-12-02",
+"best": 13,
+"snapshots_in_top50": 6,
+"id": 474
+},
+{
+"artist": "Kendrick Lamar",
+"title": "wacced out murals",
+"first_top50": "2024-12-02",
+"best": 20,
+"snapshots_in_top50": 4,
+"id": 475
+},
+{
+"artist": "Cynthia Erivo",
+"title": "Defying Gravity (w/ Ariana Grande)",
+"first_top50": "2024-12-02",
+"best": 16,
+"snapshots_in_top50": 4,
+"id": 476
+},
+{
+"artist": "Kendrick Lamar",
+"title": "dodger blue (w/ Wallie the Sensei, Roddy Ricch, Siete7x)",
+"first_top50": "2024-12-02",
+"best": 24,
+"snapshots_in_top50": 4,
+"id": 477
+},
+{
+"artist": "Bing Crosby",
+"title": "White Christmas - 1947 Version (w/ Ken Darby Singers, John Scott Trotter & His Orchestra)",
+"first_top50": "2024-12-02",
+"best": 14,
+"snapshots_in_top50": 14,
+"id": 478
+},
+{
+"artist": "Kendrick Lamar",
+"title": "reincarnated",
+"first_top50": "2024-12-02",
+"best": 26,
+"snapshots_in_top50": 3,
+"id": 479
+},
+{
+"artist": "Arcane",
+"title": "Ma Meilleure Ennemie - from the series Arcane League of Legends (w/ League of Legends, Stromae, Pomme)",
+"first_top50": "2024-12-02",
+"best": 28,
+"snapshots_in_top50": 2,
+"id": 480
+},
+{
+"artist": "Ariana Grande",
+"title": "What Is This Feeling? (w/ Cynthia Erivo)",
+"first_top50": "2024-12-02",
+"best": 30,
+"snapshots_in_top50": 2,
+"id": 481
+},
+{
+"artist": "Kendrick Lamar",
+"title": "peekaboo (w/ AzChike)",
+"first_top50": "2024-12-02",
+"best": 14,
+"snapshots_in_top50": 3,
+"id": 482
+},
+{
+"artist": "Ariana Grande",
+"title": "Popular",
+"first_top50": "2024-12-02",
+"best": 36,
+"snapshots_in_top50": 1,
+"id": 483
+},
+{
+"artist": "Kendrick Lamar",
+"title": "heart pt. 6",
+"first_top50": "2024-12-02",
+"best": 41,
+"snapshots_in_top50": 1,
+"id": 484
+},
+{
+"artist": "Kendrick Lamar",
+"title": "man at the garden",
+"first_top50": "2024-12-02",
+"best": 44,
+"snapshots_in_top50": 1,
+"id": 485
+},
+{
+"artist": "Juice WRLD",
+"title": "Misfit",
+"first_top50": "2024-12-02",
+"best": 47,
+"snapshots_in_top50": 1,
+"id": 486
+},
+{
+"artist": "Mykola Dmytrovych Leontovych",
+"title": "Carol of the Bells (w/ John Williams)",
+"first_top50": "2024-12-02",
+"best": 25,
+"snapshots_in_top50": 9,
+"id": 487
+},
+{
+"artist": "Bad Bunny",
+"title": "EL CLúB",
+"first_top50": "2024-12-06",
+"best": 15,
+"snapshots_in_top50": 13,
+"id": 488
+},
+{
+"artist": "Lola Young",
+"title": "Messy",
+"first_top50": "2024-12-16",
+"best": 11,
+"snapshots_in_top50": 62,
+"id": 489
+},
+{
+"artist": "Sabrina Carpenter",
+"title": "A Nonsense Christmas",
+"first_top50": "2024-12-16",
+"best": 26,
+"snapshots_in_top50": 5,
+"id": 490
+},
+{
+"artist": "Bing Crosby",
+"title": "Mele Kalikimaka (Merry Christmas) (w/ The Andrews Sisters)",
+"first_top50": "2024-12-16",
+"best": 22,
+"snapshots_in_top50": 9,
+"id": 491
+}
+]

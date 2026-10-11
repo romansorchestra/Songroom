@@ -44,7 +44,7 @@ export function Seed({ label, lines, children }: { label: string; lines: string[
   );
 }
 
-export type Fragment = { id: string; text: string; saved: boolean; source?: string };
+export type Fragment = { id: string; text: string; saved: boolean; source?: string; ask?: string };
 
 export function FragmentList({ items, onSave, onRemove, onAdd }: {
   items: Fragment[];
