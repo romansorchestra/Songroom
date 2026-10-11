@@ -52,7 +52,9 @@ Every card and finding carries a label. 104 of 127 findings and 47 of 56 cards r
 
 ## What changed in actual suggestions, and did Sam prefer it
 
-Unjudged at the time of writing. The experiment harness stores each trial blind; the tally appears in Settings → Experiments once Sam votes. No claim of improvement is made here. The honest expectation from the audit: p2.0 should remove the forced-narrative failure on pop briefs regardless of research; whether the craft notes add anything beyond that is exactly what the C-vs-B comparison tests.
+**Run, not yet judged.** On 10 Oct 2026 (15:35–19:47 PT) all 11 fresh briefs were generated twice under each of the three conditions on the live app with real Opus 5.5 at effort `high`: 22 blinded trials, 66 generations, every one succeeded, total $1.71 (a further ~$0.17 was lost when a code deploy restarted the app mid-batch; those runs are marked interrupted and are not in any trial). Checks made before handing it to Sam, without looking at which condition produced which output: 0 hard-constraint failures across all 66 (counts, line counts, exact first lines, forbidden words, required word "wait", untouched second lines on edits); 0 teaching-pair lines reproduced in any output (51 pair lines checked against every generated line); 0 outputs carrying an explanatory "reply"; idea concepts between 94 and 161 characters. The judging screen was exercised live (a test vote recorded, conditions revealed, tally updated, vote cleared again).
+
+Sam's judgments: none yet. All `sam_judgment` fields are null and the tally is 0/22. No claim of improvement is made. The honest expectation from the audit is that p2.0 removes the forced-narrative failure on pop briefs regardless of research; whether the craft notes add anything beyond that is exactly what C-vs-B tests, and 22 votes will give a lean, not proof.
 
 ## Coverage gaps and disagreements
 
