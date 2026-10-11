@@ -7,6 +7,7 @@ Built to `APPROVED_DESIGN_SPEC.md` and `APP_CHANGES_v2.md`. Checked offline with
 - References: checked against the research pack first, then a web search, else an honest "couldn't check"; ambiguous names offer a choice; "Not this one" removes it everywhere.
 - Journal: All / Ideas / Fragments / Songs, search. Earlier sessions still open from Recent.
 - Model choice stays in Settings and is recorded per run; nothing in the interface or saved writing depends on it.
+- Live check, 10 Oct, real Opus 5.5, phone-sized window (393 wide, dark): ADÉLA reference from the pack; an idea using it; a fragment saved word for word; Start writing; first thread added; a line selected, 4 options, Next, Keep changed only that line; Another brought 4 more with the first 4 still reachable; a web-search reference (Olivia Dean). Existing data intact: 2 earlier sessions, the song, the saved line, all 22 experiment trials with their votes. Three small faults found and fixed the same night (starting point still said "not yet in your lyrics" after adding; instruction field clipped its second line; Check gave no sign it was working).
 
 ## Works (verified before the redesign)
 - Write: ideas / lines / drafts / conversation, references, "more like this", session history, recoverable after refresh, unsent text kept locally.
