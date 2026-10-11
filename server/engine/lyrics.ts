@@ -14,16 +14,8 @@ export function newId(prefix: string): string {
   return prefix + randomBytes(6).toString('base64url');
 }
 
-const HEADER_RE =
-  /^\s*[\[(]?\s*(intro|verse|pre[- ]?chorus|pre|chorus|post[- ]?chorus|hook|bridge|middle\s*8|outro|refrain|breakdown|interlude|tag|drop)\b[^\])]*[\])]?\s*:?\s*$/i;
-
-export function isHeader(line: string): boolean {
-  return HEADER_RE.test(line) && line.trim().length <= 40;
-}
-
-function cleanHeader(line: string): string {
-  return line.trim().replace(/^[\[(]\s*/, '').replace(/\s*[\])]\s*:?$/, '').replace(/:$/, '').trim();
-}
+import { isHeader, cleanHeader } from '../../shared/lyricShape.js';
+export { isHeader };
 
 /** Parse pasted text into sections. Line text is preserved exactly (minus line-ending characters). */
 export function parseLyrics(raw: string): Section[] {
@@ -237,4 +229,36 @@ export function literalReplacements(
   const exact = run(new RegExp(bounded, 'gu'), false);
   if (exact.length) return exact;
   return run(new RegExp(bounded, 'giu'), true);
+}
+
+/**
+ * Insert new lines after a given line (or at the end). Lines with a section
+ * header become new sections after the section holding `afterLineId`. Without a
+ * header they join that section right after the line; at the end they either
+ * join the last section or start a new one (`asSection`). Existing lines and
+ * their IDs are untouched.
+ */
+export function insertLines(sections: Section[], afterLineId: string | null, text: string, asSection: boolean): Section[] {
+  const incoming = parseLyrics(text);
+  if (!incoming.length) throw new EditError('empty', 'Nothing to add.');
+  const next = sections.map((s) => ({ ...s, lines: s.lines.map((l) => ({ ...l })) }));
+  const hasHeaders = incoming.some((s) => s.label !== '');
+  let secIdx = next.length - 1, lineIdx = secIdx >= 0 ? next[secIdx].lines.length - 1 : -1;
+  if (afterLineId) {
+    secIdx = next.findIndex((s) => s.lines.some((l) => l.id === afterLineId));
+    if (secIdx < 0) throw new EditError('unknown_line', 'The line to add after no longer exists.');
+    lineIdx = next[secIdx].lines.findIndex((l) => l.id === afterLineId);
+  }
+  if (hasHeaders || next.length === 0 || (!afterLineId && asSection)) {
+    if (afterLineId && lineIdx < next[secIdx].lines.length - 1) {
+      // split the section so the new sections land right after the line
+      const tail = next[secIdx].lines.splice(lineIdx + 1);
+      next.splice(secIdx + 1, 0, { id: newId('s_'), label: '', lines: tail });
+    }
+    next.splice(secIdx + 1, 0, ...incoming);
+    return next;
+  }
+  const lines = incoming.flatMap((s) => s.lines);
+  next[secIdx].lines.splice(lineIdx + 1, 0, ...lines);
+  return next;
 }

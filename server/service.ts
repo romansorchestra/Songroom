@@ -41,9 +41,9 @@ const DEFAULTS: Settings = {
   craftPack: false,
 };
 
-const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000 };
+const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, suggest: 12000, reference: 6000 };
 
-export type Task = 'write' | 'edit' | 'suno';
+export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'suggest' | 'reference';
 
 export class Service {
   private aborts = new Map<string, AbortController>();
@@ -53,7 +53,7 @@ export class Service {
   constructor(public db: Db, public writer: Writer | null, public pack: Pack | null = null) {}
 
   /** Craft notes for one request: a few retrieved records rendered as one block, or nothing. */
-  private craftFor(plan: PromptPlan, input: { text: string; brief?: string; reference?: string | null; task: PackTask }) {
+  craftFor(plan: PromptPlan, input: { text: string; brief?: string; reference?: string | null; task: PackTask }) {
     if (!plan.pack || !this.pack) return { block: '', record: null as null | { version: string; cards: string[]; profiles: string[]; pair: string | null } };
     const sel = selectPack(this.pack, input);
     return { block: renderPack(sel), record: { version: sel.version, cards: sel.cards.map((c) => c.id), profiles: sel.profiles.map((p) => p.id), pair: sel.pair?.id ?? null } };
@@ -107,7 +107,7 @@ export class Service {
 
   async deleteVoice(id: string) { await this.db.query(`DELETE FROM voice_examples WHERE id=$1`, [id]); }
 
-  private async tasteFor(request: string): Promise<string> {
+  async tasteFor(request: string): Promise<string> {
     const s = await this.settings();
     const all = await this.voiceExamples();
     // Prefer examples whose direction is mentioned in the request; cap total size.
@@ -239,7 +239,7 @@ export class Service {
     return { cancelled: rows.length > 0, note: 'If the writer had already started, Anthropic may still bill for it.' };
   }
 
-  private async call(task: Task, system: string, user: string, schema: object, effort: Effort, signal: AbortSignal, model: string) {
+  async call(task: Task, system: string, user: string, schema: object, effort: Effort, signal: AbortSignal, model: string) {
     if (!this.writer) throw new WriterError('no_key', 'No writer is connected.');
     return this.writer.write({ system, user, schema, effort, maxTokens: MAX_TOKENS[task], model, signal });
   }
@@ -264,7 +264,7 @@ export class Service {
     await this.db.query(`DELETE FROM threads WHERE id=$1 AND song_id IS NULL`, [id]);
   }
 
-  private async recentTurns(threadId: string, excludeId?: string): Promise<Turn[]> {
+  async recentTurns(threadId: string, excludeId?: string): Promise<Turn[]> {
     const rows = await this.db.query<{ id: string; role: 'user' | 'assistant'; text: string; payload: Record<string, unknown> | null }>(
       `SELECT id, role, text, payload FROM messages WHERE thread_id=$1 ORDER BY created_at DESC, rowid DESC LIMIT 14`, [threadId]);
     return rows.reverse().filter((r) => r.id !== excludeId).map((r) => ({ role: r.role, text: compactMessage(r.text, r.payload) }));
@@ -405,7 +405,7 @@ export class Service {
   }
 
   // ---------------- songs ----------------
-  private async songThread(songId: string): Promise<string> {
+  async songThread(songId: string): Promise<string> {
     const [t] = await this.db.query<{ id: string }>(`SELECT id FROM threads WHERE song_id=$1`, [songId]);
     if (t) return t.id;
     const id = newId('t_');
@@ -458,7 +458,7 @@ export class Service {
   }
 
   /** Write a new immutable revision. Throws 409 if the base revision is stale. */
-  private async commitRevision(songId: string, baseRev: number, build: (sections: Section[], locks: Set<string>, current: number, q: Db['query']) => Promise<Section[]> | Section[], source: string, note: string, runId: string | null = null) {
+  async commitRevision(songId: string, baseRev: number, build: (sections: Section[], locks: Set<string>, current: number, q: Db['query']) => Promise<Section[]> | Section[], source: string, note: string, runId: string | null = null) {
     return this.db.tx(async (q) => {
       const [song] = await q<{ current_rev: number; locks: string[] }>(`SELECT current_rev, locks FROM songs WHERE id=$1`, [songId]);
       if (!song) throw new AppError(404, 'not_found', 'Song not found.');
@@ -648,15 +648,16 @@ export class Service {
 
   // ---------------- export ----------------
   async exportAll() {
-    const tables = ['settings', 'threads', 'messages', 'runs', 'ideas', 'songs', 'song_revisions', 'voice_examples', 'eval_results'];
-    const out: Record<string, unknown> = { format: 'songroom-backup', version: 1, exportedAt: new Date().toISOString() };
+    const tables = ['settings', 'threads', 'messages', 'runs', 'ideas', 'fragments', 'songs', 'song_revisions', 'suggestion_sets', 'refs',
+      'voice_examples', 'eval_results', 'experiments'];
+    const out: Record<string, unknown> = { format: 'songroom-backup', version: 2, exportedAt: new Date().toISOString() };
     for (const t of tables) out[t] = await this.db.query(`SELECT * FROM ${t}`);
     return out;
   }
 
   async exportMarkdown(): Promise<string> {
     const ideas = await this.db.query<{ kind: string; title: string; concept: string; lines: Array<{ text: string }>; notes: string; starred: boolean; created_at: string }>(
-      `SELECT kind, title, concept, lines, notes, starred, created_at FROM ideas WHERE NOT archived ORDER BY created_at`);
+      `SELECT kind, title, concept, lines, notes, starred, created_at FROM ideas WHERE NOT archived AND saved = 1 ORDER BY created_at`);
     const songs = await this.db.query<{ id: string; title: string; brief: string; notes: string; current_rev: number }>(`SELECT id, title, brief, notes, current_rev FROM songs WHERE NOT archived AND kind='normal' ORDER BY created_at`);
     let md = `# Songroom journal\n\nExported ${new Date().toISOString().slice(0, 10)}\n\n## Songs\n\n`;
     for (const s of songs) {
@@ -743,15 +744,15 @@ function shapeEdit(out: ReturnType<typeof editZ.parse>, det: Partial<Constraints
   return { kind: 'edit', direct: false, reply: out.reply, baseRev, instruction, options, constraints: c };
 }
 
-function diffFor(sections: Section[], reps: Replacement[]) {
+export function diffFor(sections: Section[], reps: Replacement[]) {
   return reps.map((r) => ({ lineId: r.lineId, before: findLine(sections, r.lineId)?.text ?? '', after: r.newText }));
 }
 
-function describeSelection(sections: Section[], targets: Target[]): string {
+export function describeSelection(sections: Section[], targets: Target[]): string {
   return targets.map((t) => (t.kind === 'span' ? `“${t.expected}” in “${findLine(sections, t.lineId)?.text}”` : `“${t.expected}”`)).join('; ');
 }
 
-function annotate(sections: Section[], targets: Target[], locks: Set<string>): string {
+export function annotate(sections: Section[], targets: Target[], locks: Set<string>): string {
   const spans = new Map(targets.filter((t) => t.kind === 'span').map((t) => [t.lineId, t as Extract<Target, { kind: 'span' }>]));
   const whole = new Set(targets.filter((t) => t.kind === 'line').map((t) => t.lineId));
   return sections.map((s) => {

@@ -184,3 +184,117 @@ export function sunoPrompt(input: { song: SongContext; sections: Array<{ index: 
 - Only square-bracket tags. Never write lyric text, parentheses or curly braces.`,
   ].filter(Boolean).join('\n\n');
 }
+
+// ---------------------------------------------------------------------------
+// Workspace templates (10 Oct 2026, approved design). These add only the output
+// shapes the design calls for (one idea at a time on the springboard; short
+// replacement/addition proposals in the song workspace). The writer's standing
+// instructions are systemCore(PROMPT_VERSION), unchanged. Not tuned to any
+// experiment votes. Runs record `${variant}/ws1`.
+// ---------------------------------------------------------------------------
+export const WORKSPACE_TEMPLATE = 'ws1';
+
+export type RefForPrompt = { name: string; identity: string; source: string; characteristics: string[]; want: string; pastedText?: string };
+
+export function referenceBlock(refs: RefForPrompt[]): string {
+  if (!refs.length) return '';
+  return 'Reference he attached (use only the qualities he wants, or the obvious ones; write original lines; never imitate or quote):\n' + refs.map((r) => {
+    if (r.pastedText) return `- Text he pasted as a reference (his to share; take qualities, never reuse lines):\n${r.pastedText}${r.want ? `\n  What he wants from it: ${r.want}` : ''}`;
+    const lines = [`- ${r.name}${r.identity ? `: ${r.identity}` : ''} (${r.source})`];
+    if (r.characteristics.length) lines.push(...r.characteristics.slice(0, 6).map((c) => `  · ${c}`));
+    if (r.want) lines.push(`  What he wants from it: ${r.want}`);
+    return lines.join('\n');
+  }).join('\n');
+}
+
+export function sparkPrompt(input: { direction: string; references: string; avoidTitles: string[]; count: number; craft?: string }): string {
+  const blocks: string[] = [];
+  blocks.push(input.direction.trim() ? `His direction for these ideas:\n${input.direction.trim()}` : 'He gave no direction. Vary genre, stance and shape across the ideas.');
+  if (input.references) blocks.push(input.references);
+  if (input.avoidTitles.length) blocks.push(`Ideas he has already seen (don't repeat these titles or their angles):\n${input.avoidTitles.map((t) => `- ${t}`).join('\n')}`);
+  if (input.craft) blocks.push(input.craft);
+  blocks.push(`How to answer
+- Give ${input.count} distinct song ideas. He sees them one at a time, so each must stand on its own.
+- "title": something he'd sing.
+- "titleParts": the title split into one or two natural phrase chunks that join back into the title exactly (word for word, same punctuation). Split where a singer would breathe or where the hook turns, never mechanically in half. One chunk is fine for a short title.
+- "concept": the playable emotional idea in one or two plain sentences, at most 45 words. It can be a stance, an accusation, a desire, an image, an observation, a rhythmic phrase, a character or a contradiction. Not a plot synopsis unless the direction asks for story. No justification of why it's good.
+- "lines": two to four lyric lines from inside the song. Lines only, no labels.
+- "note": empty unless something needs saying in one short line (for example: a reference you don't know, or that you have no live chart data and are writing to general contemporary pop).`);
+  return blocks.join('\n\n');
+}
+
+export type WorkspaceContext = {
+  meaning: string; narrator: string;
+  rhyme: { word: string; mode: 'fixed' | 'linked'; line?: string } | null;
+  rhythm: { sample: string; syllables: number } | null;
+};
+
+export function contextBlock(c: WorkspaceContext): string {
+  const parts: string[] = [];
+  if (c.narrator.trim()) parts.push(`- Narrator / who it's to: ${c.narrator.trim()}`);
+  if (c.meaning.trim()) parts.push(`- What it means right now: ${c.meaning.trim()}`);
+  if (c.rhyme?.word) parts.push(`- Rhyme target: land on a rhyme by sound with "${c.rhyme.word}"${c.rhyme.line ? ` (the end of "${c.rhyme.line}")` : ''}. Exact or a natural slant rhyme; meaning and natural phrasing first.`);
+  if (c.rhythm?.sample) parts.push(`- Rhythm template: match the shape of "${c.rhythm.sample}" (about ${c.rhythm.syllables} syllables by a rough count; put stresses where they fall in that phrase).`);
+  return parts.length ? `What he's holding onto right now (keep these unless his instruction changes them):\n${parts.join('\n')}` : '';
+}
+
+export function suggestPrompt(input: {
+  mode: 'replace' | 'add';
+  song: SongContext;
+  annotated: string;
+  targets: Array<{ id: string; describe: string }>;
+  insertAfter: string | null;
+  instruction: string;
+  context: string;
+  references: string;
+  avoid: string[];
+  count: number;
+  craft?: string;
+}): string {
+  const blocks: string[] = [];
+  blocks.push(`You are working on Sam's song "${input.song.title || 'untitled'}" with him.`);
+  if (input.song.brief.trim()) blocks.push(`His notes on the song (true facts about it):\n${input.song.brief.trim()}`);
+  blocks.push(input.mode === 'replace'
+    ? `The song. Lines marked 🔒 are locked. ⟦double brackets⟧ mark the words he selected:\n${input.annotated}`
+    : `The song so far (🔒 = locked):\n${input.annotated || '(empty so far)'}`);
+  if (input.context) blocks.push(input.context);
+  if (input.references) blocks.push(input.references);
+  if (input.craft) blocks.push(input.craft);
+  if (input.avoid.length) blocks.push(`Options he has already seen for this (don't repeat them or near-copies):\n${input.avoid.map((a) => `- ${a}`).join('\n')}`);
+  if (input.mode === 'replace') {
+    blocks.push(`Targets you may change, and nothing else:\n${input.targets.map((t) => `${t.id}: ${t.describe}`).join('\n')}`);
+    blocks.push(`His instruction:\n${input.instruction}`);
+    blocks.push(`How to answer
+- Give ${input.count} options. He sees one at a time and tries each against the melody.
+- Each option has exactly one entry per target, in order. "text" is the new text for that target only: for a selected span, just the words that replace the bracketed span (the words around it are re-attached automatically); for a whole line, the full new line.
+- No line breaks inside "text". Never touch anything outside the targets; keep the song's facts, narrator and tense unless his instruction changes them.
+- Match the length of what you replace unless he asks otherwise: a few words stay a few words.
+- Each option is a genuinely different solution, not one line with a word swapped. Include a straightforward one where it fits; not every option needs to be a punchline. Keep his register, bluntness and humour.
+- "update": if his instruction states or changes who is singing, who it's to, or what the line means, give the updated one-line version in "meaning"/"narrator"; otherwise empty strings.
+- "note": empty unless a constraint can't be met; then one short line saying which.`);
+  } else {
+    blocks.push(`Where the new lines go: ${input.insertAfter ? `after the line "${input.insertAfter}"` : 'at the end of the song'}.`);
+    blocks.push(`His instruction:\n${input.instruction}`);
+    blocks.push(`How to answer
+- Give ${input.count} options for new lines to add there. He sees one at a time.
+- Each option's "lines" are lyric lines only. Two to four lines unless he asks for a section or a specific count; if he asks for a whole section, you may start with one header line like "[Chorus]".
+- Never rewrite lines he already has. Never write the whole song unless he asks for it.
+- Each option is a genuinely different solution. Keep his register, bluntness and humour.
+- "update": if his instruction states or changes who is singing, who it's to, or what the song means, give the updated one-line version in "meaning"/"narrator"; otherwise empty strings.
+- "note": empty unless a constraint can't be met; then one short line saying which.`);
+  }
+  return blocks.join('\n\n');
+}
+
+export const REFERENCE_SYSTEM = `You identify music references for a professional songwriter's private writing app. Use web search. Report only what sources say; never guess and never quote lyrics. Keep it short.`;
+
+export function referencePrompt(query: string): string {
+  return `He typed this as a reference for a song he's writing: "${query}"
+
+Identify exactly which artist, song or album he means. Names can be ambiguous (e.g. ADÉLA the Slovak singer vs Adele). If one clearly fits, resolve it. If several plausibly fit, list them. If you can't find it, say so.
+
+Answer with one JSON object and nothing else:
+{"status":"resolved"|"ambiguous"|"not_found",
+ "candidates":[{"name":"...","kind":"artist"|"song"|"album","identity":"one line: who/what it is, year, key release","characteristics":["up to 5 short notes on how the writing works (stance, diction, humour, structure, title habits), only from what the sources say"]}]}
+For "resolved" give exactly one candidate. For "ambiguous" give two to four. For "not_found" give none.`;
+}

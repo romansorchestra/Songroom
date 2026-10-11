@@ -66,9 +66,10 @@ describe('writing and saving', () => {
     const save = () => api('POST', '/ideas', { sourceKey: `${reply.run_id}:i0`, kind: 'seed', title: idea.title, concept: idea.concept, lines: idea.lines, sourceRunId: reply.run_id });
     const a = await save(), b = await save();
     expect(a.body.id).toBe(b.body.id);
-    const j = (await api('GET', '/journal?filter=all')).body;
-    expect(j.ideas.length).toBe(1);
-    expect(j.ideas[0].lines.map((l: any) => l.text)).toEqual(idea.lines);
+    const j = (await api('GET', '/journal?filter=ideas')).body;
+    expect(j.entries.length).toBe(1);
+    const saved = (await api('GET', `/ideas/${j.entries[0].id}`)).body;
+    expect(saved.lines.map((l: any) => l.text)).toEqual(idea.lines);
   });
 });
 

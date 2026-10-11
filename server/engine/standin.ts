@@ -19,6 +19,23 @@ export class StandInWriter implements Writer {
   private fake(req: WriterRequest): unknown {
     const props = (req.schema as { properties: Record<string, unknown> }).properties;
     const c = { count: null, linesPerOption: null, mustStartWith: null, mustEndWith: null, forbidden: [] };
+    if ('ideas' in props && !('kind' in props)) {
+      const n = Number((req.user.match(/Give (\d+) distinct/) ?? [])[1] ?? 3);
+      const stamp = Math.random().toString(36).slice(2, 6);
+      return { note: '', ideas: Array.from({ length: n }, (_, i) => ({
+        title: `Stand-in title ${stamp}${i + 1}`, titleParts: [`Stand-in`, `title ${stamp}${i + 1}`],
+        concept: `[stand-in] Placeholder concept ${i + 1}. Not real writing.`,
+        lines: [`[stand-in] first thread line ${i + 1}a`, `[stand-in] first thread line ${i + 1}b`] })) };
+    }
+    if ('update' in props) {
+      const optProps = ((props.options as { items?: { properties?: Record<string, unknown> } })?.items?.properties) ?? {};
+      const upd = { meaning: '', narrator: '' };
+      if ('targets' in optProps) {
+        const n = (req.user.match(/^T\d+:/gm) ?? []).length;
+        return { note: '', update: upd, options: [1, 2, 3, 4].map((o) => ({ targets: Array.from({ length: n }, (_, i) => ({ target: `T${i + 1}`, text: `[stand-in ${o}]` })) })) };
+      }
+      return { note: '', update: upd, options: [1, 2, 3, 4].map((o) => ({ lines: [`[stand-in] new line ${o}a`, `[stand-in] new line ${o}b`] })) };
+    }
     if ('kind' in props) {
       if (/draft|write the song|full song/i.test((req.user.split('His request:').pop() ?? '').split('How to answer')[0]))
         return { kind: 'draft', reply: '[stand-in] Draft below.', ideas: [], options: [], draft: { sections: [

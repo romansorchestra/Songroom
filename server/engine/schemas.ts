@@ -158,3 +158,90 @@ export const sunoZ = z.object({
   outro: z.array(z.string()),
 });
 export type SunoOut = z.infer<typeof sunoZ>;
+
+// ---- workspace (approved design, 10 Oct 2026) ----
+export const sparkSchema = {
+  type: 'object',
+  properties: {
+    ideas: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          titleParts: { type: 'array', items: { type: 'string' } },
+          concept: { type: 'string' },
+          lines: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['title', 'titleParts', 'concept', 'lines'],
+        additionalProperties: false,
+      },
+    },
+    note: { type: 'string' },
+  },
+  required: ['ideas', 'note'],
+  additionalProperties: false,
+};
+
+export const sparkZ = z.object({
+  ideas: z.array(z.object({ title: z.string().min(1), titleParts: z.array(z.string()), concept: z.string(), lines: z.array(z.string()) })).min(1),
+  note: z.string(),
+});
+export type SparkOut = z.infer<typeof sparkZ>;
+
+const updateSchema = {
+  type: 'object',
+  properties: { meaning: { type: 'string' }, narrator: { type: 'string' } },
+  required: ['meaning', 'narrator'],
+  additionalProperties: false,
+};
+
+export const suggestReplaceSchema = {
+  type: 'object',
+  properties: {
+    options: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          targets: {
+            type: 'array',
+            items: { type: 'object', properties: { target: { type: 'string' }, text: { type: 'string' } }, required: ['target', 'text'], additionalProperties: false },
+          },
+        },
+        required: ['targets'],
+        additionalProperties: false,
+      },
+    },
+    update: updateSchema,
+    note: { type: 'string' },
+  },
+  required: ['options', 'update', 'note'],
+  additionalProperties: false,
+};
+
+export const suggestAddSchema = {
+  type: 'object',
+  properties: {
+    options: {
+      type: 'array',
+      items: { type: 'object', properties: { lines: { type: 'array', items: { type: 'string' } } }, required: ['lines'], additionalProperties: false },
+    },
+    update: updateSchema,
+    note: { type: 'string' },
+  },
+  required: ['options', 'update', 'note'],
+  additionalProperties: false,
+};
+
+const updateZ = z.object({ meaning: z.string(), narrator: z.string() });
+export const suggestReplaceZ = z.object({ options: z.array(z.object({ targets: z.array(z.object({ target: z.string(), text: z.string() })) })), update: updateZ, note: z.string() });
+export const suggestAddZ = z.object({ options: z.array(z.object({ lines: z.array(z.string()) })), update: updateZ, note: z.string() });
+
+export const referenceZ = z.object({
+  status: z.enum(['resolved', 'ambiguous', 'not_found']),
+  candidates: z.array(z.object({
+    name: z.string(), kind: z.string().default(''), identity: z.string().default(''),
+    characteristics: z.array(z.string()).default([]),
+  })).default([]),
+});

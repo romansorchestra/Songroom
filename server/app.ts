@@ -6,6 +6,7 @@ import { type AuthConfig, requireAuth, checkPassword, makeSession, setSessionCoo
 import { MODELS, RATES } from './engine/writer.js';
 import { startBatch, latestResults, vote } from './evals.js';
 import { startExperiment, listExperiments, judge, tally } from './experiments.js';
+import { Studio } from './studio.js';
 
 const targetZ = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('line'), lineId: z.string().max(40), expected: z.string().max(2000) }),
@@ -17,6 +18,7 @@ type H = (req: Request, res: Response) => Promise<unknown>;
 
 export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: string; writerLabel: string; writerLive: boolean }) {
   const app = express();
+  const studio = new Studio(svc);
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
   app.use(express.json({ limit: '1mb' }));
@@ -65,18 +67,19 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   api.post('/runs/:id/cancel', h(async (req) => svc.cancelRun(String(req.params.id))));
 
   // Journal
-  api.get('/journal', h(async (req) => svc.journal(String(req.query.q ?? ''), ['all', 'songs', 'seeds', 'lines', 'starred'].includes(String(req.query.filter)) ? String(req.query.filter) : 'all')));
+  api.get('/journal', h(async (req) => studio.journal(String(req.query.q ?? ''), ['all', 'ideas', 'fragments', 'songs'].includes(String(req.query.filter)) ? String(req.query.filter) : 'all')));
   api.post('/ideas', h(async (req) => {
     const b = z.object({ sourceKey: z.string().max(120).nullable(), kind: z.enum(['seed', 'line']), title: z.string().max(200), concept: z.string().max(2000),
       lines: z.array(z.string().max(1000)).max(40), sourceRunId: z.string().max(40).nullable().optional() }).parse(req.body);
     return svc.saveIdea(b);
   }));
-  api.get('/ideas/:id', h(async (req) => svc.idea(String(req.params.id))));
+  api.get('/ideas/:id', h(async (req) => studio.idea(String(req.params.id))));
   api.patch('/ideas/:id', h(async (req) => {
     const b = z.object({ title: z.string().max(200).optional(), concept: z.string().max(4000).optional(), lines: z.array(z.string().max(1000)).max(80).optional(),
-      notes: z.string().max(20000).optional(), starred: z.boolean().optional(), archived: z.boolean().optional() }).parse(req.body);
-    return svc.updateIdea(String(req.params.id), b);
+      notes: z.string().max(20000).optional(), starred: z.boolean().optional(), archived: z.boolean().optional(), pending: z.string().max(20000).optional(), saved: z.boolean().optional() }).parse(req.body);
+    return studio.patchIdea(String(req.params.id), b);
   }));
+  api.post('/ideas/:id/start', h(async (req) => studio.startWriting(String(req.params.id))));
   api.delete('/ideas/:id', h(async (req) => svc.deleteIdea(String(req.params.id))));
 
   // Songs
@@ -84,7 +87,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
     const b = z.object({ title: z.string().max(200).optional(), text: z.string().max(30000).optional(), ideaId: z.string().max(40).nullable().optional() }).parse(req.body);
     return svc.createSong(b);
   }));
-  api.get('/songs/:id', h(async (req) => svc.song(String(req.params.id))));
+  api.get('/songs/:id', h(async (req) => studio.workspace(String(req.params.id))));
   api.patch('/songs/:id', h(async (req) => {
     const b = z.object({ title: z.string().max(200).optional(), brief: z.string().max(8000).optional(), notes: z.string().max(20000).optional(),
       starred: z.boolean().optional(), archived: z.boolean().optional(), locks: z.array(z.string().max(40)).max(500).optional() }).parse(req.body);
@@ -117,6 +120,56 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
     const b = z.object({ hint: z.string().max(2000).default(''), clientKey: key }).parse(req.body);
     return svc.suno(String(req.params.id), { hint: b.hint, clientKey: b.clientKey ?? null });
   }));
+
+  // Springboard (approved design, 10 Oct 2026)
+  api.get('/springboard', h(async () => studio.springboard()));
+  api.put('/springboard/direction', h(async (req) => {
+    const b = z.object({ text: z.string().max(2000).optional(), refId: z.string().max(40).nullable().optional() }).parse(req.body);
+    return studio.setDirection(b);
+  }));
+  api.post('/springboard/next', h(async (req) => studio.sparkNext(z.object({ clientKey: key }).parse(req.body).clientKey ?? null)));
+  api.post('/springboard/current', h(async (req) => studio.setCurrent(z.object({ ideaId: z.string().max(40) }).parse(req.body).ideaId)));
+  api.get('/recent', h(async () => studio.recent()));
+
+  // Fragments
+  api.post('/fragments', h(async (req) => {
+    const b = z.object({ ideaId: z.string().max(40).nullable().optional(), songId: z.string().max(40).nullable().optional(), text: z.string().max(20000), clientKey: key, source: z.enum(['typed', 'suggestion']).optional() }).parse(req.body);
+    return studio.addFragment(b);
+  }));
+  api.patch('/fragments/:id', h(async (req) => studio.updateFragment(String(req.params.id), z.object({ saved: z.boolean().optional(), text: z.string().max(20000).optional() }).parse(req.body))));
+  api.delete('/fragments/:id', h(async (req) => studio.deleteFragment(String(req.params.id))));
+
+  // Song workspace
+  api.patch('/songs/:id/context', h(async (req) => {
+    const b = z.object({ meaning: z.string().max(500).optional(), narrator: z.string().max(300).optional(),
+      rhyme: z.object({ word: z.string().max(60).optional(), lineId: z.string().max(40).optional() }).nullable().optional(),
+      rhythm: z.object({ sample: z.string().max(300) }).nullable().optional(), refIds: z.array(z.string().max(40)).max(3).optional(), clearNotice: z.boolean().optional() }).parse(req.body);
+    return studio.setContext(String(req.params.id), b);
+  }));
+  api.post('/songs/:id/suggest', h(async (req) => {
+    const b = z.object({ baseRev: z.number().int(), targets: z.array(targetZ).max(40).default([]), afterLineId: z.string().max(40).nullable().optional(),
+      instruction: z.string().max(4000), clientKey: key, parentSetId: z.string().max(40).nullable().optional() }).parse(req.body);
+    return studio.suggest(String(req.params.id), { ...b, clientKey: b.clientKey ?? null });
+  }));
+  api.get('/suggestions/:id', h(async (req) => studio.suggestionSet(String(req.params.id))));
+  api.post('/songs/:id/keep', h(async (req) => {
+    const b = z.object({ setId: z.string().max(40), index: z.number().int().min(0).max(20), clientKey: key }).parse(req.body);
+    return studio.keep(String(req.params.id), { ...b, clientKey: b.clientKey ?? null });
+  }));
+  api.post('/songs/:id/add', h(async (req) => {
+    const b = z.object({ baseRev: z.number().int(), afterLineId: z.string().max(40).nullable(), text: z.string().max(8000), clientKey: key, source: z.enum(['seed', 'scrap']) }).parse(req.body);
+    return studio.addToLyrics(String(req.params.id), { ...b, clientKey: b.clientKey ?? null });
+  }));
+
+  // References
+  api.post('/references/resolve', h(async (req) => {
+    const b = z.object({ query: z.string().max(8000), clientKey: key }).parse(req.body);
+    return studio.resolveRef(b.query, b.clientKey ?? null);
+  }));
+  api.get('/references/:id', h(async (req) => studio.ref(String(req.params.id))));
+  api.post('/references/:id/choose', h(async (req) => studio.chooseRef(String(req.params.id), z.object({ index: z.number().int().min(0).max(5) }).parse(req.body).index)));
+  api.post('/references/:id/reject', h(async (req) => studio.rejectRef(String(req.params.id))));
+  api.patch('/references/:id', h(async (req) => studio.patchRef(String(req.params.id), z.object({ want: z.string().max(1000).optional() }).parse(req.body))));
 
   // Settings
   api.patch('/settings', h(async (req) => {

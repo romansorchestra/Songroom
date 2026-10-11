@@ -97,3 +97,23 @@ export function checkCandidate(lines: string[], c: Constraints, opts: { checkEnd
     checks.push({ label: `avoids ${c.forbidden.map((w) => `“${w}”`).join(', ')}`, ok: true });
   return checks;
 }
+
+/** Rough English syllable count. Assistance only; never proof of melodic fit. */
+export function syllables(text: string): number {
+  let n = 0;
+  for (const raw of text.toLowerCase().normalize('NFC').replace(/[‘’]/g, "'").match(/[a-z']+/g) ?? []) {
+    let w = raw.replace(/'/g, '');
+    if (!w) continue;
+    if (w.length <= 3) { n += 1; continue; }
+    w = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '').replace(/^y/, '');
+    const groups = w.match(/[aeiouy]{1,2}/g);
+    n += Math.max(1, groups ? groups.length : 1);
+  }
+  return n;
+}
+
+/** The last word of a line, lower-cased, for rhyme targets. */
+export function endWord(line: string): string {
+  const words = line.replace(/\([^)]*\)\s*$/, '').match(/[\p{L}\p{N}'’-]+/gu);
+  return words?.length ? words[words.length - 1].replace(/’/g, "'") : '';
+}

@@ -13,7 +13,8 @@ export interface Db {
 }
 
 /** Columns holding JSON text. They are parsed when read. */
-const JSON_COLS = new Set(['value', 'request', 'result', 'error', 'usage', 'payload', 'lines', 'original', 'locks', 'suno', 'sections', 'trial']);
+const JSON_COLS = new Set(['value', 'request', 'result', 'error', 'usage', 'payload', 'lines', 'original', 'locks', 'suno', 'sections', 'trial',
+  'steer', 'title_parts', 'context', 'targets', 'items', 'details', 'candidates']);
 
 function toParam(v: unknown): null | number | bigint | string | Uint8Array {
   if (v === undefined || v === null) return null;
@@ -69,13 +70,13 @@ export async function openDb(file?: string): Promise<Db> {
         throw e;
       }
     }),
-    close: async () => { await chain; sqlite.close(); },
+    close: async () => { await chain; if (sqlite.isOpen) sqlite.close(); },
   };
 }
 
 const TS = `TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))`;
 
-const MIGRATIONS: string[] = [
+export const MIGRATIONS: string[] = [
   `CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
    CREATE TABLE threads (
      id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', song_id TEXT, kind TEXT NOT NULL DEFAULT 'normal',
@@ -119,6 +120,41 @@ const MIGRATIONS: string[] = [
      id TEXT PRIMARY KEY, batch TEXT NOT NULL, brief_id TEXT NOT NULL, repeat INTEGER NOT NULL DEFAULT 1,
      trial TEXT NOT NULL, vote TEXT, stars TEXT, note TEXT, created_at ${TS});
    CREATE INDEX experiments_batch ON experiments(batch, created_at)`,
+  // 3 (10 Oct 2026): the approved springboard/workspace design. Additive only: every
+  // existing idea stays a saved Journal entry; old songs keep their lyrics as they are.
+  `ALTER TABLE ideas ADD COLUMN saved INTEGER NOT NULL DEFAULT 1;
+   ALTER TABLE ideas ADD COLUMN origin TEXT NOT NULL DEFAULT 'journal';
+   ALTER TABLE ideas ADD COLUMN state TEXT NOT NULL DEFAULT 'shown';
+   ALTER TABLE ideas ADD COLUMN shown_at TEXT;
+   ALTER TABLE ideas ADD COLUMN batch_id TEXT;
+   ALTER TABLE ideas ADD COLUMN palette TEXT;
+   ALTER TABLE ideas ADD COLUMN title_parts TEXT;
+   ALTER TABLE ideas ADD COLUMN steer TEXT NOT NULL DEFAULT '{}';
+   ALTER TABLE ideas ADD COLUMN pending TEXT NOT NULL DEFAULT '';
+   ALTER TABLE ideas ADD COLUMN note TEXT NOT NULL DEFAULT '';
+   ALTER TABLE ideas ADD COLUMN song_id TEXT;
+   ALTER TABLE ideas ADD COLUMN saved_at TEXT;
+   UPDATE ideas SET palette = CASE rowid % 3 WHEN 1 THEN 'ochre' WHEN 2 THEN 'sage' ELSE 'blue' END WHERE palette IS NULL;
+   CREATE INDEX ideas_spark ON ideas(origin, state, shown_at);
+   ALTER TABLE songs ADD COLUMN palette TEXT;
+   ALTER TABLE songs ADD COLUMN context TEXT NOT NULL DEFAULT '{}';
+   CREATE TABLE fragments (
+     id TEXT PRIMARY KEY, idea_id TEXT, song_id TEXT, text TEXT NOT NULL, saved INTEGER NOT NULL DEFAULT 0,
+     source TEXT NOT NULL DEFAULT 'typed', client_key TEXT UNIQUE, saved_at TEXT, created_at ${TS}, updated_at ${TS});
+   CREATE INDEX fragments_idea ON fragments(idea_id, created_at);
+   CREATE INDEX fragments_song ON fragments(song_id, created_at);
+   CREATE TABLE suggestion_sets (
+     id TEXT PRIMARY KEY, song_id TEXT NOT NULL, run_id TEXT, base_rev INTEGER NOT NULL, mode TEXT NOT NULL,
+     targets TEXT NOT NULL, instruction TEXT NOT NULL, context TEXT NOT NULL, items TEXT, status TEXT NOT NULL,
+     error TEXT, parent_id TEXT, client_key TEXT UNIQUE, created_at ${TS});
+   CREATE INDEX suggestion_sets_song ON suggestion_sets(song_id, created_at);
+   CREATE TABLE refs (
+     id TEXT PRIMARY KEY, query TEXT NOT NULL, norm TEXT NOT NULL, status TEXT NOT NULL, name TEXT NOT NULL DEFAULT '',
+     kind TEXT NOT NULL DEFAULT '', identity TEXT NOT NULL DEFAULT '', want TEXT NOT NULL DEFAULT '', details TEXT NOT NULL DEFAULT '{}',
+     candidates TEXT NOT NULL DEFAULT '[]', source TEXT NOT NULL DEFAULT '', rejected INTEGER NOT NULL DEFAULT 0, run_id TEXT,
+     created_at ${TS}, updated_at ${TS});
+   CREATE INDEX refs_norm ON refs(norm);
+   CREATE TABLE client_actions (key TEXT PRIMARY KEY, result TEXT NOT NULL, created_at ${TS})`,
 ];
 
 export async function migrate(db: Db): Promise<void> {
