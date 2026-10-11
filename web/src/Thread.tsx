@@ -122,8 +122,8 @@ export function ThreadView(props: {
   const develop = async (key: string, runId: string, idea: Idea) => {
     const id = data?.saved[key] ?? await saveIdea(key, runId, idea);
     if (!id) return;
-    const s = await api('POST', '/songs', { ideaId: id });
-    go(`/song/${s.id}`);
+    const s = await api('POST', `/ideas/${id}/start`);
+    go(`/song/${s.songId}`);
   };
 
   const useDraft = async (runId: string, draft: NonNullable<Payload['draft']>) => {
@@ -170,21 +170,19 @@ export function ThreadView(props: {
         <div ref={bottom} />
       </div>
 
-      <div className="composer">
-        <div className="inner">
-          {focus && <div className="chip">More like {focus.label}<button className="iconbtn" aria-label="Clear" onClick={() => setFocus(null)}>×</button></div>}
-          {reference !== null && (
-            <input type="text" value={reference} autoFocus placeholder="Reference song – and what you like about it (optional)"
-              onChange={(e) => setReference(e.target.value)} aria-label="Reference" />
-          )}
-          <div className="line">
-            <textarea ref={taRef} rows={1} value={text} placeholder={props.placeholder} aria-label={props.placeholder}
-              onChange={(e) => { setText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }}
-              onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); } }} />
-            <button className="btn send" aria-label="Send" disabled={!text.trim() || !!running} onClick={() => void send()}>{Icon.send}</button>
-          </div>
-          {reference === null && <button className="linkbtn" onClick={() => setReference('')}>Add a reference</button>}
+      <div className="thread-composer">
+        {focus && <div className="chip">More like {focus.label} <button className="tb" aria-label="Clear" onClick={() => setFocus(null)}>×</button></div>}
+        {reference !== null && (
+          <input className="line" type="text" value={reference} autoFocus placeholder="Reference song, and what you like about it (optional)"
+            onChange={(e) => setReference(e.target.value)} aria-label="Reference" />
+        )}
+        <div className="ask-row">
+          <textarea ref={taRef} rows={1} value={text} placeholder={props.placeholder} aria-label={props.placeholder}
+            onChange={(e) => { setText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); } }} />
+          <button className="tb" disabled={!text.trim() || !!running} onClick={() => void send()}>Send</button>
         </div>
+        {reference === null && <button className="linkbtn" onClick={() => setReference('')}>Add a reference</button>}
       </div>
     </>
   );

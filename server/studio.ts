@@ -113,9 +113,11 @@ export class Studio {
     const [lastFail] = await this.db.query<{ id: string; status: string; error: { message?: string } | null; created_at: string }>(
       `SELECT id, status, error, created_at FROM runs WHERE task='spark' ORDER BY created_at DESC LIMIT 1`);
     const [{ n: queued }] = await this.db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ideas WHERE origin='spark' AND state='queued' AND steer=$1`, [stableDir(direction)]);
+    let number = 0;
+    if (current?.shown_at) [{ n: number }] = await this.db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ideas WHERE origin='spark' AND state='shown' AND shown_at <= $1`, [current.shown_at]);
     return {
       direction, reference: direction.refId ? await this.ref(direction.refId).catch(() => null) : null,
-      current, prevId, nextId, queued: Number(queued),
+      current, prevId, nextId, queued: Number(queued), number: Number(number),
       runId: running?.id ?? null,
       lastError: lastFail && lastFail.status !== 'succeeded' && lastFail.status !== 'running' ? (lastFail.error?.message ?? 'That request failed.') : null,
       writer: { connected: !!this.svc.writer, live: !!this.svc.writer?.live },
@@ -210,6 +212,26 @@ export class Studio {
       },
     });
     return { shown: false, runId: run.id };
+  }
+
+  /** A starting point he types himself: his words become the idea's first thread, exactly. */
+  async ownIdea(textRaw: string, clientKey: string | null) {
+    return this.once(clientKey, async () => {
+      const text = textRaw.replace(/\r\n?/g, '\n');
+      const lines = text.split('\n').map((l) => l.replace(/\s+$/, '')).filter((l) => l.trim());
+      if (!lines.length) throw new AppError(400, 'empty', 'Type a line first.');
+      const [{ n }] = await this.db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ideas WHERE origin='spark'`);
+      const id = newId('i_');
+      const title = lines[0].trim().slice(0, 120);
+      const now = new Date().toISOString();
+      await this.db.query(
+        `INSERT INTO ideas(id, kind, title, concept, lines, original, motif, saved, origin, state, shown_at, palette, steer)
+         VALUES ($1,'seed',$2,'',$3,$4,$5,0,'spark','shown',$6,$7,$8)`,
+        [id, title, JSON.stringify(lines.map((t) => ({ id: newId('l_'), text: t }))), JSON.stringify({ title, concept: '', lines, typed: true }), motifFor(id), now,
+          PALETTES[Number(n) % 3], stableDir(await this.direction())]);
+      await this.setKv('sb.current', id);
+      return { ideaId: id };
+    });
   }
 
   async recent(limit = 40) {

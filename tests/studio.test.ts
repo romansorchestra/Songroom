@@ -68,6 +68,19 @@ describe('springboard', () => {
     expect(back.nextId).toBe(second.current.id);
   });
 
+  it('a line he types becomes the idea exactly, with no writer call and no duplicate on a double tap', async () => {
+    await boot(new StandInWriter());
+    const typed = 'Half a line about  the ferry\n\n  and the second one ';
+    const a = await api('POST', '/springboard/own', { text: typed, clientKey: 'own1' });
+    const b = await api('POST', '/springboard/own', { text: typed, clientKey: 'own1' });
+    expect(a.status).toBe(200); expect(b.status).toBe(200);
+    expect(a.body.current.id).toBe(b.body.current.id);
+    expect(a.body.current.lines.map((l: any) => l.text)).toEqual(['Half a line about  the ferry', '  and the second one']);
+    expect(a.body.current.saved).toBe(false);
+    expect((await api('GET', '/receipts')).body.length).toBe(0);
+    expect((await api('POST', '/springboard/own', { text: '  \n ' })).status).toBe(400);
+  });
+
   it('double taps send one paid request', async () => {
     await boot(new StandInWriter());
     const [a, b] = await Promise.all([api('POST', '/springboard/next', { clientKey: 'x1' }), api('POST', '/springboard/next', { clientKey: 'x2' })]);

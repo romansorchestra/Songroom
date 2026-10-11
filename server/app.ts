@@ -129,6 +129,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   }));
   api.post('/springboard/next', h(async (req) => studio.sparkNext(z.object({ clientKey: key }).parse(req.body).clientKey ?? null)));
   api.post('/springboard/current', h(async (req) => studio.setCurrent(z.object({ ideaId: z.string().max(40) }).parse(req.body).ideaId)));
+  api.post('/springboard/own', h(async (req) => { const b = z.object({ text: z.string().max(4000), clientKey: key }).parse(req.body); await studio.ownIdea(b.text, b.clientKey ?? null); return studio.springboard(); }));
   api.get('/recent', h(async () => studio.recent()));
 
   // Fragments

@@ -1,90 +1,57 @@
+// Journal: the collection of deliberately saved ideas, fragments and songs.
+// Not a feed. Each entry opens the thing itself; palettes are the item's own.
+
 import { useEffect, useState } from 'react';
-import { api, type Section } from './api';
-import { Motif, timeAgo } from './bits';
+import { api } from './api';
+import { palClass, Pending } from './paper';
 import { go } from './App';
 
-type IdeaRow = { id: string; kind: 'seed' | 'line'; title: string; concept: string; lines: Array<{ text: string }>; starred: boolean; motif: number; updated_at: string };
-type SongRow = { id: string; title: string; brief: string; starred: boolean; motif: number; updated_at: string; sections: Section[] };
-
-const FILTERS: Array<[string, string]> = [['all', 'Everything'], ['songs', 'Songs'], ['seeds', 'Seeds'], ['lines', 'Lines'], ['starred', 'Starred']];
+type Entry = { type: 'idea' | 'fragment' | 'song'; id: string; at: string; palette: string; title: string; text: string; parent?: { id: string; title: string } | null; legacy?: boolean };
+const FILTERS: Array<[string, string]> = [['all', 'All'], ['ideas', 'Ideas'], ['fragments', 'Fragments'], ['songs', 'Songs']];
 
 export function Journal() {
+  const [filter, setFilter] = useState(() => { try { return sessionStorage.getItem('journal.filter') || 'all'; } catch { return 'all'; } });
   const [q, setQ] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [data, setData] = useState<{ ideas: IdeaRow[]; songs: SongRow[] } | null>(null);
+  const [entries, setEntries] = useState<Entry[] | null>(null);
   const [err, setErr] = useState('');
-  const [newSong, setNewSong] = useState(false);
-
   useEffect(() => {
-    const t = setTimeout(() => {
-      api('GET', `/journal?q=${encodeURIComponent(q)}&filter=${filter}`).then((d) => { setData(d); setErr(''); }).catch((e) => setErr(e.message));
+    try { sessionStorage.setItem('journal.filter', filter); } catch { /* fine */ }
+    const t = window.setTimeout(() => {
+      api<{ entries: Entry[] }>('GET', `/journal?filter=${filter}&q=${encodeURIComponent(q)}`).then((r) => { setEntries(r.entries); setErr(''); }).catch((e) => setErr(e.message));
     }, q ? 250 : 0);
-    return () => clearTimeout(t);
-  }, [q, filter]);
+    return () => window.clearTimeout(t);
+  }, [filter, q]);
 
-  const items = [
-    ...(data?.songs ?? []).map((s) => ({ type: 'song' as const, at: s.updated_at, s })),
-    ...(data?.ideas ?? []).map((i) => ({ type: 'idea' as const, at: i.updated_at, i })),
-  ].sort((a, b) => (a.at < b.at ? 1 : -1));
+  function open(e: Entry) {
+    if (e.type === 'song') go(`/song/${e.id}`);
+    else if (e.type === 'idea' || e.legacy) go(`/idea/${e.id}`);
+    else if (e.parent?.id.startsWith('song:')) go(`/song/${e.parent.id.slice(5)}`);
+    else if (e.parent) go(`/idea/${e.parent.id}`);
+  }
 
   return (
-    <>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <h1 style={{ fontSize: 30 }}>Journal</h1>
-        <button className="btn quiet sm" onClick={() => setNewSong(true)}>New song</button>
-      </div>
-      {newSong && <NewSong onClose={() => setNewSong(false)} />}
-      <div style={{ marginTop: 12 }}>
-        <input type="text" placeholder="Search titles, lines and notes" aria-label="Search" value={q} onChange={(e) => setQ(e.target.value)} />
-      </div>
-      <div className="filters" role="group" aria-label="Filter">
+    <div className="pal-ochre">
+      <div className="eyebrow">Keep the sparks</div>
+      <h2 className="page-title">Your journal.</h2>
+      <div className="filters" role="group" aria-label="Show">
         {FILTERS.map(([k, label]) => <button key={k} aria-pressed={filter === k} onClick={() => setFilter(k)}>{label}</button>)}
       </div>
-      {err && <div className="error">{err}</div>}
-      {data && !items.length && (
-        <div className="empty muted">{q || filter !== 'all' ? 'Nothing matches.' : 'Nothing saved yet. Save an idea from Write, or start a song.'}</div>
+      <input className="line" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search your words" aria-label="Search the journal" />
+      {err && <div className="status err" role="alert">{err}</div>}
+      {!entries && !err && <div style={{ marginTop: 16 }}><Pending text="Opening…" /></div>}
+      {entries && !entries.length && (
+        <p className="empty-note" style={{ marginTop: 18 }}>{q || filter !== 'all' ? 'Nothing here matches.' : 'Save an idea or a little fragment. It will be waiting here.'}</p>
       )}
-      <div className="pages">
-        {items.map((it) => it.type === 'song' ? (
-          <a key={it.s.id} className="page-link" href={`#/song/${it.s.id}`}>
-            <article className="sheet">
-              <Motif n={it.s.motif} />
-              <div className="kind">{it.s.starred ? '★ ' : ''}Song, edited {timeAgo(it.s.updated_at)}</div>
-              <h2 className="title">{it.s.title || 'Untitled'}</h2>
-              <div className="lyrics clip">{it.s.sections.flatMap((x) => x.lines.map((l) => l.text)).slice(0, 4).join('\n') || it.s.brief}</div>
-            </article>
-          </a>
-        ) : (
-          <a key={it.i.id} className="page-link" href={`#/idea/${it.i.id}`}>
-            <article className="sheet">
-              <Motif n={it.i.motif} />
-              <div className="kind">{it.i.starred ? '★ ' : ''}{it.i.kind === 'line' ? 'Line' : 'Seed'}, saved {timeAgo(it.i.updated_at)}</div>
-              {it.i.kind === 'seed' && <h2 className="title">{it.i.title || 'Untitled'}</h2>}
-              {it.i.kind === 'seed' && it.i.concept && <p className="concept clip">{it.i.concept}</p>}
-              <div className="lyrics clip">{it.i.lines.map((l) => l.text).join('\n')}</div>
-            </article>
-          </a>
+      <div>
+        {entries?.map((e) => (
+          <button key={`${e.type}:${e.id}`} className={`journal-entry ${palClass(e.palette)}`} onClick={() => open(e)}>
+            <small>{e.type === 'song' ? 'Song in progress' : e.type === 'idea' ? 'Idea' : e.parent?.title ? `Fragment · ${e.parent.title}` : 'Fragment'}</small>
+            {e.type === 'fragment'
+              ? <span className={`frag ${e.text.length > 90 ? 'long' : ''}`}>{e.text}</span>
+              : <><strong>{e.title || 'Untitled'}</strong>{e.text && <span className="line1">{e.text}</span>}</>}
+          </button>
         ))}
       </div>
-    </>
-  );
-}
-
-function NewSong({ onClose }: { onClose: () => void }) {
-  const [title, setTitle] = useState('');
-  const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-  async function create() {
-    setBusy(true);
-    try { const s = await api('POST', '/songs', { title, text }); go(`/song/${s.id}`); } catch (e) { setErr((e as Error).message); setBusy(false); }
-  }
-  return (
-    <div className="editsheet" style={{ marginTop: 12 }}>
-      <input type="text" placeholder="Title" aria-label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-      <textarea rows={8} placeholder={'Paste or type lyrics (optional).\n[Verse 1], [Chorus] etc. become sections.'} aria-label="Lyrics" value={text} onChange={(e) => setText(e.target.value)} />
-      {err && <div className="error">{err}</div>}
-      <div className="row"><button className="btn" disabled={busy} onClick={create}>Create song</button><button className="btn quiet" onClick={onClose}>Cancel</button></div>
     </div>
   );
 }

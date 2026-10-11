@@ -11,9 +11,11 @@ Private songwriting app for Sam (single user). Spec: `docs/PRODUCT_SPEC.md` (ame
 
 ## Layout
 - `server/engine/` writer adapter, prompts (versioned; bump `PROMPT_VERSION` on change, keep old variants verbatim), schemas, validators, lyric model, `pack.ts` (research pack loader + retriever)
+- `server/studio.ts` the approved design's operations (springboard, fragments, workspace suggestions, references); `shared/lyricShape.ts` line rules used by server and browser
 - `server/service.ts` all domain operations; `server/app.ts` routes; `server/evals.ts` the 12-brief test pack; `server/experiments.ts` blind prompt/research comparison
 - `research/` the songwriting-craft research: `PLAN.md` (audit), `SCHEMA.md`, `pack/` (the retrievable collection: cards, profiles, pairs, sources, manifest), `raw/` (agent findings), `SUMMARY.md`, `INTEGRATION.md`. Rebuild the pack with `python3 -I research/build_cards.py` etc. Never quote lyrics into it.
-- `web/src/` React app (Write, Journal, Song page, Settings)
+- `web/src/` React app: `Springboard.tsx` (Write), `Workspace.tsx` (song), `Journal.tsx`, `Direction.tsx` (references), `paper.tsx` (shared pieces), `Settings.tsx`, `Thread.tsx` (earlier sessions). Design source: `docs/design/`. Check layout at 320/393/430/768/1440 and dark.
+- Model choice is a setting only; do not tune prompts to unfinished blind votes.
 - `tests/` vitest: lyric safety + HTTP end-to-end with deliberately badly-behaved writer doubles
 
 ## Commands
