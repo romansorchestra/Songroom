@@ -163,7 +163,7 @@ export class Studio {
     if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected. Add the Anthropic API key in Render to generate ideas.');
 
     const s = await this.svc.settings();
-    const plan: PromptPlan = { variant: PROMPT_VERSION, pack: s.craftPack };
+    const plan: PromptPlan = { variant: PROMPT_VERSION, pack: s.craftPack === 'all' }; // ideas: only when notes are on for everything
     const refs = direction.refId ? await this.refsForPrompt([direction.refId]) : [];
     const recent = await this.db.query<{ title: string }>(`SELECT title FROM ideas WHERE origin='spark' AND state IN ('shown','queued') ORDER BY created_at DESC LIMIT 15`);
     const craft = this.svc.craftFor(plan, { text: direction.text || 'song ideas', reference: refs.map((r) => r.name).join(', ') || null, task: 'ideas' });
@@ -630,7 +630,8 @@ export class Studio {
     const wctx: WorkspaceContext = { meaning: view.meaning, narrator: view.narrator, rhyme: view.rhyme ? { word: view.rhyme.word, mode: view.rhyme.mode, line: view.rhyme.line ?? undefined } : null, rhythm: view.rhythm };
     const refs = await this.refsForPrompt(nextCtx.refIds ?? []);
     const s = await this.svc.settings();
-    const plan: PromptPlan = { variant: PROMPT_VERSION, pack: s.craftPack };
+    // Replacements count as precise edits (notes on by default); added lines follow the 'all' scope.
+    const plan: PromptPlan = { variant: PROMPT_VERSION, pack: mode === 'replace' ? s.craftPack !== 'off' : s.craftPack === 'all' };
     const craft = this.svc.craftFor(plan, { text: instruction, brief: ctx.brief, reference: refs.map((r) => r.name).join(', ') || null, task: mode === 'replace' ? 'edit' : 'lines' });
     const targetDescs = targets.map((t, i) => {
       const line = findLine(ctx.sections, t.lineId)!;
