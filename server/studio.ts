@@ -109,8 +109,8 @@ export class Studio {
     const current = currentId ? await this.idea(currentId).catch(() => null) : null;
     let prevId: string | null = null, nextId: string | null = null;
     if (current?.shown_at) {
-      const [p] = await this.db.query<{ id: string }>(`SELECT id FROM ideas WHERE origin='spark' AND state='shown' AND (shown_at < $1 OR (shown_at = $1 AND rowid < (SELECT rowid FROM ideas WHERE id=$2))) ORDER BY shown_at DESC, rowid DESC LIMIT 1`, [current.shown_at, current.id]);
-      const [n] = await this.db.query<{ id: string }>(`SELECT id FROM ideas WHERE origin='spark' AND state='shown' AND (shown_at > $1 OR (shown_at = $1 AND rowid > (SELECT rowid FROM ideas WHERE id=$2))) ORDER BY shown_at ASC, rowid ASC LIMIT 1`, [current.shown_at, current.id]);
+      const [p] = await this.db.query<{ id: string }>(`SELECT id FROM ideas WHERE origin='spark' AND state='shown' AND NOT archived AND (shown_at < $1 OR (shown_at = $1 AND rowid < (SELECT rowid FROM ideas WHERE id=$2))) ORDER BY shown_at DESC, rowid DESC LIMIT 1`, [current.shown_at, current.id]);
+      const [n] = await this.db.query<{ id: string }>(`SELECT id FROM ideas WHERE origin='spark' AND state='shown' AND NOT archived AND (shown_at > $1 OR (shown_at = $1 AND rowid > (SELECT rowid FROM ideas WHERE id=$2))) ORDER BY shown_at ASC, rowid ASC LIMIT 1`, [current.shown_at, current.id]);
       prevId = p?.id ?? null; nextId = n?.id ?? null;
     }
     const [running] = await this.db.query<{ id: string; error: unknown }>(`SELECT id, error FROM runs WHERE task='spark' AND status='running' ORDER BY created_at DESC LIMIT 1`);
@@ -118,7 +118,7 @@ export class Studio {
       `SELECT id, status, error, created_at FROM runs WHERE task='spark' ORDER BY created_at DESC LIMIT 1`);
     const [{ n: queued }] = await this.db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ideas WHERE origin='spark' AND state='queued' AND steer=$1`, [stableDir(direction)]);
     let number = 0;
-    if (current?.shown_at) [{ n: number }] = await this.db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ideas WHERE origin='spark' AND state='shown' AND shown_at <= $1`, [current.shown_at]);
+    if (current?.shown_at) [{ n: number }] = await this.db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ideas WHERE origin='spark' AND state='shown' AND NOT archived AND shown_at <= $1`, [current.shown_at]);
     return {
       direction, reference: direction.refId ? await this.ref(direction.refId).catch(() => null) : null,
       current, prevId, nextId, queued: Number(queued), number: Number(number),

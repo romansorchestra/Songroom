@@ -81,6 +81,19 @@ describe('springboard', () => {
     expect((await api('POST', '/springboard/own', { text: '  \n ' })).status).toBe(400);
   });
 
+  it('an archived idea drops out of Previous / Next and the count (11 Oct, after test ideas were hidden)', async () => {
+    await boot(new StandInWriter());
+    const a = await firstIdea();
+    const b = (await api('POST', '/springboard/next', { clientKey: 'n2' })).body;
+    const c = (await api('POST', '/springboard/next', { clientKey: 'n3' })).body;
+    expect(c.prevId).toBe(b.current.id);
+    await api('PATCH', `/ideas/${b.current.id}`, { archived: true });
+    const now = (await api('GET', '/springboard')).body;
+    expect(now.prevId).toBe(a.current.id);
+    expect(now.number).toBe(2);
+    expect((await api('GET', '/recent')).body.ideas.map((i: any) => i.id)).not.toContain(b.current.id);
+  });
+
   it('double taps send one paid request', async () => {
     await boot(new StandInWriter());
     const [a, b] = await Promise.all([api('POST', '/springboard/next', { clientKey: 'x1' }), api('POST', '/springboard/next', { clientKey: 'x2' })]);
