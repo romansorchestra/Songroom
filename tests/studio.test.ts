@@ -403,6 +403,14 @@ describe('ideas grounded in the chart, rework and page lines (11 Oct)', () => {
     await api('POST', '/springboard/next', { clientKey: 'c1' }); await svc.idle();
     expect(users.at(-1)).toMatch(/country songs that actually charted/);
     expect((await api('PUT', '/springboard/direction', { genre: 'polka' })).status).toBe(400);
+    // the diary-pop lane (11 Oct research): its own mix and its own note; naming its writers in the direction picks it too
+    await api('PUT', '/springboard/direction', { genre: 'diary_pop' });
+    await api('POST', '/springboard/next', { clientKey: 'c2' }); await svc.idle();
+    expect(users.at(-1)).toContain('diary-pop lane');
+    expect(users.at(-1)).toContain('Not a mood: a situation');
+    await api('PUT', '/springboard/direction', { genre: '', text: 'like Gracie Abrams, sharp and sad' });
+    await api('POST', '/springboard/next', { clientKey: 'c3' }); await svc.idle();
+    expect(users.at(-1)).toContain('diary-pop lane');
   });
 
   it('the next batch is fetched ahead when the queue runs out, without stealing the screen', async () => {

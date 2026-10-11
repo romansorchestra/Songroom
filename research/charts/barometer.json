@@ -238,6 +238,79 @@
    },
    "n": 270,
    "relationship": 0.622
+  },
+  "diary_pop": {
+   "n": 233,
+   "relationship": 0.828,
+   "subject": {
+    "breakup_heartbreak": 0.219,
+    "relationship_trouble": 0.215,
+    "desire": 0.142,
+    "romantic_love": 0.137,
+    "struggle_inner": 0.077,
+    "longing_unrequited": 0.056,
+    "self_confidence": 0.052,
+    "story_character": 0.03,
+    "other": 0.013,
+    "party_nightlife": 0.013,
+    "nostalgia_hometown": 0.013,
+    "social_political": 0.013,
+    "lifestyle_place": 0.009,
+    "flex_money_status": 0.009,
+    "family_friends": 0.004
+   },
+   "perspective": {
+    "I_to_you": 0.627,
+    "I_about_me": 0.245
+   },
+   "explicitness": {
+    "suggestive": 0.258,
+    "clean": 0.657,
+    "explicit": 0.086
+   },
+   "title_device": {
+    "plain_phrase": 0.605,
+    "metaphor_image": 0.233,
+    "other": 0.062,
+    "name_or_brand": 0.047,
+    "place": 0.039,
+    "number_or_date": 0.016
+   },
+   "concept_scale": {
+    "everyday": 0.496,
+    "twisted_everyday": 0.419,
+    "high_concept": 0.085
+   },
+   "register": {
+    "imagistic": 0.206,
+    "mixed": 0.094,
+    "conversational": 0.567,
+    "narrative": 0.082,
+    "anthemic": 0.052
+   },
+   "tone": {
+    "horny": 0.086,
+    "anxious": 0.099,
+    "sad": 0.189,
+    "tender": 0.133,
+    "bitter": 0.086,
+    "joyful": 0.09,
+    "wry": 0.15,
+    "angry": 0.017,
+    "defiant": 0.129,
+    "nostalgic": 0.021
+   },
+   "devices": {
+    "humour": 0.326,
+    "repetition_hook": 0.262,
+    "self_aware_aside": 0.236,
+    "specific_mundane_detail": 0.163,
+    "direct_accusation": 0.142,
+    "names_brands_places": 0.129,
+    "rhetorical_question": 0.116,
+    "profanity": 0.082
+   },
+   "source": "research/charts/COHORT.md: 233 tracks >=80M streams by the female diary-pop cohort, 2023-2026"
   }
  }
 }

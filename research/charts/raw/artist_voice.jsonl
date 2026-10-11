@@ -1,0 +1,295 @@
+{"artist": "$uicideboy$", "voice": "male_group", "lane": "hiphop", "confidence": "high"}
+{"artist": "*NSYNC", "voice": "male_group", "lane": "pop", "confidence": "high"}
+{"artist": "21 Savage", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "4batz", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "A$AP Rocky", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "ABBA", "voice": "mixed_group", "lane": "pop", "confidence": "high"}
+{"artist": "ADÉLA", "voice": "female", "lane": "pop", "confidence": "low"}
+{"artist": "Addison Rae", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Alemán", "voice": "male", "lane": "hiphop", "confidence": "medium"}
+{"artist": "Alex Warren", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "Alyssa Grace", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "medium"}
+{"artist": "Andrew Gold", "voice": "male", "lane": "other", "confidence": "medium"}
+{"artist": "Arcane", "voice": "mixed_group", "lane": "other", "confidence": "low"}
+{"artist": "Ariana Grande", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Artemas", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "Ashe", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "medium"}
+{"artist": "BLACKPINK", "voice": "female_group", "lane": "kpop", "confidence": "high"}
+{"artist": "BOYS JACK 2", "voice": "male_group", "lane": "hiphop", "confidence": "low"}
+{"artist": "BTS", "voice": "male_group", "lane": "kpop", "confidence": "high"}
+{"artist": "Baby Keem", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Bad Bunny", "voice": "male", "lane": "latin", "confidence": "high"}
+{"artist": "Ball Brothers", "voice": "male_group", "lane": "hiphop", "confidence": "low"}
+{"artist": "Bee Gees", "voice": "male_group", "lane": "pop", "confidence": "high"}
+{"artist": "Bella Kay", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "medium"}
+{"artist": "Benson Boone", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "Beyoncé", "voice": "female", "lane": "rnb", "confidence": "medium"}
+{"artist": "Bhad Bhabie", "voice": "female", "lane": "hiphop", "confidence": "high"}
+{"artist": "BigXthaPlug", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Billie Eilish", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "Bing Crosby", "voice": "male", "lane": "other", "confidence": "high"}
+{"artist": "Black Eyed Peas", "voice": "mixed_group", "lane": "pop", "confidence": "high"}
+{"artist": "Black Sabbath", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Bobby \"Boris\" Pickett & The Crypt-Kickers", "voice": "male", "lane": "other", "confidence": "medium"}
+{"artist": "Brent Faiyaz", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Brooks & Dunn", "voice": "male_group", "lane": "country", "confidence": "high"}
+{"artist": "Bruce Springsteen", "voice": "male", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Bruno Mars", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "Bryson Tiller", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Camila Cabello", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Cardi B", "voice": "female", "lane": "hiphop", "confidence": "high"}
+{"artist": "Central Cee", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Chappell Roan", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Charli xcx", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Childish Gambino", "voice": "male", "lane": "hiphop", "confidence": "medium"}
+{"artist": "Chris Stapleton", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Clipse", "voice": "male_group", "lane": "hiphop", "confidence": "high"}
+{"artist": "Cody Johnson", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Coldplay", "voice": "male_group", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "Conan Gray", "voice": "male", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "Creedence Clearwater Revival", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Cynthia Erivo", "voice": "female", "lane": "other", "confidence": "high"}
+{"artist": "Céline Dion", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Daniel Caesar", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Darius Rucker", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Daryl Hall & John Oates", "voice": "male_group", "lane": "pop", "confidence": "high"}
+{"artist": "Dasha", "voice": "female", "lane": "country", "confidence": "medium"}
+{"artist": "Deftones", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Dexter and The Moonrocks", "voice": "male_group", "lane": "rock_alt", "confidence": "low"}
+{"artist": "Disco Lines", "voice": "unknown", "lane": "dance", "confidence": "low"}
+{"artist": "Disney Characters", "voice": "mixed_group", "lane": "other", "confidence": "low"}
+{"artist": "Dj Agus Lima", "voice": "unknown", "lane": "dance", "confidence": "low"}
+{"artist": "Djo", "voice": "male", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Doechii", "voice": "female", "lane": "hiphop", "confidence": "high"}
+{"artist": "Doja Cat", "voice": "female", "lane": "pop", "confidence": "medium"}
+{"artist": "Dolly Parton", "voice": "female", "lane": "country", "confidence": "high"}
+{"artist": "Dominic Fike", "voice": "male", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "Don McLean", "voice": "male", "lane": "other", "confidence": "high"}
+{"artist": "Don Toliver", "voice": "male", "lane": "hiphop", "confidence": "medium"}
+{"artist": "Drake", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Dropkick Murphys", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Dua Lipa", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Eagles", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Earth, Wind & Fire", "voice": "male_group", "lane": "rnb", "confidence": "high"}
+{"artist": "Ella Langley", "voice": "female", "lane": "country", "confidence": "high"}
+{"artist": "Elton John", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "Elvis Presley", "voice": "male", "lane": "other", "confidence": "medium"}
+{"artist": "Eminem", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Eric Church", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "EsDeeKid", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "F3miii", "voice": "male", "lane": "hiphop", "confidence": "medium"}
+{"artist": "Falling In Reverse", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Fetty Wap", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Fleetwood Mac", "voice": "mixed_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Flo Milli", "voice": "female", "lane": "hiphop", "confidence": "high"}
+{"artist": "FloyyMenor", "voice": "male", "lane": "latin", "confidence": "medium"}
+{"artist": "Frank Ocean", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Frank Sinatra", "voice": "male", "lane": "other", "confidence": "high"}
+{"artist": "Fuerza Regida", "voice": "male_group", "lane": "latin", "confidence": "high"}
+{"artist": "Future", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "GELO", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "GIVĒON", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Gayla Peevey", "voice": "female", "lane": "other", "confidence": "high"}
+{"artist": "Gigi Perez", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "GloRilla", "voice": "female", "lane": "hiphop", "confidence": "high"}
+{"artist": "Good Neighbours", "voice": "male_group", "lane": "pop", "confidence": "medium"}
+{"artist": "Gorillaz", "voice": "mixed_group", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "Gracie Abrams", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "Gunna", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Gwen Stefani", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "HARDY", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "HAVEN.", "voice": "female", "lane": "dance", "confidence": "medium"}
+{"artist": "HUNTR/X", "voice": "female_group", "lane": "kpop", "confidence": "high"}
+{"artist": "Hanumankind", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Harry Styles", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "Hazbin Hotel", "voice": "mixed_group", "lane": "other", "confidence": "low"}
+{"artist": "Hozier", "voice": "male", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "ILLIT", "voice": "female_group", "lane": "kpop", "confidence": "high"}
+{"artist": "Ice Spice", "voice": "female", "lane": "hiphop", "confidence": "high"}
+{"artist": "Imogen Heap", "voice": "female", "lane": "other", "confidence": "medium"}
+{"artist": "Ivan Cornejo", "voice": "male", "lane": "latin", "confidence": "high"}
+{"artist": "J Balvin", "voice": "male", "lane": "latin", "confidence": "high"}
+{"artist": "J. Cole", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "JENNIE", "voice": "female", "lane": "kpop", "confidence": "high"}
+{"artist": "JID", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Jack Harlow", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Jessie Murph", "voice": "female", "lane": "pop", "confidence": "medium"}
+{"artist": "Jimin", "voice": "male", "lane": "kpop", "confidence": "high"}
+{"artist": "John Denver", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "John Mellencamp", "voice": "male", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Joji", "voice": "male", "lane": "rnb", "confidence": "medium"}
+{"artist": "Jonas Brothers", "voice": "male_group", "lane": "pop", "confidence": "high"}
+{"artist": "Journey", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Juice WRLD", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Julia Wolf", "voice": "female", "lane": "pop", "confidence": "low"}
+{"artist": "Jung Kook", "voice": "male", "lane": "kpop", "confidence": "high"}
+{"artist": "Justin Bieber", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "Justin Timberlake", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "KAROL G", "voice": "female", "lane": "latin", "confidence": "high"}
+{"artist": "KATSEYE", "voice": "female_group", "lane": "kpop", "confidence": "medium"}
+{"artist": "Kacey Musgraves", "voice": "female", "lane": "country", "confidence": "high"}
+{"artist": "Kali Uchis", "voice": "female", "lane": "rnb", "confidence": "medium"}
+{"artist": "Kanye West", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Kate Bush", "voice": "female", "lane": "pop", "confidence": "medium"}
+{"artist": "Katy Perry", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Kehlani", "voice": "female", "lane": "rnb", "confidence": "high"}
+{"artist": "Kelly Clarkson", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Kelsea Ballerini", "voice": "female", "lane": "country", "confidence": "high"}
+{"artist": "Kendrick Lamar", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Kenny Chesney", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Kesha", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Kid Rock", "voice": "male", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "Koe Wetzel", "voice": "male", "lane": "country", "confidence": "medium"}
+{"artist": "LE SSERAFIM", "voice": "female_group", "lane": "kpop", "confidence": "high"}
+{"artist": "LISA", "voice": "female", "lane": "kpop", "confidence": "high"}
+{"artist": "Lady Gaga", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Lana Del Rey", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "Laufey", "voice": "female", "lane": "other", "confidence": "medium"}
+{"artist": "Lay Bankz", "voice": "female", "lane": "dance", "confidence": "medium"}
+{"artist": "Lee Greenwood", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Leon Thomas", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Lil Baby", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Lil Tecca", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Lil Uzi Vert", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Lil Wayne", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Linkin Park", "voice": "male_group", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "Lola Young", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "Lorde", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "medium"}
+{"artist": "Luke Combs", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Lynyrd Skynyrd", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Mac Miller", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Malcolm Todd", "voice": "male", "lane": "singer_songwriter_confessional", "confidence": "medium"}
+{"artist": "Mark Ambor", "voice": "male", "lane": "singer_songwriter_confessional", "confidence": "medium"}
+{"artist": "Mazzy Star", "voice": "mixed_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Megan Moroney", "voice": "female", "lane": "country", "confidence": "high"}
+{"artist": "Megan Thee Stallion", "voice": "female", "lane": "hiphop", "confidence": "high"}
+{"artist": "Michael Bublé", "voice": "male", "lane": "other", "confidence": "high"}
+{"artist": "Michael Jackson", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "Michael Marcagi", "voice": "male", "lane": "singer_songwriter_confessional", "confidence": "medium"}
+{"artist": "Miguel", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Miley Cyrus", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Moneybagg Yo", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Morgan Wallen", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Mustard", "voice": "male", "lane": "hiphop", "confidence": "medium"}
+{"artist": "Mykola Dmytrovych Leontovych", "voice": "unknown", "lane": "other", "confidence": "medium"}
+{"artist": "Myles Smith", "voice": "male", "lane": "pop", "confidence": "medium"}
+{"artist": "NF", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "NLE Choppa", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Nat King Cole", "voice": "male", "lane": "other", "confidence": "high"}
+{"artist": "Neil Diamond", "voice": "male", "lane": "pop", "confidence": "medium"}
+{"artist": "Nelly Furtado", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Neton Vega", "voice": "male", "lane": "latin", "confidence": "high"}
+{"artist": "Nicki Minaj", "voice": "female", "lane": "hiphop", "confidence": "high"}
+{"artist": "Noah Kahan", "voice": "male", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "Oasis", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Offset", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Oliver Tree", "voice": "male", "lane": "pop", "confidence": "medium"}
+{"artist": "Olivia Dean", "voice": "female", "lane": "rnb", "confidence": "medium"}
+{"artist": "Olivia Rodrigo", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "Omar Apollo", "voice": "male", "lane": "rnb", "confidence": "medium"}
+{"artist": "Oscar Maydon", "voice": "male", "lane": "latin", "confidence": "high"}
+{"artist": "Ozzy Osbourne", "voice": "male", "lane": "rock_alt", "confidence": "high"}
+{"artist": "PARTYNEXTDOOR", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Paul Russell", "voice": "male", "lane": "pop", "confidence": "medium"}
+{"artist": "Pentatonix", "voice": "mixed_group", "lane": "other", "confidence": "high"}
+{"artist": "Perry Como", "voice": "male", "lane": "other", "confidence": "high"}
+{"artist": "Peso Pluma", "voice": "male", "lane": "latin", "confidence": "high"}
+{"artist": "Pharrell Williams", "voice": "male", "lane": "pop", "confidence": "medium"}
+{"artist": "Phoebe Bridgers", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "Pierce The Veil", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "PinkPantheress", "voice": "female", "lane": "dance", "confidence": "medium"}
+{"artist": "Playboi Carti", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Post Malone", "voice": "male", "lane": "pop", "confidence": "medium"}
+{"artist": "Prince", "voice": "male", "lane": "rnb", "confidence": "medium"}
+{"artist": "Quavo", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "RAYE", "voice": "female", "lane": "rnb", "confidence": "medium"}
+{"artist": "ROSÉ", "voice": "female", "lane": "kpop", "confidence": "high"}
+{"artist": "RUMI", "voice": "female", "lane": "kpop", "confidence": "medium"}
+{"artist": "Radiohead", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Rauw Alejandro", "voice": "male", "lane": "latin", "confidence": "high"}
+{"artist": "Ravyn Lenae", "voice": "female", "lane": "rnb", "confidence": "high"}
+{"artist": "Ray Parker Jr.", "voice": "male", "lane": "rnb", "confidence": "medium"}
+{"artist": "Rich Amiri", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Richy Mitch & The Coal Miners", "voice": "male_group", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "Rick James", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Rihanna", "voice": "female", "lane": "pop", "confidence": "medium"}
+{"artist": "Riley Green", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Rockwell", "voice": "male", "lane": "rnb", "confidence": "medium"}
+{"artist": "SIENNA SPIRO", "voice": "female", "lane": "pop", "confidence": "medium"}
+{"artist": "STELLA LEFTY", "voice": "female", "lane": "country", "confidence": "medium"}
+{"artist": "SZA", "voice": "female", "lane": "rnb", "confidence": "high"}
+{"artist": "Sabrina Carpenter", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Saja Boys", "voice": "male_group", "lane": "kpop", "confidence": "high"}
+{"artist": "Sam Barber", "voice": "male", "lane": "country", "confidence": "medium"}
+{"artist": "Sam Fender", "voice": "male", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Sean Kingston", "voice": "male", "lane": "pop", "confidence": "medium"}
+{"artist": "Selena Gomez", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Sexyy Red", "voice": "female", "lane": "hiphop", "confidence": "high"}
+{"artist": "Shaboozey", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Shakira", "voice": "female", "lane": "latin", "confidence": "high"}
+{"artist": "She & Him", "voice": "mixed_group", "lane": "other", "confidence": "medium"}
+{"artist": "Sheck Wes", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Sleep Token", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Sleepy Hallow", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "SoFaygo", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Sophie Ellis-Bextor", "voice": "female", "lane": "dance", "confidence": "medium"}
+{"artist": "Steve Lacy", "voice": "male", "lane": "rnb", "confidence": "medium"}
+{"artist": "Stray Kids", "voice": "male_group", "lane": "kpop", "confidence": "high"}
+{"artist": "TLC", "voice": "female_group", "lane": "rnb", "confidence": "high"}
+{"artist": "TWICE", "voice": "female_group", "lane": "kpop", "confidence": "high"}
+{"artist": "Talking Heads", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Tame Impala", "voice": "male", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Tate McRae", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "Taylor Swift", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "Teddy Swims", "voice": "male", "lane": "pop", "confidence": "medium"}
+{"artist": "Temper City", "voice": "male_group", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "The Beach Boys", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "The Beatles", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "The Citizens of Halloween", "voice": "mixed_group", "lane": "other", "confidence": "low"}
+{"artist": "The Cranberries", "voice": "mixed_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "The Doobie Brothers", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "The Goo Goo Dolls", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "The Kid LAROI", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "The Marías", "voice": "mixed_group", "lane": "pop", "confidence": "medium"}
+{"artist": "The Police", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "The Weavers", "voice": "mixed_group", "lane": "other", "confidence": "medium"}
+{"artist": "The Weeknd", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Thomas Rhett", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Tito Double P", "voice": "male", "lane": "latin", "confidence": "high"}
+{"artist": "Toby Keith", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Tom Petty", "voice": "male", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Tom Petty and the Heartbreakers", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Tommy Richman", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Travis Scott", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Troye Sivan", "voice": "male", "lane": "pop", "confidence": "high"}
+{"artist": "Tucker Wetmore", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Twenty One Pilots", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Tyla", "voice": "female", "lane": "rnb", "confidence": "medium"}
+{"artist": "Tyler, The Creator", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "USHER", "voice": "male", "lane": "rnb", "confidence": "high"}
+{"artist": "Unknown Artist", "voice": "unknown", "lane": "other", "confidence": "low"}
+{"artist": "Van Morrison", "voice": "male", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "Vince Guaraldi Trio", "voice": "unknown", "lane": "other", "confidence": "high"}
+{"artist": "Waka Flocka Flame", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Weezer", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "Whiskey Myers", "voice": "male_group", "lane": "country", "confidence": "medium"}
+{"artist": "White Noise Radiance", "voice": "unknown", "lane": "other", "confidence": "low"}
+{"artist": "Xavi", "voice": "male", "lane": "latin", "confidence": "high"}
+{"artist": "YG Marley", "voice": "male", "lane": "other", "confidence": "medium"}
+{"artist": "Yeat", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Young Thug", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "YoungBoy Never Broke Again", "voice": "male", "lane": "hiphop", "confidence": "high"}
+{"artist": "Zac Brown Band", "voice": "male_group", "lane": "country", "confidence": "high"}
+{"artist": "Zach Bryan", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Zach Top", "voice": "male", "lane": "country", "confidence": "high"}
+{"artist": "Zara Larsson", "voice": "female", "lane": "pop", "confidence": "high"}
+{"artist": "beabadoobee", "voice": "female", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "blink-182", "voice": "male_group", "lane": "rock_alt", "confidence": "high"}
+{"artist": "comehelpglo", "voice": "unknown", "lane": "other", "confidence": "low"}
+{"artist": "d4vd", "voice": "male", "lane": "singer_songwriter_confessional", "confidence": "medium"}
+{"artist": "girl in red", "voice": "female", "lane": "singer_songwriter_confessional", "confidence": "high"}
+{"artist": "mgk", "voice": "male", "lane": "rock_alt", "confidence": "medium"}
+{"artist": "pupsies", "voice": "unknown", "lane": "other", "confidence": "low"}
+{"artist": "sombr", "voice": "male", "lane": "singer_songwriter_confessional", "confidence": "medium"}
+{"artist": "wifiskeleton", "voice": "male", "lane": "other", "confidence": "low"}
+{"artist": "¥$", "voice": "male_group", "lane": "hiphop", "confidence": "high"}

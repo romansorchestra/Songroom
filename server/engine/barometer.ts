@@ -9,9 +9,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export type Genre = 'pop' | 'country' | 'hiphop' | 'latin' | 'rock_alt' | 'any';
+export type Genre = 'pop' | 'diary_pop' | 'country' | 'hiphop' | 'latin' | 'rock_alt' | 'any';
 export const GENRES: Array<{ id: Genre; label: string }> = [
-  { id: 'pop', label: 'Pop' }, { id: 'country', label: 'Country' }, { id: 'hiphop', label: 'Hip-hop' },
+  { id: 'pop', label: 'Pop' }, { id: 'diary_pop', label: 'Diary pop' }, { id: 'country', label: 'Country' }, { id: 'hiphop', label: 'Hip-hop' },
   { id: 'latin', label: 'Latin' }, { id: 'rock_alt', label: 'Alt / rock' }, { id: 'any', label: 'Any genre' },
 ];
 
@@ -45,6 +45,7 @@ export function loadBarometer(file = path.resolve(process.cwd(), 'research', 'ch
 export function genreFor(chip: string | undefined, text: string): Genre {
   if (chip && GENRES.some((g) => g.id === chip)) return chip as Genre;
   const t = text.toLowerCase();
+  if (/gracie abrams|olivia rodrigo|diary|diaristic|confessional|sad girl|lizzy mcalpine|phoebe bridgers/.test(t)) return 'diary_pop';
   if (/\bcountry\b|nashville|\bhonky/.test(t)) return 'country';
   if (/hip[\s-]?hop|\brap\b|\btrap\b|\bdrill\b/.test(t)) return 'hiphop';
   if (/latin|reggaet|\bbachata|\bcorrido|spanish/.test(t)) return 'latin';
@@ -83,6 +84,7 @@ export function shapeNote(genre: Genre): string {
   const b = loadBarometer();
   const g = b?.genres[genre === 'any' ? 'all' : genre] ?? b?.genres.pop;
   if (!g) return '';
+  if (genre === 'diary_pop') return DIARY_POP_NOTE;
   const pct = (x: number | undefined) => `${Math.round((x ?? 0) * 100)}%`;
   const label = GENRES.find((x) => x.id === genre)?.label.toLowerCase() ?? 'pop';
   return [
@@ -94,3 +96,13 @@ export function shapeNote(genre: Genre): string {
     `- ${pct(g.explicitness.suggestive)} are suggestive and ${pct(g.explicitness.explicit)} explicit.`,
   ].join('\n');
 }
+
+// The diary-pop lane (Gracie Abrams, Olivia Rodrigo, Sabrina Carpenter, Tate McRae, Olivia
+// Dean…), from research/charts/COHORT.md: 233 of their tracks with 80M+ streams, 2023–2026.
+// Figures in our words; never song lines.
+const DIARY_POP_NOTE = `What the diary-pop lane that actually streams is like (233 big tracks by its writers, 2023–2026):
+- 83% are about a relationship or one specific person; the biggest subjects are after the breakup (22%), trouble while still in it (21%), wanting someone (14%), being in love (14%).
+- The register is the point: 57% are conversational, sentences you could say or text to the person, read out loud; 63% are sung straight to "you".
+- A third have a joke in them and a quarter have the singer undercutting herself; the most common tone after sad is wry. Angst is clear in under half.
+- The album tracks fans push hardest are the messier, funnier, more specific ones: the situationship, the ex's new girl, the grudge, the self-sabotage. Not a mood: a situation with one checkable detail and one turn.
+- Critics punish vagueness, sameness and self-help vocabulary in this lane; nobody here writes short aphorisms. Specific, talky and a little unflattering to the narrator wins.`;

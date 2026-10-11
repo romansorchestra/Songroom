@@ -53,6 +53,15 @@ three ideas in a batch never share a subject, and subjects he has just seen are 
 likely. The idea brief (`sparkPromptV2`, template `ws2`) carries the figures above.
 His direction always overrides the assigned subject.
 
+## Follow-up (11 Oct, later)
+
+Sam asked about the diary-pop cohort (Gracie Abrams, Olivia Rodrigo and company), their
+well-streamed album tracks, and whether "female relationship angst, conversational,
+Instagram-poet style" is what most songs are now. `COHORT.md` tests that: the lane is
+16% of hits, not most; 83% of it is about a relationship; it is conversational (57%) but
+not Instagram-poet (8%); and the album tracks fans push are the messier, funnier, more
+specific ones. The app has a "Diary pop" lane built from it.
+
 ## Limits
 
 - Snapshots are about three days apart, so a song that was in the top 50 for a day or

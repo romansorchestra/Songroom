@@ -1,0 +1,157 @@
+# id|subject|rel|address|register|devices|instapoet|angst|tone|explicit|situation   (devices: m mundane detail, s self-aware aside, a direct accusation, q rhetorical question, t therapy vocab, i internet/text diction, n names/brands/places, p aphorism, r run-on talky, b bridge climax, h humour, f profanity, k repetition hook, w twist)
+c6|breakup_heartbreak|1|to_you|anthemic|k|1|2|sad|clean|pleading with a partner who is halfway out the door
+c11|family_friends|0|to_you|conversational|m,n|2|0|tender|clean|keeping a place for a father who died before the milestones
+c13|romantic_love|1|to_you|anthemic|k|1|1|tender|clean|a partner as the steady thing through his worst stretch
+o57|breakup_heartbreak|1|to_you|conversational|s,q,h|2|2|wry|clean|an ex now feels like someone who never existed
+o45|breakup_heartbreak|1|to_you|narrative|n|0|2|nostalgic|clean|salsa for a love remembered through one unforgettable dance
+o51|party_nightlife|0|we|anthemic|n|0|0|joyful|clean|a plena about drinking and dancing with your people
+o40|struggle_inner|1|about_me|conversational|m|1|2|sad|clean|at the club, still stuck on someone
+o50|relationship_trouble|1|to_you|conversational|i,a|1|2|bitter|clean|an ex who wants to stay close friends after the hurt
+o52|nostalgia_hometown|0|about_me|narrative|n|0|0|defiant|clean|his parents' story and his own, with Puerto Rican pride
+o47|desire|1|to_you|conversational|n|0|0|joyful|suggestive|inviting a woman home to his island for a good time
+c21|relationship_trouble|1|to_you|anthemic|a,k|1|2|angry|clean|demanding feeling from a partner who gives none back
+c18|breakup_heartbreak|1|to_you|anthemic|p,k|1|2|sad|clean|leaving so she can be happy instead of stuck with him
+c22|breakup_heartbreak|1|to_you|anthemic|k|1|2|sad|clean|asking to be let go gently rather than all at once
+c17|romantic_love|1|to_you|anthemic|k|1|1|tender|clean|calming a partner who is overwhelmed, telling her to slow down
+c23|romantic_love|1|to_you|anthemic||0|0|joyful|suggestive|sweet, giddy infatuation
+o81|breakup_heartbreak|1|to_you|conversational|a,h,f|1|2|bitter|explicit|petty kiss-off wishing small miseries on a bad ex
+c45|party_nightlife|0|about_me|anthemic|n|0|0|joyful|suggestive|after midnight she does whatever and whoever she wants
+c46|nostalgia_hometown|0|about_me|conversational|n,m|1|1|sad|clean|homesick and failing in Los Angeles, missing Missouri
+c48|relationship_trouble|1|to_you|conversational|m,q|1|2|anxious|suggestive|agreeing to coffee with an ex, knowing where it leads
+c47|longing_unrequited|1|to_you|imagistic||1|2|tender|clean|in love with a best friend she cannot tell
+c44|desire|1|to_you|conversational|q|1|2|horny|suggestive|fantasising about someone who may not want her back
+c43|self_confidence|1|to_you|anthemic|h,f|1|1|defiant|suggestive|done with a disappointing man, declaring herself the upgrade
+c52|longing_unrequited|1|to_you|conversational|q|1|1|tender|clean|asking whether what she gives him adds up to enough
+c51|desire|1|to_you|imagistic||1|1|tender|suggestive|wanting one slow intimate moment with someone
+c54|romantic_love|1|to_you|anthemic|k|0|0|joyful|clean|an infatuation that plays on a loop like a song
+c53|breakup_heartbreak|1|to_you|conversational|m,a|1|2|sad|clean|a relationship over in all but words, nursed over a drink
+c55|breakup_heartbreak|1|about_them|conversational|i,h|1|2|wry|clean|wishing he could delete an ex from his memory
+c61|self_confidence|1|to_you|conversational|m,n,h|0|0|defiant|clean|she out-countries the country boy and knows it
+c69|struggle_inner|0|about_me|conversational|s,m|1|1|wry|clean|apologising for her messy life while refusing to tidy it
+c68|breakup_heartbreak|1|about_me|conversational|w,h|1|2|wry|clean|going out after a breakup, but blue instead of red
+c66|relationship_trouble|1|we|conversational|h|0|2|wry|suggestive|the fight-and-make-up cycle, and why they keep it
+c58|breakup_heartbreak|1|about_me|imagistic|m|1|2|sad|clean|she would have stayed if something hadn't carried her off
+o23|desire|1|to_you|anthemic||0|0|horny|suggestive|a flirty ode to a fierce girl he wants
+o12|romantic_love|1|to_you|anthemic|k|1|0|joyful|clean|a person who feels like home
+c86|relationship_trouble|1|to_you|conversational|s,a,r|2|2|sad|clean|admitting she was never her best to him, an apology
+c79|breakup_heartbreak|1|about_them|conversational|h,s,f|2|2|bitter|suggestive|sarcastic congratulations on the ex's new girl
+c87|relationship_trouble|1|to_you|conversational|s,h|2|2|wry|clean|the aloof man she chased, and how uncool that made her
+c81|breakup_heartbreak|1|to_you|conversational|t|2|2|tender|clean|letting him go and calling it freedom for both
+c80|relationship_trouble|1|to_you|conversational|q|2|2|anxious|clean|she told him everything, and now he holds it
+c84|desire|1|about_me|conversational|s|2|2|anxious|suggestive|giving in to something reckless and new
+c83|self_confidence|1|about_me|conversational|s,h|2|1|defiant|clean|she is tougher than he thinks and not waiting around
+o43|struggle_inner|0|to_you|imagistic||1|1|anxious|clean|watching a friend stuck in a rut they refuse to leave
+c90|lifestyle_place|0|about_me|narrative|n|0|0|nostalgic|clean|drifting between small towns, always leaving
+c103|romantic_love|1|to_you|imagistic||0|0|tender|clean|new love as a spell she cannot break
+c99|relationship_trouble|1|about_them|conversational|h,s|1|1|wry|clean|a dull man who bores her on a date
+c100|self_confidence|0|about_me|conversational|s|1|0|joyful|clean|happily single and dreaming on her own
+c101|relationship_trouble|1|about_them|imagistic||1|2|bitter|clean|adored on stage, ignored at home
+c98|longing_unrequited|1|about_me|imagistic||1|2|anxious|clean|love as an illness she cannot shake
+c95|breakup_heartbreak|1|to_you|conversational|s|1|2|sad|clean|keeping her distance from someone she promised not to fall for
+c105|longing_unrequited|1|to_you|conversational|s|1|2|sad|clean|being someone's second choice and knowing it
+c102|breakup_heartbreak|1|to_you|conversational|a|1|2|defiant|clean|an ex comes back after she has already healed
+o25|relationship_trouble|1|to_you|anthemic|i,a|0|2|defiant|explicit|both cheating; telling him to tell his girlfriend
+c109|romantic_love|1|to_you|conversational|m|1|1|tender|clean|a relationship moving through the seasons, hoping it holds
+c110|relationship_trouble|1|about_me|conversational|s|2|2|sad|clean|staying in something wrong because leaving is harder
+c114|self_confidence|1|to_you|conversational|h,f,a|1|1|defiant|explicit|called conceited by a man, and owning it
+c116|relationship_trouble|1|to_you|conversational|n,r,q|2|3|angry|clean|reckoning with the man who shaped her, asking what she gave up
+o24|story_character|0|third_person|narrative|n|0|0|nostalgic|clean|a brother who lived wild and died young
+o68|breakup_heartbreak|1|to_you|conversational|a,h|1|2|wry|clean|predicting the ex will regret it in half a year
+o17|relationship_trouble|1|to_you|conversational||1|1|anxious|clean|too nervous to start because of what happened before
+o62|nostalgia_hometown|0|about_me|conversational|n|0|1|defiant|clean|owning a bad name in the hometown and leaving it behind
+o55|struggle_inner|0|about_me|conversational|s,h|1|1|wry|clean|admitting he is a little crazy, like everyone else
+o32|breakup_heartbreak|1|about_me|conversational|k,w|1|2|sad|clean|the lies are the ones he tells himself about being fine
+o38|longing_unrequited|1|about_me|anthemic||0|1|anxious|clean|wanting someone to love tonight
+o65|family_friends|0|to_you|conversational||1|0|tender|clean|being his son's hero while knowing he isn't one
+o66|breakup_heartbreak|1|about_them|conversational|n,w|1|2|sad|clean|a state and a woman, both left behind
+o42|party_nightlife|0|about_me|anthemic||0|0|joyful|explicit|carefree wild living and casual flings
+c132|breakup_heartbreak|1|to_you|conversational|m|1|1|tender|clean|wishing an ex well and still meaning every bit of it
+c157|longing_unrequited|1|to_you|narrative|m,s,n|1|1|wry|clean|inviting someone into his messy family house
+c142|romantic_love|1|to_you|anthemic|p|1|1|tender|clean|wanting to love someone everywhere, to the end
+c135|romantic_love|1|to_you|anthemic|p|1|1|tender|clean|wanting to love someone everywhere, to the end
+c141|romantic_love|1|to_you|conversational|m|1|1|tender|clean|choosing to stay, for good
+c138|nostalgia_hometown|0|to_you|conversational|m,n|1|1|bitter|clean|the hometown changing and resenting the new people
+c153|struggle_inner|0|about_me|conversational|t,s,h|1|1|wry|clean|on medication and in therapy, insisting he has no complaints
+c133|family_friends|0|to_you|narrative|m|1|0|tender|clean|a friend newly sober, offered juice instead of a drink
+c150|nostalgia_hometown|0|about_me|conversational|n|1|1|anxious|clean|desperate to get out of a small town
+c145|relationship_trouble|1|about_me|anthemic|k|1|2|anxious|clean|waiting for her to call back
+c143|relationship_trouble|1|about_me|anthemic|k|1|2|anxious|clean|waiting for her to call back
+c151|nostalgia_hometown|1|to_you|imagistic|m|1|1|nostalgic|clean|a past summer love, remembered sweetly
+c140|nostalgia_hometown|0|about_me|narrative|b,n|1|1|sad|clean|driving home past the dead and the weight of it
+c162|nostalgia_hometown|0|about_me|narrative|b,n|1|1|sad|clean|driving home past the dead and the weight of it
+c156|relationship_trouble|1|to_you|conversational|t|2|2|sad|clean|two people whose needs no longer fit
+c164|romantic_love|1|to_you|conversational||1|0|joyful|clean|falling in love comes easily with the right person
+c166|romantic_love|1|to_you|imagistic||1|1|tender|clean|diving all the way into a new love
+c174|family_friends|0|we|conversational|m,n|1|0|joyful|clean|friendships made in the club toilets
+c173|relationship_trouble|1|to_you|conversational||1|1|anxious|clean|not quite friends, not quite together
+c206|self_confidence|0|about_me|conversational|h,s|1|0|defiant|clean|she has always been this girl and will not apologise
+c186|relationship_trouble|1|to_you|conversational|h,a,q|1|3|anxious|clean|fixated on his ex more than he is
+c203|struggle_inner|1|about_me|conversational|s|2|2|anxious|clean|afraid to write, because the song will say the relationship is over
+c190|romantic_love|1|about_them|conversational|h,n,m|1|0|joyful|clean|a foreign boyfriend who teases her for being so American
+c196|breakup_heartbreak|1|to_you|conversational||2|2|tender|clean|turning an ex back into a stranger
+o6|desire|1|to_you|anthemic||0|0|horny|explicit|a club seduction
+o30|party_nightlife|0|we|anthemic||0|0|joyful|clean|a drinking song with a friend
+o39|longing_unrequited|1|to_you|conversational|q|0|1|tender|suggestive|wondering what would happen if they gave in
+c207|desire|1|about_them|conversational|h,a|1|1|wry|suggestive|straight girls who kiss her drunk and deny it sober
+c208|breakup_heartbreak|1|to_you|conversational|m,s|2|2|bitter|clean|the ex moved on and it physically hurts
+o16|romantic_love|1|to_you|anthemic||1|0|tender|clean|promising a love that lasts every season
+o41|self_confidence|0|about_me|anthemic|f|0|0|defiant|explicit|swaggering about her status and allure
+c231|flex_money_status|1|about_them|conversational|h,s|1|1|wry|clean|an ex spending his fifteen minutes on her name
+c227|desire|1|to_you|conversational|h|0|0|horny|suggestive|Christmas innuendo, played for laughs
+c224|relationship_trouble|1|to_you|conversational|h,s,a|1|2|bitter|clean|his "coincidental" reunion with his ex, read with sarcasm
+c240|breakup_heartbreak|1|to_you|conversational|h,w|1|2|wry|suggestive|an ex making it hard, in both senses
+c223|breakup_heartbreak|1|to_you|conversational|w|2|2|sad|clean|asking him not to be fine about it being over
+c238|relationship_trouble|1|to_you|conversational|h,w|1|1|wry|suggestive|promising to be the kind of girl who keeps him worried
+c230|struggle_inner|1|about_me|conversational|h,m|1|1|wry|suggestive|drunk-dialling old flames on a bender
+c232|breakup_heartbreak|1|to_you|conversational|h|1|1|wry|clean|a flippant, multilingual goodbye
+c222|desire|1|to_you|conversational|h,w|0|0|horny|suggestive|a house tour that is not about the house
+c234|relationship_trouble|1|to_you|conversational|p,s|2|2|sad|clean|he needn't lie, girls lie to themselves for him
+c226|relationship_trouble|1|about_them|conversational|h,s|1|1|wry|suggestive|a man so busy being good he won't touch her
+c235|breakup_heartbreak|1|to_you|conversational|h,a|1|2|bitter|suggestive|a revenge wish that he never gets laid again
+c221|breakup_heartbreak|1|to_you|conversational|h,s|1|2|wry|clean|dumped with a self-improvement line, mocked deadpan
+c225|relationship_trouble|1|to_you|conversational|a,h|1|2|sad|clean|a dim man who ghosted her and called it kindness
+c228|longing_unrequited|0|about_me|conversational|h,s|1|1|wry|clean|the pickings of decent men are slim
+c229|relationship_trouble|1|to_you|conversational|h|1|1|wry|suggestive|sweet talk she has heard before
+c236|relationship_trouble|1|we|conversational|h,s,m|1|2|anxious|clean|the nightly almost-breakup and the morning after
+c239|desire|1|to_you|conversational|h|0|0|horny|suggestive|a Christmas wish list that is only him
+o56|breakup_heartbreak|1|to_you|conversational||1|2|tender|clean|sad eyes after a love ended
+c249|desire|1|to_you|anthemic|k|0|0|horny|suggestive|wanting his hands on her
+c259|relationship_trouble|1|to_you|anthemic|k|1|1|defiant|clean|she will take anything from him except love
+c250|relationship_trouble|1|about_me|conversational|q|1|2|anxious|clean|praying she can stay away from someone bad for her
+c252|romantic_love|1|we|anthemic||1|0|tender|clean|she knows what love is now, with him
+c251|self_confidence|1|to_you|anthemic|h,a|0|1|defiant|clean|warning other girls off her man
+c253|desire|1|to_you|conversational|a,m|1|2|bitter|suggestive|he only listens when she is undressed
+c245|relationship_trouble|1|to_you|conversational||1|2|anxious|clean|a toxic ex she keeps going back to
+c262|relationship_trouble|1|about_me|conversational||1|2|sad|clean|all the signs she chose not to see
+c248|relationship_trouble|1|to_you|conversational||1|2|anxious|clean|warning sirens she can hear and ignores
+c256|breakup_heartbreak|1|to_you|anthemic|h,f|0|1|defiant|explicit|his hurt is on her hands and she does not care
+c260|self_confidence|0|about_me|conversational|m|1|1|defiant|clean|cutting her hair to shed the old self
+c243|breakup_heartbreak|1|about_them|anthemic|f,h|0|1|defiant|explicit|exes resurfacing; she wants them out of her head
+c261|breakup_heartbreak|1|about_me|conversational||1|2|sad|clean|digging her own grave in a relationship
+c254|relationship_trouble|1|to_you|conversational|a|1|2|bitter|clean|a cheat and the conscience he should have
+c255|relationship_trouble|1|to_you|conversational|a|1|2|defiant|suggestive|he hurt her and she refuses to show it
+c246|relationship_trouble|1|to_you|conversational||1|1|defiant|clean|a warning that she is trouble and he should run
+c257|breakup_heartbreak|1|to_you|conversational|a|1|2|defiant|clean|she and the ex were never alike
+c299|breakup_heartbreak|1|to_you|conversational|n,r|2|3|sad|clean|a lost love who moved on to anyone with a name
+c310|romantic_love|1|to_you|anthemic||0|0|tender|clean|a partner too good to be real
+c308|relationship_trouble|1|about_me|anthemic||1|2|anxious|clean|dreams of losing her that will not stop
+c313|breakup_heartbreak|1|to_you|anthemic||1|2|sad|clean|mourning a relationship like a death
+c309|breakup_heartbreak|1|to_you|anthemic||1|2|sad|clean|hurt that lands like a hammer
+c311|breakup_heartbreak|1|to_you|anthemic|q|1|2|sad|clean|never knowing why she left
+c307|breakup_heartbreak|1|to_you|conversational|a,m|1|2|defiant|clean|telling an ex to use the door and go
+c312|breakup_heartbreak|1|to_you|anthemic|q|1|2|sad|clean|pleading with nothing left to say
+o36|breakup_heartbreak|1|to_you|conversational||2|2|sad|clean|a relationship fading away without anyone noticing
+o83|breakup_heartbreak|1|about_them|imagistic|n|1|2|sad|clean|imagining the daughter she and her ex never had
+o4|relationship_trouble|1|about_them|conversational||0|1|tender|suggestive|smitten with a dangerous woman
+o5|relationship_trouble|1|to_you|conversational|a|0|2|bitter|clean|accusing a woman of playing the victim
+o31|romantic_love|1|to_you|conversational|n,m|1|0|tender|clean|two lovers revisiting hometowns, home in each other
+o29|struggle_inner|0|about_me|narrative|m|1|0|sad|clean|grieving his mother through the family at the funeral
+o59|breakup_heartbreak|1|to_you|conversational|w,h|1|2|wry|clean|insisting he is fine after the split while clearly not
+c316|romantic_love|1|to_you|conversational|m|1|0|joyful|clean|a happy day at the beach with a lover
+c315|relationship_trouble|1|about_them|conversational|h,a|1|1|wry|clean|a boyfriend whose idea of a real man is control
+c317|desire|1|about_me|anthemic||0|1|horny|suggestive|temptation, and giving in
+c321|romantic_love|1|to_you|imagistic||1|0|tender|clean|wishing someone peace while they sleep
+c322|romantic_love|1|to_you|imagistic||1|0|tender|clean|devotion, the two of them against everything
+c328|longing_unrequited|1|about_me|conversational|s|2|2|anxious|clean|a crush he cannot act on
+c327|relationship_trouble|1|to_you|conversational|n|2|2|sad|clean|he cannot give her up however bad it is
+c326|breakup_heartbreak|1|to_you|conversational|s|2|2|sad|clean|grieving someone he was never officially with
