@@ -8,6 +8,7 @@ import { createApp } from './app.js';
 import { AnthropicWriter, type Writer } from './engine/writer.js';
 import { StandInWriter } from './engine/standin.js';
 import { loadPack } from './engine/pack.js';
+import { transcriberFromEnv } from './engine/transcribe.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,7 +34,9 @@ async function main() {
   if (!env.SESSION_SECRET) console.warn('SESSION_SECRET not set: sessions will reset on restart.');
   const auth = { password: env.APP_PASSWORD ?? null, secret: env.SESSION_SECRET ?? randomBytes(32).toString('hex'), secure: env.NODE_ENV === 'production' };
   const staticDir = path.resolve(here, '../web');
-  const app = createApp(svc, auth, { staticDir, writerLabel: writer?.label ?? 'none', writerLive: !!writer?.live });
+  const transcriber = transcriberFromEnv(env);
+  console.log(transcriber ? `Transcriber: ${transcriber.label}` : 'Transcriber: none (paste transcripts; add DEEPGRAM_API_KEY for recordings)');
+  const app = createApp(svc, auth, { staticDir, writerLabel: writer?.label ?? 'none', writerLive: !!writer?.live, transcriber });
   const port = Number(env.PORT ?? 3000);
   const server = app.listen(port, () => console.log(`Songroom on :${port} · writer: ${writer?.label ?? 'none'}`));
 

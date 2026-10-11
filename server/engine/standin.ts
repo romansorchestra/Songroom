@@ -19,6 +19,12 @@ export class StandInWriter implements Writer {
   private fake(req: WriterRequest): unknown {
     const props = (req.schema as { properties: Record<string, unknown> }).properties;
     const c = { count: null, linesPerOption: null, mustStartWith: null, mustEndWith: null, forbidden: [] };
+    if ('candidates' in props) {
+      // the hang: pick a few real phrases out of the transcript it was given
+      const body = req.user.split('Transcript:\n')[1] ?? '';
+      const lines = body.split('\n').map((l) => l.replace(/^\[[^\]]*\]\s*(Speaker \d+:\s*)?/, '').trim()).filter((l) => l.split(' ').length >= 4).slice(0, 3);
+      return { note: '', candidates: lines.map((l, i) => ({ kind: (['title', 'line', 'concept'] as const)[i % 3], text: l.split(' ').slice(0, 4).join(' ').replace(/[.,!?]$/, ''), saidBy: '', at: '', context: l, why: '[stand-in] placeholder reason', score: 2 })) };
+    }
     if ('titleParts' in props && 'note' in props) {
       return { title: '[stand-in] Reworked title', titleParts: ['[stand-in] Reworked', 'title'], concept: '[stand-in] Reworked concept. Placeholder, not real writing.', lines: ['[stand-in] reworked line one', '[stand-in] reworked line two'], note: '' };
     }

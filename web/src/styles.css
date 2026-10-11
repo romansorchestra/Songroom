@@ -284,3 +284,12 @@ textarea.lyric-editor:focus { outline: 2px solid var(--ink); outline-offset: 0; 
 .seed .page-line { border-bottom-color: transparent; }
 .seed .page-line .t { font: inherit; }
 .more-lines .composer { margin: 4px 0 4px; }
+/* the hang */
+.hang-card { background: var(--sheet); box-shadow: 2px 3px 0 var(--shadow); padding: 12px 14px; margin: 10px 0; }
+.hang-card:nth-child(odd) { transform: rotate(.4deg); }
+.hang-card:nth-child(even) { transform: rotate(-.4deg); }
+.hang-card.is-dismissed { opacity: .55; }
+.hang-text { font-family: var(--serif); font-size: 22px; line-height: 1.3; margin: 0 0 4px; overflow-wrap: anywhere; }
+.hang-context { font-size: 13px; color: var(--sub); margin: 8px 0 0; line-height: 1.5; }
+.hang-actions { display: flex; gap: 2px; flex-wrap: wrap; margin: 6px -8px -8px; }
+.hang-actions .tb { font-size: 13px; }

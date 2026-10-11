@@ -45,9 +45,9 @@ const DEFAULTS: Settings = {
   craftPack: 'edits',
 };
 
-const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 16000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000 };
+const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 16000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000 };
 
-export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines';
+export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines' | 'hang';
 
 export class Service {
   private aborts = new Map<string, AbortController>();
@@ -223,6 +223,9 @@ export class Service {
     p.finally(() => this.pending.delete(p));
     return { id, status: 'running', reused: false };
   }
+
+  /** A background job idle() should wait for (the hang's transcription, a run's follow-up). */
+  track(p: Promise<unknown>) { this.pending.add(p); p.catch(() => {}).finally(() => this.pending.delete(p)); }
 
   private async lock(): Promise<() => void> {
     let release!: () => void;

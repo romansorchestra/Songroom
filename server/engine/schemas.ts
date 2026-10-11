@@ -281,3 +281,34 @@ export const relineSchema = {
   additionalProperties: false,
 } as const;
 export const relineZ = z.object({ ideas: z.array(z.object({ index: z.number(), lines: z.array(z.string()), rhymes: z.string().optional() })), note: z.string() });
+
+// ---- 11 Oct 2026: the hang. Things said in the room that could be a title, a concept or a line ----
+export const hangSchema = {
+  type: 'object',
+  properties: {
+    candidates: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          kind: { type: 'string', enum: ['title', 'concept', 'line'] },
+          text: { type: 'string' },
+          saidBy: { type: 'string' },
+          at: { type: 'string' },
+          context: { type: 'string' },
+          why: { type: 'string' },
+          score: { type: 'integer' },
+        },
+        required: ['kind', 'text', 'saidBy', 'at', 'context', 'why', 'score'],
+        additionalProperties: false,
+      },
+    },
+    note: { type: 'string' },
+  },
+  required: ['candidates', 'note'],
+  additionalProperties: false,
+} as const;
+export const hangZ = z.object({
+  candidates: z.array(z.object({ kind: z.enum(['title', 'concept', 'line']), text: z.string(), saidBy: z.string(), at: z.string(), context: z.string(), why: z.string(), score: z.number() })),
+  note: z.string(),
+});

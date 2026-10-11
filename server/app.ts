@@ -7,6 +7,10 @@ import { MODELS, RATES } from './engine/writer.js';
 import { startBatch, latestResults, vote } from './evals.js';
 import { startExperiment, listExperiments, judge, tally } from './experiments.js';
 import { Studio } from './studio.js';
+import { Hang, MAX_AUDIO_BYTES, MAX_TRANSCRIPT_CHARS } from './hang.js';
+import type { Transcriber } from './engine/transcribe.js';
+import fs from 'node:fs';
+import os from 'node:os';
 
 const targetZ = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('line'), lineId: z.string().max(40), expected: z.string().max(2000) }),
@@ -16,9 +20,10 @@ const key = z.string().max(80).nullable().optional();
 
 type H = (req: Request, res: Response) => Promise<unknown>;
 
-export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: string; writerLabel: string; writerLive: boolean }) {
+export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: string; writerLabel: string; writerLive: boolean; transcriber?: Transcriber | null }) {
   const app = express();
   const studio = new Studio(svc);
+  const hang = new Hang(svc, studio, opts.transcriber ?? null);
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
   app.use(express.json({ limit: '1mb' }));
@@ -47,6 +52,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
 
   api.get('/status', h(async () => ({
     writer: { connected: !!svc.writer, live: opts.writerLive, label: opts.writerLabel },
+    transcriber: hang.status(),
     settings: await svc.settings(), spend: await svc.spend(), models: MODELS, rates: RATES,
   })));
 
@@ -140,6 +146,34 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   api.post('/springboard/own', h(async (req) => { const b = z.object({ text: z.string().max(4000), clientKey: key }).parse(req.body); await studio.ownIdea(b.text, b.clientKey ?? null); return studio.springboard(); }));
   api.post('/springboard/preview', h(async (req) => { const b = z.object({ genre: z.string().max(20).optional(), text: z.string().max(2000).optional(), clientKey: key }).parse(req.body); return studio.preview({ genre: b.genre, text: b.text, clientKey: b.clientKey ?? null }); }));
   api.get('/recent', h(async () => studio.recent()));
+
+  // The hang: a session's talk, read for titles, concepts and lines
+  api.get('/hangs', h(async () => hang.list()));
+  api.get('/hangs/:id', h(async (req) => hang.get(String(req.params.id))));
+  api.post('/hangs', h(async (req) => { const b = z.object({ title: z.string().max(120).default(''), text: z.string().max(MAX_TRANSCRIPT_CHARS + 1000) }).parse(req.body); return hang.fromText(b); }));
+  // a recording, streamed to a temp file as it arrives (express.json leaves audio bodies alone)
+  api.post('/hangs/audio', (req, res, next) => {
+    const title = String(req.query.title ?? '').slice(0, 120);
+    const contentType = String(req.headers['content-type'] ?? 'application/octet-stream');
+    if (!/^(audio|video)\//.test(contentType) && contentType !== 'application/octet-stream') { res.status(415).json({ error: { code: 'not_audio', message: 'That is not an audio file.' } }); req.resume(); return; }
+    const declared = Number(req.headers['content-length'] ?? 0);
+    if (declared > MAX_AUDIO_BYTES) { res.status(413).json({ error: { code: 'too_big', message: 'That recording is over 250 MB. Split it or compress it.' } }); req.resume(); return; }
+    const tmp = path.join(os.tmpdir(), `hang-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+    const out = fs.createWriteStream(tmp);
+    let bytes = 0, tooBig = false;
+    req.on('data', (c: Buffer) => { bytes += c.length; if (bytes > MAX_AUDIO_BYTES && !tooBig) { tooBig = true; req.destroy(); } });
+    req.pipe(out);
+    out.on('finish', async () => {
+      if (tooBig || bytes === 0) { fs.rm(tmp, () => {}); if (!res.headersSent) res.status(tooBig ? 413 : 400).json({ error: { code: tooBig ? 'too_big' : 'empty', message: tooBig ? 'That recording is over 250 MB.' : 'Nothing was uploaded.' } }); return; }
+      try { res.json(await hang.fromAudio({ title, filePath: tmp, contentType, bytes })); } catch (e) { next(e); }
+    });
+    out.on('error', (e) => { fs.rm(tmp, () => {}); next(e); });
+    req.on('error', () => { out.destroy(); fs.rm(tmp, () => {}); });
+  });
+  api.post('/hangs/:id/idea', h(async (req) => hang.toIdea(String(req.params.id), z.object({ index: z.number().int().min(0).max(100) }).parse(req.body).index)));
+  api.post('/hangs/:id/save', h(async (req) => hang.save(String(req.params.id), z.object({ index: z.number().int().min(0).max(100) }).parse(req.body).index)));
+  api.post('/hangs/:id/dismiss', h(async (req) => { const b = z.object({ index: z.number().int().min(0).max(100), undo: z.boolean().default(false) }).parse(req.body); return hang.dismiss(String(req.params.id), b.index, b.undo); }));
+  api.delete('/hangs/:id', h(async (req) => hang.remove(String(req.params.id))));
 
   // Fragments
   api.post('/fragments', h(async (req) => {

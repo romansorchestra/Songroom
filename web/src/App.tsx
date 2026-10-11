@@ -3,11 +3,13 @@ import { api } from './api';
 import { Springboard } from './Springboard';
 import { Workspace } from './Workspace';
 import { Journal } from './Journal';
+import { HangPage } from './Hang';
 import { Settings } from './Settings';
 import { ThreadView } from './Thread';
 
 export type Status = {
   writer: { connected: boolean; live: boolean; label: string };
+  transcriber?: { configured: boolean; label: string | null; usdPerMinute: number | null };
   settings: Record<string, any>;
   spend: { today: number; month: number; dailyCapUsd: number; monthlyCapUsd: number };
   models: Array<{ id: string; label: string; note: string }>;
@@ -56,6 +58,7 @@ export function App() {
   const inJournal = ['journal', 'idea'].includes(place);
   let page: React.ReactNode;
   if (place === 'journal') page = <Journal />;
+  else if (place === 'hang') page = <HangPage key={id ?? 'list'} id={id} />;
   else if (place === 'song' && id) page = <Workspace key={id} id={id} />;
   else if (place === 'idea' && id) page = <Springboard key={id} ideaId={id} />;
   else if (place === 'settings') page = <Settings section={id} />;
@@ -69,8 +72,9 @@ export function App() {
           <div className="top-inner">
             <a className="brand" href="#/write">songroom.</a>
             <nav className="nav" aria-label="Main">
-              <a href="#/write" aria-current={!inJournal && place !== 'settings' ? 'page' : undefined}>Write</a>
+              <a href="#/write" aria-current={!inJournal && place !== 'settings' && place !== 'hang' ? 'page' : undefined}>Write</a>
               <a href="#/journal" aria-current={inJournal ? 'page' : undefined}>Journal</a>
+              <a href="#/hang" aria-current={place === 'hang' ? 'page' : undefined}>Hang</a>
               <a className="gear" href="#/settings" aria-label="Settings" aria-current={place === 'settings' ? 'page' : undefined}>{Gear}</a>
             </nav>
           </div>

@@ -13,7 +13,7 @@ export interface Db {
 }
 
 /** Columns holding JSON text. They are parsed when read. */
-const JSON_COLS = new Set(['value', 'request', 'result', 'error', 'usage', 'payload', 'lines', 'original', 'locks', 'suno', 'sections', 'trial',
+const JSON_COLS = new Set(['dismissed', 'value', 'request', 'result', 'error', 'usage', 'payload', 'lines', 'original', 'locks', 'suno', 'sections', 'trial',
   'steer', 'title_parts', 'context', 'targets', 'items', 'details', 'candidates']);
 
 function toParam(v: unknown): null | number | bigint | string | Uint8Array {
@@ -161,6 +161,12 @@ export const MIGRATIONS: string[] = [
    ALTER TABLE ideas ADD COLUMN parent_id TEXT;
    ALTER TABLE ideas ADD COLUMN feedback TEXT NOT NULL DEFAULT '';
    ALTER TABLE fragments ADD COLUMN ask TEXT NOT NULL DEFAULT ''`,
+  // 5 (11 Oct 2026): the hang. A session recording or pasted transcript, read once for
+  // titles, concepts and lines. The transcript is cleared once the candidates are out.
+  `CREATE TABLE hangs (
+     id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', status TEXT NOT NULL, source TEXT NOT NULL,
+     minutes REAL, speakers INTEGER, transcript TEXT, candidates TEXT NOT NULL DEFAULT '[]', dismissed TEXT NOT NULL DEFAULT '[]',
+     error TEXT, run_id TEXT, created_at ${TS}, updated_at ${TS})`,
 ];
 
 export async function migrate(db: Db): Promise<void> {

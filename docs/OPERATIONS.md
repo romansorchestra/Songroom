@@ -24,3 +24,7 @@ Create a new key in the Anthropic Console, paste it into Render → songroom →
 
 ## Interrupted requests
 A restart during a request marks it "interrupted, may have been billed". Nothing retries automatically.
+
+## Transcription (the hang)
+
+Recordings are transcribed by Deepgram. In Render → the songroom service → Environment, add `DEEPGRAM_API_KEY` (from console.deepgram.com → API keys). Without it, the Hang page still works with pasted transcripts. Cost: about $0.46 per hour of audio, shown in Settings → receipts as a `transcribe` run and counted against the spend caps.
