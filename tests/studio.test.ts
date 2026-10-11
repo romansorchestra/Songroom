@@ -400,7 +400,8 @@ describe('upgrading the live database', () => {
 // ground subjects in what charts; a bigger New idea; react to an idea and have it
 // reworked; a committed idea is a page whose lines tap into the draft.
 describe('ideas grounded in the chart, rework and page lines (11 Oct)', () => {
-  const sparkJson = (n = 3) => ({ note: '', ideas: Array.from({ length: n }, (_, i) => ({ title: `Title ${i}`, titleParts: [`Title ${i}`], concept: `c${i}`, lines: [`line ${i}a`, `line ${i}b`] })) });
+  // rhymed, so the rhyme check (added later the same day) doesn't add a call
+  const sparkJson = (n = 3) => ({ note: '', ideas: Array.from({ length: n }, (_, i) => ({ title: `Title ${i}`, titleParts: [`Title ${i}`], concept: `c${i}`, lines: [`line ${i}a, end of day`, `line ${i}b, we play`, `line ${i}c, tonight`, `line ${i}d, the light`] })) });
 
   it('each idea in a batch gets its own subject from the chart mix, and the genre chip changes the mix', async () => {
     const users: string[] = [];
@@ -507,5 +508,66 @@ describe('ideas grounded in the chart, rework and page lines (11 Oct)', () => {
     await api('POST', `/songs/${ws.id}/add`, { baseRev: a1.body.rev, afterLineId: last, text: 'page two', clientKey: 't2', source: 'scrap' });
     ws = (await api('GET', `/songs/${ws.id}`)).body;
     expect(text(ws)).toBe('page one\npage two');
+  });
+});
+
+// 11 Oct, later: "there's usually only 1 rhyme in the whole thing".
+describe('rhyme is checked, not trusted', () => {
+  const unrhymed = { title: 'Flat', titleParts: ['Flat'], concept: 'c', lines: ['You fold the towels in three now', "You say darlin' like you mean it", 'Who taught you that', "I won't ask twice"], rhymes: '' };
+  const rhymed = { title: 'Round', titleParts: ['Round'], concept: 'c', lines: ["Put your card away, babe, I'll get my own", 'I got the corner booth and a ride back home', "It's not that you're not cute, you're kind of cute", "I just don't want to owe you, and that's the truth"], rhymes: 'own / home, cute / truth' };
+  const systems: string[] = [];
+  const scripted = (relined: string[]) => {
+    const calls: string[] = [];
+    const w = new StandInWriter((req: WriterRequest) => {
+      calls.push(req.user); systems.push(req.system);
+      const props = (req.schema as any).properties;
+      if ('index' in (props.ideas?.items?.properties ?? {})) return { note: '', ideas: [{ index: 1, lines: relined, rhymes: '' }] };
+      return { note: '', ideas: [unrhymed, rhymed, { ...rhymed, title: 'Round 2' }] };
+    });
+    return { w, calls };
+  };
+
+  it('sends only the unrhymed block back once, with what the check found, and keeps the better version', async () => {
+    const { w, calls } = scripted(['I said I would, and I did', 'I kept the receipt, I kept the lid', 'You say my name like a dare', 'And I show up, and I stay there']);
+    await boot(w);
+    const sb = await firstIdea();
+    expect(calls.length).toBe(2);
+    expect(calls[1]).toContain('"Flat"');
+    expect(calls[1]).not.toContain('"Round"');
+    expect(calls[1]).toMatch(/no two lines rhyme; they end on now, it, that, twice/);
+    expect(systems[0]).toContain('Rhyme is part of the pleasure'); // p2.1
+    expect(calls[0]).toContain('at least two end-rhymes by sound');
+    const ideas = (await db.query<{ title: string; lines: Array<{ text: string }> }>(`SELECT title, lines FROM ideas WHERE origin='spark' ORDER BY rowid`)).map((r) => ({ t: r.title, l: r.lines.map((x) => x.text) }));
+    expect(ideas.find((i) => i.t === 'Flat')!.l).toEqual(['I said I would, and I did', 'I kept the receipt, I kept the lid', 'You say my name like a dare', 'And I show up, and I stay there']);
+    expect(ideas.find((i) => i.t === 'Round')!.l).toEqual(rhymed.lines);
+    const [run] = await db.query<{ result: any }>(`SELECT result FROM runs WHERE task='spark' ORDER BY created_at DESC LIMIT 1`);
+    expect(run.result.rhyme).toEqual({ before: [0, 2, 2], retried: [0], after: [2, 2, 2] });
+    void sb;
+  });
+
+  it('a retry that rhymes no better is thrown away; a batch that already rhymes costs one call', async () => {
+    const { w, calls } = scripted(['still flat', 'no rhyme here', 'nothing lands', 'at all']);
+    await boot(w);
+    await firstIdea();
+    expect(calls.length).toBe(2);
+    const [flat] = await db.query<{ lines: Array<{ text: string }> }>(`SELECT lines FROM ideas WHERE title='Flat'`);
+    expect(flat.lines.map((x) => x.text)).toEqual(unrhymed.lines);
+    const calls2: string[] = [];
+    await svc.idle(); server.close(); await db.close();
+    await boot(new StandInWriter((req: WriterRequest) => { calls2.push(req.user); return { note: '', ideas: [rhymed, { ...rhymed, title: 'B' }, { ...rhymed, title: 'C' }] }; }));
+    await firstIdea();
+    expect(calls2.length).toBe(1);
+  });
+
+  it('a preview writes a batch for a direction given on the spot and saves no idea', async () => {
+    await boot(new StandInWriter());
+    const r = await api('POST', '/springboard/preview', { genre: 'country', text: 'about trucks', clientKey: 'pv1' });
+    expect(r.status).toBe(200);
+    await svc.idle();
+    const run = (await api('GET', `/runs/${r.body.runId}`)).body;
+    expect(run.status).toBe('succeeded');
+    expect(run.result.ideas.length).toBe(3);
+    expect((await api('GET', '/springboard')).body.current).toBe(null);
+    expect((await db.query(`SELECT id FROM ideas`)).length).toBe(0);
   });
 });

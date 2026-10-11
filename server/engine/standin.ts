@@ -25,13 +25,19 @@ export class StandInWriter implements Writer {
     if ('lines' in props && 'note' in props && Object.keys(props).length === 2) {
       return { note: '', lines: [1, 2, 3, 4, 5, 6].map((n) => `[stand-in] page line ${n}`) };
     }
+    if ('ideas' in props && !('kind' in props) && 'index' in (((props.ideas as { items?: { properties?: Record<string, unknown> } }).items?.properties) ?? {})) {
+      // lines sent back for rhyme: the stand-in rhymes them
+      const idx = [...req.user.matchAll(/^(\d+)\. "/gm)].map((m) => Number(m[1]) - 1);
+      return { note: '', ideas: idx.map((i) => ({ index: i + 1, lines: ['[stand-in] I said I would, and I did', '[stand-in] I kept the receipt, I kept the lid', '[stand-in] you say my name like a dare', '[stand-in] and I show up, and I stay there'], rhymes: 'did / lid, dare / there' })) };
+    }
     if ('ideas' in props && !('kind' in props)) {
       const n = Number((req.user.match(/Give (\d+) distinct/) ?? [])[1] ?? 3);
       const stamp = Math.random().toString(36).slice(2, 6);
       return { note: '', ideas: Array.from({ length: n }, (_, i) => ({
         title: `Stand-in title ${stamp}${i + 1}`, titleParts: [`Stand-in`, `title ${stamp}${i + 1}`],
         concept: `[stand-in] Placeholder concept ${i + 1}. Not real writing.`,
-        lines: [`[stand-in] first thread line ${i + 1}a`, `[stand-in] first thread line ${i + 1}b`] })) };
+        // a rhymed block, so the rhyme check passes unless a test scripts otherwise
+        lines: [`[stand-in] first thread line ${i + 1}a, not real, end of day`, `[stand-in] first thread line ${i + 1}b, not real, we play`, `[stand-in] first thread line ${i + 1}c, not real, tonight`, `[stand-in] first thread line ${i + 1}d, not real, the light`], rhymes: 'day / play, tonight / light' })) };
     }
     if ('update' in props) {
       const optProps = ((props.options as { items?: { properties?: Record<string, unknown> } })?.items?.properties) ?? {};

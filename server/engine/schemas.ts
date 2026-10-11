@@ -172,8 +172,9 @@ export const sparkSchema = {
           titleParts: { type: 'array', items: { type: 'string' } },
           concept: { type: 'string' },
           lines: { type: 'array', items: { type: 'string' } },
+          rhymes: { type: 'string' },
         },
-        required: ['title', 'titleParts', 'concept', 'lines'],
+        required: ['title', 'titleParts', 'concept', 'lines', 'rhymes'],
         additionalProperties: false,
       },
     },
@@ -184,7 +185,7 @@ export const sparkSchema = {
 };
 
 export const sparkZ = z.object({
-  ideas: z.array(z.object({ title: z.string().min(1), titleParts: z.array(z.string()), concept: z.string(), lines: z.array(z.string()) })).min(1),
+  ideas: z.array(z.object({ title: z.string().min(1), titleParts: z.array(z.string()), concept: z.string(), lines: z.array(z.string()), rhymes: z.string().optional() })).min(1),
   note: z.string(),
 });
 export type SparkOut = z.infer<typeof sparkZ>;
@@ -268,3 +269,15 @@ export const moreLinesSchema = {
   additionalProperties: false,
 } as const;
 export const moreLinesZ = z.object({ lines: z.array(z.string()).min(1), note: z.string() });
+
+// ---- 11 Oct 2026, later: lines sent back once for rhyme ----
+export const relineSchema = {
+  type: 'object',
+  properties: {
+    ideas: { type: 'array', items: { type: 'object', properties: { index: { type: 'integer' }, lines: { type: 'array', items: { type: 'string' } }, rhymes: { type: 'string' } }, required: ['index', 'lines', 'rhymes'], additionalProperties: false } },
+    note: { type: 'string' },
+  },
+  required: ['ideas', 'note'],
+  additionalProperties: false,
+} as const;
+export const relineZ = z.object({ ideas: z.array(z.object({ index: z.number(), lines: z.array(z.string()), rhymes: z.string().optional() })), note: z.string() });

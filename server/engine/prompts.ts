@@ -2,9 +2,9 @@
 // record which instructions produced them. Older variants are kept verbatim so
 // the experiments screen can run them as a baseline.
 
-export type PromptVariant = 'p1.1' | 'p2.0';
-export const PROMPT_VERSION: PromptVariant = 'p2.0';
-export const PROMPT_VARIANTS: PromptVariant[] = ['p1.1', 'p2.0'];
+export type PromptVariant = 'p1.1' | 'p2.0' | 'p2.1';
+export const PROMPT_VERSION: PromptVariant = 'p2.1';
+export const PROMPT_VARIANTS: PromptVariant[] = ['p1.1', 'p2.0', 'p2.1'];
 
 // ---------------------------------------------------------------------------
 // p1.1 — the prompt that shipped on 9 Oct 2026. Kept unchanged as the baseline.
@@ -53,8 +53,33 @@ How to behave
 - If something is genuinely ambiguous and a wrong guess would waste the request, make the most likely reading and state it in one short line in "reply".
 - Lyrics he gives you are his unreleased work. Treat them as the source of truth for the song's facts, voice and spelling.`;
 
+// ---------------------------------------------------------------------------
+// p2.1 — 11 Oct 2026. Sam, after a day on the springboard: "there's usually only 1 rhyme
+// in the whole thing. Needs more attempts at clever rhyming." p2.0 told the writer that
+// natural speech beats rhyme; p2.1 makes rhyme expected and names what a good one is.
+// Everything else is p2.0 word for word. The engine checks the rhymes (engine/rhyme.ts).
+// ---------------------------------------------------------------------------
+const SYSTEM_CORE_P21 = `You are the co-writer in Songroom, a private writing room for Sam, a professional songwriter with major-label cuts across pop and other genres. He is the writer. You are the person in the room he thinks out loud with: fast, specific, unsentimental, and useful.
+
+What good material means here
+- A song can work in many ways. An idea can be a hook phrase with an attitude; a feeling stated exactly; a question the song never answers; a stance toward one person; a situation; an image; a character; or a story with a turn. Use the shape the brief calls for. If he names a genre, direction or artist, work the way that direction actually works. If he names none, vary the shapes across the ideas; don't make every idea a quiet realisation story, and don't give every title a second meaning by the end.
+- Topic is what the song is about; angle is what this song says about it. Give the angle in one sentence a person would say. If a concept needs a paragraph to justify its title, it isn't ready.
+- The title is something he'd sing: a phrase people say, a short repeatable hook, or an odd concrete noun that stands for a feeling. Plain and sayable beats clever and explained.
+- Seed lines are lyric lines from inside the song, in that narrator's mouth, sung or spoken, not descriptions of the song. At least one should be a line a chorus could be built around. Let them work in different ways: a blunt admission, a petty checkable detail, a joke that carries hurt, a rhythmic fragment, a quiet plain line.
+- Common words are not clichés and unusual words are not fresh. A detail earns its place by changing what we know about the narrator, not by decorating. Stock phrases (hearts on fire, broken pieces, falling apart, "I'm not okay") only when he asks for that register or when a familiar phrase is used on purpose and turned.
+- Rhyme is part of the pleasure and it is expected. Any run of lines that belong together (a couplet, a four-line block, a chorus) has a rhyme scheme, and the rhymes are worth noticing: a multi-syllable rhyme, a rhyme across a word boundary, an ordinary word against a name or a brand, an internal rhyme on the way to the end of the line. Slant rhyme is welcome when it keeps the line natural, and it must still rhyme by sound: the same stressed vowel, endings close. Never bend syntax or pick a word only to rhyme; find a different line that gets there honestly. Landing the same word twice is not a rhyme. If you claim a rhyme, it must rhyme by sound, not spelling.
+- Distinct means different situations, stances or mechanisms, not the same idea with new titles. If three ideas could be verses of one song, start again.
+- Artist and song references are shorthand for qualities (stance, diction, humour, structure, detail level, rhythm). Write original material with those qualities. Never reproduce or closely paraphrase existing lyrics, and never write an impression of a named artist. If you don't know a reference he names, say so in one line in "reply" and work from what he says about it; never invent what it sounds like.
+
+How to behave
+- Follow every explicit instruction exactly: counts, line counts, start and end words, words to avoid, perspective, what must stay unchanged. If two instructions conflict, say which in one sentence and do your best with the rest. Don't silently relax one.
+- Small requests stay small. Change only what he asked about. Never rewrite surrounding lines "while you're there".
+- Show the lines, not the reasoning. Don't praise his work or your own, don't explain wordplay, don't add caveats about subjectivity, don't summarise what you're about to do, don't attach a rationale to an option. Concepts are one or two plain sentences at most.
+- If something is genuinely ambiguous and a wrong guess would waste the request, make the most likely reading and state it in one short line in "reply".
+- Lyrics he gives you are his unreleased work. Treat them as the source of truth for the song's facts, voice and spelling.`;
+
 export function systemCore(variant: PromptVariant = PROMPT_VERSION): string {
-  return variant === 'p1.1' ? SYSTEM_CORE_P11 : SYSTEM_CORE_P20;
+  return variant === 'p1.1' ? SYSTEM_CORE_P11 : variant === 'p2.0' ? SYSTEM_CORE_P20 : SYSTEM_CORE_P21;
 }
 /** @deprecated kept for older imports; equals the current variant. */
 export const SYSTEM_CORE = SYSTEM_CORE_P20;
@@ -194,7 +219,8 @@ export function sunoPrompt(input: { song: SongContext; sections: Array<{ index: 
 // ---------------------------------------------------------------------------
 export const WORKSPACE_TEMPLATE = 'ws1';
 /** 11 Oct 2026: ideas get an engine-chosen subject from the chart barometer; rework and page lines. */
-export const IDEA_TEMPLATE = 'ws2';
+export const IDEA_TEMPLATE = 'ws3';
+/** ws3 (11 Oct, later): the first few lines are one rhymed block, and the writer names its rhymes. */
 
 export type RefForPrompt = { name: string; identity: string; source: string; characteristics: string[]; want: string; pastedText?: string };
 
@@ -330,9 +356,19 @@ How to answer
 - "title": something he'd sing.
 - "titleParts": the title split into one or two natural phrase chunks that join back into the title exactly (word for word, same punctuation). Split where a singer would breathe or where the hook turns. One chunk is fine for a short title.
 - "concept": the situation and the angle in one or two plain sentences, at most 45 words.
-- "lines": two to four lyric lines from inside the song. Lines only, no labels.
+- "lines": four lyric lines that belong together as one block (the opening of a verse, or a chorus), with a rhyme scheme (AABB, ABAB or ABCB): at least two end-rhymes by sound, and at least one rhyme a songwriter would notice. Lines only, no labels.
+- "rhymes": the end-word pairs you rhymed, like "own / home, cute / truth".
 - "note": empty unless something needs saying in one short line.`);
   return blocks.join('\n\n');
+}
+
+/** The lines of ideas that didn't rhyme, sent back once for a rhymed block. */
+export function relinePrompt(input: { items: Array<{ index: number; title: string; concept: string; lines: string[]; found: string }> }): string {
+  return [
+    `These ideas are good, but their lines don't rhyme enough. Keep each title and concept exactly; write the four lines again as one block with a rhyme scheme (AABB, ABAB or ABCB): at least two end-rhymes by sound, one of them worth noticing (multi-syllable, across a word boundary, or an ordinary word against a name). Keep the voice and the situation; you may keep lines that already rhyme with each other.`,
+    ...input.items.map((i) => `${i.index + 1}. "${i.title}" — ${i.concept}\nLines now:\n${i.lines.map((l) => `- ${l}`).join('\n')}\nWhat the check found: ${i.found}`),
+    `How to answer\n- One entry per numbered idea, in order: "index" (the number above, starting at 1), "lines" (four lines), "rhymes" (the end-word pairs, like "own / home, cute / truth").\n- "note": empty unless something needs saying in one short line.`,
+  ].join('\n\n');
 }
 
 /** One idea, reworked to his note. What he marked to keep comes back word for word. */
@@ -356,7 +392,7 @@ export function reworkPrompt(input: {
   blocks.push(`How to answer
 - Rework this one idea to his note. Keep what he marked; change what he asked; leave the rest as it is unless his note reaches it.
 - An adult narrator and an everyday situation, unless his note says otherwise.
-- "title", "titleParts" (one or two chunks that join back into the title exactly), "concept" (at most 45 words), "lines" (two to four lyric lines; kept lines included, in their places).
+- "title", "titleParts" (one or two chunks that join back into the title exactly), "concept" (at most 45 words), "lines" (four lyric lines as one rhymed block, at least two end-rhymes by sound; kept lines included, in their places).
 - "note": empty unless something needs saying in one short line.`);
   return blocks.join('\n\n');
 }

@@ -10,13 +10,14 @@ import {
   buildReplacements, parseLiteral, literalReplacements, insertLines, EditError,
 } from './engine/lyrics.js';
 import { extractConstraints, mergeConstraints, containsWord, endsWithPhrase, startsWithPhrase, syllables, endWord, type Check } from './engine/validate.js';
-import { sparkSchema, sparkZ, reworkSchema, reworkZ, moreLinesSchema, moreLinesZ, suggestReplaceSchema, suggestReplaceZ, suggestAddSchema, suggestAddZ, referenceZ } from './engine/schemas.js';
+import { sparkSchema, sparkZ, relineSchema, relineZ, reworkSchema, reworkZ, moreLinesSchema, moreLinesZ, suggestReplaceSchema, suggestReplaceZ, suggestAddSchema, suggestAddZ, referenceZ } from './engine/schemas.js';
 import {
-  systemCore, PROMPT_VERSION, WORKSPACE_TEMPLATE, IDEA_TEMPLATE, sparkPromptV2, reworkPrompt, moreLinesPrompt, suggestPrompt, contextBlock, referenceBlock,
+  systemCore, PROMPT_VERSION, WORKSPACE_TEMPLATE, IDEA_TEMPLATE, sparkPromptV2, relinePrompt, reworkPrompt, moreLinesPrompt, suggestPrompt, contextBlock, referenceBlock,
   REFERENCE_SYSTEM, referencePrompt, type RefForPrompt, type WorkspaceContext,
 } from './engine/prompts.js';
 import { WriterError, type Usage } from './engine/writer.js';
 import { SUBJECTS, GENRES, genreFor, pickSubjects, shapeNote } from './engine/barometer.js';
+import { rhymeReport, rhymesEnough } from './engine/rhyme.js';
 
 export const PALETTES = ['ochre', 'sage', 'blue'] as const;
 export type Palette = (typeof PALETTES)[number];
@@ -209,7 +210,10 @@ export class Studio {
         const r = await this.svc.call('spark', system, user, sparkSchema, s.effortCreative, signal, model);
         const parsed = sparkZ.safeParse(r.json);
         if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
-        return { result: parsed.data as unknown as Record<string, unknown>, usage: r.usage, requestId: r.requestId, model: r.model, live: r.live };
+        // Sam, 11 Oct: "usually only 1 rhyme in the whole thing". The engine checks each block
+        // by sound; the ones that fall short go back once, and the better-rhymed version is kept.
+        const { ideas, usage, rhyme } = await this.rhymeOrRetry(parsed.data.ideas, system, s.effortCreative, signal, model, r.usage);
+        return { result: { ...parsed.data, ideas, rhyme } as unknown as Record<string, unknown>, usage, requestId: r.requestId, model: r.model, live: r.live };
       },
       onSuccess: async (runId, result) => {
         const out = result as unknown as { ideas: Array<{ title: string; titleParts: string[]; concept: string; lines: string[] }>; note: string };
@@ -245,6 +249,65 @@ export class Studio {
     });
     if (waiting && (await this.kv<string | null>('sb.waiting', null)) === marker) await this.setKv('sb.waiting', run.id);
     return run.id;
+  }
+
+  /**
+   * A batch written to a direction given here, for checking the writer without touching his
+   * board: nothing is saved as an idea, the run and its receipt are kept. (11 Oct: after live
+   * tests left his app on a test idea with Diary pop switched on.)
+   */
+  async preview(input: { genre?: string; text?: string; clientKey: string | null }) {
+    if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected.');
+    const s = await this.svc.settings();
+    const genre = genreFor(input.genre, input.text ?? '');
+    const subjects = pickSubjects(genre, SPARK_BATCH);
+    const taste = await this.svc.tasteFor(input.text ?? '');
+    const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
+    const user = sparkPromptV2({ direction: input.text ?? '', genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: '', avoidTitles: [], subjects: subjects.map((k) => SUBJECTS[k]), shape: shapeNote(genre) });
+    const run = await this.svc.startRun({
+      task: 'preview', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
+      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { preview: true, genre, text: input.text ?? '', subjects }, inputChars: system.length + user.length,
+      exec: async (signal, model) => {
+        const r = await this.svc.call('preview', system, user, sparkSchema, s.effortCreative, signal, model);
+        const parsed = sparkZ.safeParse(r.json);
+        if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
+        const { ideas, usage, rhyme } = await this.rhymeOrRetry(parsed.data.ideas, system, s.effortCreative, signal, model, r.usage);
+        return { result: { ...parsed.data, ideas, rhyme } as unknown as Record<string, unknown>, usage, requestId: r.requestId, model: r.model, live: r.live };
+      },
+      onSuccess: async () => {},
+    });
+    return { runId: run.id };
+  }
+
+  /** Check every idea's block of lines for rhyme; send the ones that fall short back once. */
+  private async rhymeOrRetry<T extends { title: string; concept: string; lines: string[] }>(ideas: T[], system: string, effort: string, signal: AbortSignal, model: string, usage: Usage) {
+    const clean = (ls: string[]) => ls.map((t) => t.trim()).filter(Boolean).slice(0, 4);
+    const before = ideas.map((i) => rhymeReport(clean(i.lines)).score);
+    const failing = ideas.map((i, index) => ({ i, index })).filter(({ i }) => !rhymesEnough(clean(i.lines)));
+    const rhyme: { before: number[]; after?: number[]; retried: number[] } = { before, retried: failing.map((f) => f.index) };
+    if (!failing.length) return { ideas, usage, rhyme };
+    const found = (ls: string[]) => {
+      const rep = rhymeReport(ls);
+      const ends = ls.map((l) => l.trim().split(/\s+/).at(-1) ?? '').join(', ');
+      return rep.pairs.length ? `only ${rep.pairs.map((p) => `${p.words[0]} / ${p.words[1]}`).join(', ')} rhyme; the lines end on ${ends}` : `no two lines rhyme; they end on ${ends}`;
+    };
+    const user = relinePrompt({ items: failing.map(({ i, index }) => ({ index, title: i.title, concept: i.concept, lines: clean(i.lines), found: found(clean(i.lines)) })) });
+    let out = ideas.map((i) => ({ ...i }));
+    try {
+      const r2 = await this.svc.call('spark', system, user, relineSchema, effort as never, signal, model);
+      const p2 = relineZ.safeParse(r2.json);
+      usage = { inputTokens: usage.inputTokens + r2.usage.inputTokens, outputTokens: usage.outputTokens + r2.usage.outputTokens, cacheReadTokens: usage.cacheReadTokens + r2.usage.cacheReadTokens, cacheWriteTokens: usage.cacheWriteTokens + r2.usage.cacheWriteTokens };
+      if (p2.success) {
+        for (const e of p2.data.ideas) {
+          const idx = e.index - 1;
+          if (!(idx >= 0 && idx < out.length) || !failing.some((f) => f.index === idx)) continue;
+          const nl = clean(e.lines);
+          if (nl.length >= 2 && rhymeReport(nl).score > rhymeReport(clean(out[idx].lines)).score) out[idx] = { ...out[idx], lines: nl };
+        }
+      }
+    } catch { /* the first draft stands; the receipt shows the retry */ }
+    rhyme.after = out.map((i) => rhymeReport(clean(i.lines)).score);
+    return { ideas: out, usage, rhyme };
   }
 
   /**
