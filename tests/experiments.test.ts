@@ -79,15 +79,26 @@ describe('blind experiments', () => {
     for (const r of runs.filter((x) => x.prompt_version !== 'p2.0+pack')) expect(r.request.pack).toBeNull();
   });
 
-  it('normal writing follows the craftPack setting (off by default)', { timeout: 60000 }, async () => {
+  it('normal writing follows the craftPack scope (edits only by default)', { timeout: 60000 }, async () => {
+    const last = async () => (await svc.db.query<{ prompt_version: string }>(`SELECT prompt_version FROM runs ORDER BY created_at DESC LIMIT 1`))[0].prompt_version;
     await api('POST', '/messages', { threadId: null, text: 'Three pop ideas with hooks and attitude', clientKey: 'c1' });
     await svc.idle();
-    let [run] = await svc.db.query<{ prompt_version: string }>(`SELECT prompt_version FROM runs ORDER BY created_at DESC LIMIT 1`);
-    expect(run.prompt_version).toBe('p2.0');
-    await api('PATCH', '/settings', { craftPack: true });
-    await api('POST', '/messages', { threadId: null, text: 'Three pop ideas with hooks and attitude', clientKey: 'c2' });
+    expect(await last()).toBe('p2.0');
+    const song = (await api('POST', '/songs', { title: 'S', text: 'I watched the headlights leaving\nAnd told myself I am dreaming' })).body;
+    const s = (await api('GET', `/songs/${song.id}`)).body;
+    const line = s.sections[0].lines[0];
+    await api('POST', `/songs/${song.id}/edit`, { baseRev: s.current_rev, targets: [{ kind: 'line', lineId: line.id, expected: line.text }], instruction: 'Three replacements that keep a natural slant rhyme with dreaming', clientKey: 'c2' });
     await svc.idle();
-    [run] = await svc.db.query<{ prompt_version: string }>(`SELECT prompt_version FROM runs ORDER BY created_at DESC LIMIT 1`);
-    expect(run.prompt_version).toBe('p2.0+pack');
+    expect(await last()).toBe('p2.0+pack');
+    await api('PATCH', '/settings', { craftPack: 'all' });
+    await api('POST', '/messages', { threadId: null, text: 'Three pop ideas with hooks and attitude', clientKey: 'c3' });
+    await svc.idle();
+    expect(await last()).toBe('p2.0+pack');
+    await api('PATCH', '/settings', { craftPack: 'off' });
+    await api('POST', `/songs/${song.id}/edit`, { baseRev: s.current_rev, targets: [{ kind: 'line', lineId: line.id, expected: line.text }], instruction: 'Three replacements that keep a natural slant rhyme with dreaming', clientKey: 'c4' });
+    await svc.idle();
+    expect(await last()).toBe('p2.0');
+    const bad = await api('PATCH', '/settings', { craftPack: 'sometimes' });
+    expect(bad.status).toBe(400);
   });
 });

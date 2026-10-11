@@ -13,7 +13,7 @@ Built to `APPROVED_DESIGN_SPEC.md` and `APP_CHANGES_v2.md`. Checked offline with
 - Journal: seeds, single lines, songs; search; filters; star; edit; delete (songs from a seed survive).
 - Song page: sections with stable line IDs, tap-to-select lines and words, locks, direct literal edits, writer-assisted edits with before/after, free-text editing, drafts, full version history with restore, conflict protection.
 - Suno: style + exclude + per-section tags around exact lyrics; stale warning when lyrics change.
-- Settings: model and thinking level, spend caps and receipts, taste notes and example lyrics, 12-brief test pack with judging, blind Experiments screen (prompt versions and research craft notes), craft-notes toggle, JSON + Markdown export, sign out.
+- Settings: model and thinking level, spend caps and receipts, taste notes and example lyrics, 12-brief test pack with judging, blind Experiments screen (prompt versions and research craft notes; 22 trials judged by Sam on 10 Oct), craft-notes scope (off / edits only / everything, default edits only), JSON + Markdown export, sign out.
 - Research pack (10 Oct): `research/pack` — 552 sources, 56 craft cards, 16 reference profiles, 16 original teaching pairs; loaded at boot; keyword retrieval; see `research/SUMMARY.md` and `research/INTEGRATION.md`.
 - Tests: 54 automated (19 for the redesign in `tests/studio.test.ts`); before that 35 (lyric safety, locks, conflicts, duplicates, spend cap, Suno verbatim, no-writer state). Full browser flow at iPhone size, light and dark, plus desktop, using the labelled stand-in writer.
 

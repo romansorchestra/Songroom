@@ -54,7 +54,22 @@ Every card and finding carries a label. 104 of 127 findings and 47 of 56 cards r
 
 **Run, not yet judged.** On 10 Oct 2026 (15:35–19:47 PT) all 11 fresh briefs were generated twice under each of the three conditions on the live app with real Opus 5.5 at effort `high`: 22 blinded trials, 66 generations, every one succeeded, total $1.71 (a further ~$0.17 was lost when a code deploy restarted the app mid-batch; those runs are marked interrupted and are not in any trial). Checks made before handing it to Sam, without looking at which condition produced which output: 0 hard-constraint failures across all 66 (counts, line counts, exact first lines, forbidden words, required word "wait", untouched second lines on edits); 0 teaching-pair lines reproduced in any output (51 pair lines checked against every generated line); 0 outputs carrying an explanatory "reply"; idea concepts between 94 and 161 characters. The judging screen was exercised live (a test vote recorded, conditions revealed, tally updated, vote cleared again).
 
-Sam's judgments: none yet. All `sam_judgment` fields are null and the tally is 0/22. No claim of improvement is made. The honest expectation from the audit is that p2.0 removes the forced-narrative failure on pop briefs regardless of research; whether the craft notes add anything beyond that is exactly what C-vs-B tests, and 22 votes will give a lean, not proof.
+**Sam judged all 22 trials on 10 Oct 2026 (evening PT), on his phone, blind.** Raw votes are in `research/pack/sam_judgments.jsonl` (evidence label `sam_judgment`, the first Sam-labelled data in the collection). Result:
+
+| | A: old prompt p1.1 | B: corrected p2.0 | C: p2.0 + craft notes | none |
+|---|---|---|---|---|
+| Overall (22 trials) | 5 | 7 | 6 | 4 |
+| Ideas (6 trials) | 3 | 2 | 1 | 2 |
+| Lines (10 trials) | 2 | 4 | 2 | 2 |
+| Precise edits (4 trials) | 0 | 1 | 3 | 0 |
+
+Stars ("exceptional"): none on any output. Ties: none.
+
+Reading, stated plainly: **no version clearly wins overall.** 18 picks split 5/7/6 is a coin toss. Two things are more specific than that: (1) on the four precise-edit trials (rhythm-matched replacement, keep-the-rhyme) the craft-notes version was picked three times and the old prompt never, which matches where the cards are most concrete (stress, syllable templates, rhyme-as-a-dial); (2) on ideas the old prompt was picked most often (3 of 4 judged), which runs against the audit's expectation and is recorded as such. Both are leans from tiny samples. The "none" votes fall on the attitude-led second-line brief (both runs), the titles-only brief and the character-downfall brief: short attitude lines are where all three versions failed, which is the weakness Sam first reported.
+
+Caveat that must travel with these numbers: 11 of the 18 picks were "option 1", although conditions were shuffled per trial. Either the first adequate option was taken or there is a position effect; a future run should randomise the display order per viewing, not only per trial, and a second judging pass on the same trials would show how stable the picks are.
+
+Decision taken (reversible, Settings → Writer → Craft notes): default is now **"precise edits only"**; the corrected prompt p2.0 stays the default for everything; nothing is promoted on the ideas or lines paths. See `docs/DECISIONS.md` 2026-10-11.
 
 ## Coverage gaps and disagreements
 

@@ -36,11 +36,14 @@ export function Settings({ section }: { section?: string }) {
             </label>
           </div>
           <p className="small muted">More thinking costs more and takes longer. It isn't proven to write better lyrics; judge by results.</p>
-          <label className="row" style={{ gap: 10, cursor: 'pointer' }}>
-            <input type="checkbox" checked={!!s.craftPack} onChange={(e) => void set({ craftPack: e.target.checked })} />
-            <span>Use craft notes from the research pack</span>
+          <label className="field">Craft notes from the research pack
+            <select value={s.craftPack === true ? 'all' : s.craftPack === false ? 'off' : (s.craftPack ?? 'edits')} onChange={(e) => void set({ craftPack: e.target.value })}>
+              <option value="off">Off</option>
+              <option value="edits">Precise edits only</option>
+              <option value="all">Everything</option>
+            </select>
           </label>
-          <p className="small muted">Off until you've judged it in Experiments below. When on, the writer gets at most two short notes from working writers that fit the request, plus a reference profile when you name one it knows. Never the research itself.</p>
+          <p className="small muted">When on, the writer gets at most two short notes from working writers that fit the request (plus a reference profile when you name one it knows); never the research itself. In your blind comparison (10 Oct) the notes won 3 of 4 edit rounds and made no difference on ideas or lines, so "precise edits only" is the default.</p>
         </div>
       </section>
 

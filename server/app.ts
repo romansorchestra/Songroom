@@ -175,7 +175,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   // Settings
   api.patch('/settings', h(async (req) => {
     const b = z.object({ model: z.string().optional(), effortCreative: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(), effortEdit: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(),
-      dailyCapUsd: z.number().optional(), monthlyCapUsd: z.number().optional(), taste: z.string().optional(), craftPack: z.boolean().optional() }).parse(req.body);
+      dailyCapUsd: z.number().optional(), monthlyCapUsd: z.number().optional(), taste: z.string().optional(), craftPack: z.enum(['off', 'edits', 'all']).optional() }).parse(req.body);
     return svc.updateSettings(b);
   }));
   api.get('/receipts', h(async () => svc.receipts()));

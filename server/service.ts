@@ -27,8 +27,11 @@ export type Settings = {
   dailyCapUsd: number;
   monthlyCapUsd: number;
   taste: string;
-  craftPack: boolean;
+  craftPack: 'off' | 'edits' | 'all';
 };
+
+export type CraftScope = Settings['craftPack'];
+const CRAFT_SCOPES: CraftScope[] = ['off', 'edits', 'all'];
 
 const DEFAULTS: Settings = {
   model: 'claude-opus-5-5',
@@ -37,8 +40,9 @@ const DEFAULTS: Settings = {
   dailyCapUsd: 10,
   monthlyCapUsd: 150,
   taste: '',
-  // Research craft notes stay off until Sam has judged them in Settings → Experiments.
-  craftPack: false,
+  // Research craft notes. 'edits' after the 10 Oct 2026 blind comparison: the notes won 3 of the
+  // 4 judged edit trials and showed no lean on ideas or lines (see docs/DECISIONS.md).
+  craftPack: 'edits',
 };
 
 const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, suggest: 12000, reference: 6000 };
@@ -76,6 +80,8 @@ export class Service {
     const rows = await this.db.query<{ key: string; value: unknown }>(`SELECT key, value FROM settings`);
     const s: Record<string, unknown> = { ...DEFAULTS };
     for (const r of rows) if (r.key in DEFAULTS) s[r.key] = r.value;
+    // The setting was a boolean before 11 Oct 2026.
+    if (typeof s.craftPack === 'boolean') s.craftPack = s.craftPack ? 'all' : 'off';
     return s as Settings;
   }
 
@@ -87,7 +93,7 @@ export class Service {
       if ((k === 'effortCreative' || k === 'effortEdit') && !efforts.includes(v as string)) throw new AppError(400, 'bad_effort', 'Unknown effort.');
       if ((k === 'dailyCapUsd' || k === 'monthlyCapUsd') && !(typeof v === 'number' && v >= 0 && v <= 5000)) throw new AppError(400, 'bad_cap', 'Cap must be between $0 and $5000.');
       if (k === 'taste' && !(typeof v === 'string' && v.length <= 8000)) throw new AppError(400, 'bad_taste', 'Taste notes are too long.');
-      if (k === 'craftPack' && typeof v !== 'boolean') throw new AppError(400, 'bad_flag', 'craftPack must be true or false.');
+      if (k === 'craftPack' && !CRAFT_SCOPES.includes(v as CraftScope)) throw new AppError(400, 'bad_flag', 'craftPack must be off, edits or all.');
       await this.db.query(`INSERT INTO settings(key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`, [k, JSON.stringify(v)]);
     }
     return this.settings();
@@ -308,7 +314,7 @@ export class Service {
     const song = songId ? await this.songContext(songId) : null;
     const taste = await this.tasteFor(text + ' ' + (reference ?? ''));
     const s = await this.settings();
-    const plan: PromptPlan = input.plan ?? { variant: PROMPT_VERSION, pack: s.craftPack };
+    const plan: PromptPlan = input.plan ?? { variant: PROMPT_VERSION, pack: s.craftPack === 'all' };
     const craft = this.craftFor(plan, { text, brief: song?.brief, reference, task: inferTask(text, !!song) });
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
     const user = writePrompt({ request: text, reference, turns, song, focus, craft: craft.block, variant: plan.variant });
@@ -589,7 +595,7 @@ export class Service {
     const turns = await this.recentTurns(threadId);
     const taste = await this.tasteFor(instruction);
     const s = await this.settings();
-    const plan: PromptPlan = input.plan ?? { variant: PROMPT_VERSION, pack: s.craftPack };
+    const plan: PromptPlan = input.plan ?? { variant: PROMPT_VERSION, pack: s.craftPack !== 'off' };
     const craft = this.craftFor(plan, { text: instruction, brief: ctx.brief, task: 'edit' });
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
     const user = editPrompt({ request: instruction, song: ctx, annotated, targets: targetDescs, count, turns, craft: craft.block, variant: plan.variant });
