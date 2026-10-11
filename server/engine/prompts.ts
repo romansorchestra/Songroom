@@ -323,6 +323,7 @@ export function sparkPromptV2(input: { direction: string; genreLabel: string; re
 - Mostly sung to "you", in the moment, as something you'd actually say to that person.
 - Desire can be frank and suggestive, the way pop is; keep it suggestive rather than graphic unless he asks.
 - Titles are mostly a plain phrase people say out loud; an image title is fine now and then.
+- Written for the US market unless his direction says otherwise: American words and spelling (sweater, sidewalk, apartment, parking lot).
 
 How to answer
 - Give ${input.subjects.length} distinct song ideas, one per subject above. He sees them one at a time, so each must stand on its own.
