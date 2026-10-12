@@ -45,8 +45,8 @@ export class StandInWriter implements Writer {
       return { note: '', ideas: Array.from({ length: n }, (_, i) => ({
         title: `Stand-in title ${stamp}${i + 1}`, titleParts: [`Stand-in`, `title ${stamp}${i + 1}`],
         concept: `[stand-in] Placeholder concept ${i + 1}. Not real writing.`,
-        // a rhymed block, so the rhyme check passes unless a test scripts otherwise
-        lines: [`[stand-in] first thread line ${i + 1}a, not real, end of day`, `[stand-in] first thread line ${i + 1}b, not real, we play`, `[stand-in] first thread line ${i + 1}c, not real, tonight`, `[stand-in] first thread line ${i + 1}d, not real, the light`], rhymes: 'day / play, tonight / light' })) };
+        // a rhymed block that opens with the title, so the checks pass unless a test scripts otherwise
+        lines: [`Stand-in title ${stamp}${i + 1}, not real, end of day`, `[stand-in] first thread line ${i + 1}b, not real, we play`, `[stand-in] first thread line ${i + 1}c, not real, tonight`, `[stand-in] first thread line ${i + 1}d, not real, the light`], rhymes: 'day / play, tonight / light' })) };
     }
     if ('update' in props) {
       const optProps = ((props.options as { items?: { properties?: Record<string, unknown> } })?.items?.properties) ?? {};

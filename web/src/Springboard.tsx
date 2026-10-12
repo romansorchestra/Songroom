@@ -226,6 +226,7 @@ export function Springboard({ ideaId }: { ideaId?: string }) {
         <TitleStrips title="Let’s find a song." parts={['Let’s find', 'a song.']} />
         <p className="concept">One idea at a time: a title, the feeling behind it, and a first few lines. Pick a genre or add a direction first if you like.</p>
         <button className="primary big-new" disabled={!writerOk || !!genRun} onClick={another}>{genRun ? 'Writing…' : 'Give me an idea'}</button>
+        <div className="browse-link"><a className="tb under" href="#/browse">Or browse ten titles at once →</a></div>
         <div className="status" role="status" aria-live="polite">{genRun ? <Pending text="Writing an idea…" /> : genErr || board.lastError || ''}</div>
         <OwnLine onDone={load} />
       </div>
@@ -297,6 +298,7 @@ export function Springboard({ ideaId }: { ideaId?: string }) {
           {genRun ? 'Writing a new idea…' : board.nextId ? 'Next idea →' : 'New idea'}
         </button>
       )}
+      {!journalMode && board && <div className="browse-link"><a className="tb under" href="#/browse">Or browse ten titles at once →</a></div>}
       {genErr && !genRun && <div className="status err" role="alert">{genErr}</div>}
 
       <div className="actions">

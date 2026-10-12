@@ -30,7 +30,7 @@ async function api(method: string, path: string, body?: unknown) {
 afterEach(async () => { await svc?.idle(); server?.close(); await db?.close(); });
 
 const HALL = 'A rhyme word must belong in the scene: "hall" after a night out reads as a wedding or a church.';
-const sparkJson = () => ({ note: '', ideas: [0, 1, 2].map((i) => ({ title: `Title ${i}`, titleParts: [`Title ${i}`], concept: `c${i}`, lines: [`line ${i}a, end of day`, `line ${i}b, we play`, `line ${i}c, tonight`, `line ${i}d, the light`] })) });
+const sparkJson = () => ({ note: '', ideas: [0, 1, 2].map((i) => ({ title: `Title ${i}`, titleParts: [`Title ${i}`], concept: `c${i}`, lines: [`Title ${i}, end of day`, `line ${i}b, we play`, `line ${i}c, tonight`, `line ${i}d, the light`] })) });
 const isRework = (req: WriterRequest) => { const p = (req.schema as any).properties; return 'titleParts' in p && 'lesson' in p; };
 
 async function firstIdea() {

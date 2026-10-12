@@ -145,7 +145,10 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   api.post('/springboard/next', h(async (req) => studio.sparkNext(z.object({ clientKey: key }).parse(req.body).clientKey ?? null)));
   api.post('/springboard/current', h(async (req) => studio.setCurrent(z.object({ ideaId: z.string().max(40) }).parse(req.body).ideaId)));
   api.post('/springboard/own', h(async (req) => { const b = z.object({ text: z.string().max(4000), clientKey: key }).parse(req.body); await studio.ownIdea(b.text, b.clientKey ?? null); return studio.springboard(); }));
-  api.post('/springboard/preview', h(async (req) => { const b = z.object({ genre: z.string().max(20).optional(), text: z.string().max(2000).optional(), clientKey: key }).parse(req.body); return studio.preview({ genre: b.genre, text: b.text, clientKey: b.clientKey ?? null }); }));
+  api.post('/springboard/preview', h(async (req) => { const b = z.object({ genre: z.string().max(20).optional(), text: z.string().max(2000).optional(), clientKey: key, count: z.number().int().min(1).max(10).optional(), scope: z.enum(['all', 'relationship']).optional() }).parse(req.body); return studio.preview({ genre: b.genre, text: b.text, clientKey: b.clientKey ?? null, count: b.count, scope: b.scope }); }));
+  // Browse: ten titles at once (11 Oct, late)
+  api.get('/browse', h(async () => studio.browse()));
+  api.post('/browse/list', h(async (req) => { const b = z.object({ clientKey: key, scope: z.enum(['all', 'relationship']).optional() }).parse(req.body); return studio.startList({ clientKey: b.clientKey ?? null, scope: b.scope }); }));
   api.get('/recent', h(async () => studio.recent()));
 
   // The hang: a session's talk, read for titles, concepts and lines

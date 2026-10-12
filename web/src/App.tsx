@@ -4,6 +4,7 @@ import { Springboard } from './Springboard';
 import { Workspace } from './Workspace';
 import { Journal } from './Journal';
 import { HangPage } from './Hang';
+import { Browse } from './Browse';
 import { Settings } from './Settings';
 import { ThreadView } from './Thread';
 
@@ -59,6 +60,7 @@ export function App() {
   let page: React.ReactNode;
   if (place === 'journal') page = <Journal />;
   else if (place === 'hang') page = <HangPage key={id ?? 'list'} id={id} />;
+  else if (place === 'browse') page = <Browse />;
   else if (place === 'song' && id) page = <Workspace key={id} id={id} />;
   else if (place === 'idea' && id) page = <Springboard key={id} ideaId={id} />;
   else if (place === 'settings') page = <Settings section={id} />;

@@ -401,13 +401,14 @@ describe('upgrading the live database', () => {
 // reworked; a committed idea is a page whose lines tap into the draft.
 describe('ideas grounded in the chart, rework and page lines (11 Oct)', () => {
   // rhymed, so the rhyme check (added later the same day) doesn't add a call
-  const sparkJson = (n = 3) => ({ note: '', ideas: Array.from({ length: n }, (_, i) => ({ title: `Title ${i}`, titleParts: [`Title ${i}`], concept: `c${i}`, lines: [`line ${i}a, end of day`, `line ${i}b, we play`, `line ${i}c, tonight`, `line ${i}d, the light`] })) });
+  const sparkJson = (n = 3) => ({ note: '', ideas: Array.from({ length: n }, (_, i) => ({ title: `Title ${i}`, titleParts: [`Title ${i}`], concept: `c${i}`, lines: [`Title ${i}, end of day`, `line ${i}b, we play`, `line ${i}c, tonight`, `line ${i}d, the light`] })) });
 
   it('each idea in a batch gets its own subject from the chart mix, and the genre chip changes the mix', async () => {
     const users: string[] = [];
     await boot(new StandInWriter((req: WriterRequest) => { users.push(req.user); return sparkJson(); }));
     await firstIdea();
-    expect(users[0]).toContain('Subjects for this batch');
+    expect(users[0]).toContain('Subject and title placement for this batch');
+    expect(users[0]).toMatch(/Title: the (title opens the block|block lands on the title|title is said in passing)/);
     expect(users[0]).toMatch(/charted on Spotify US/);
     expect(users[0]).toContain('adult narrator');
     const ids = (await db.query<{ subject: string }>(`SELECT subject FROM ideas WHERE origin='spark'`)).map((r) => r.subject);
@@ -513,37 +514,39 @@ describe('ideas grounded in the chart, rework and page lines (11 Oct)', () => {
 
 // 11 Oct, later: "there's usually only 1 rhyme in the whole thing".
 describe('rhyme is checked, not trusted', () => {
-  const unrhymed = { title: 'Flat', titleParts: ['Flat'], concept: 'c', lines: ['You fold the towels in three now', "You say darlin' like you mean it", 'Who taught you that', "I won't ask twice"], rhymes: '' };
-  const rhymed = { title: 'Round', titleParts: ['Round'], concept: 'c', lines: ["Put your card away, babe, I'll get my own", 'I got the corner booth and a ride back home', "It's not that you're not cute, you're kind of cute", "I just don't want to owe you, and that's the truth"], rhymes: 'own / home, cute / truth' };
+  // both blocks carry their title (the title check, added later the same night, would send a block without it back too)
+  const unrhymed = { title: 'Who Taught You That', titleParts: ['Who Taught You That'], concept: 'c', lines: ['You fold the towels in three now', "You say darlin' like you mean it", 'Who taught you that', "I won't ask twice"], rhymes: '' };
+  const rhymed = { title: "I'll Get My Own", titleParts: ["I'll Get My Own"], concept: 'c', lines: ["Put your card away, babe, I'll get my own", 'I got the corner booth and a ride back home', "It's not that you're not cute, you're kind of cute", "I just don't want to owe you, and that's the truth"], rhymes: 'own / home, cute / truth' };
   const systems: string[] = [];
   const scripted = (relined: string[]) => {
     const calls: string[] = [];
     const w = new StandInWriter((req: WriterRequest) => {
       calls.push(req.user); systems.push(req.system);
       const props = (req.schema as any).properties;
-      if ('index' in (props.ideas?.items?.properties ?? {})) return { note: '', ideas: [{ index: 1, lines: relined, rhymes: 'did / lid, dare / there' }] };
-      return { note: '', ideas: [unrhymed, rhymed, { ...rhymed, title: 'Round 2' }] };
+      if ('index' in (props.ideas?.items?.properties ?? {})) return { note: '', ideas: [{ index: 1, lines: relined, rhymes: 'lie / reply, dare / there' }] };
+      return { note: '', ideas: [unrhymed, rhymed, { ...rhymed, title: "I'll Get My Own", concept: 'c2' }] };
     });
     return { w, calls };
   };
 
   it('sends only the unrhymed block back once, with what the check found, and keeps the better version', async () => {
-    const { w, calls } = scripted(['I said I would, and I did', 'I kept the receipt, I kept the lid', 'You say my name like a dare', 'And I show up, and I stay there']);
+    const { w, calls } = scripted(['Who taught you that, and who taught you to lie', 'I kept the receipt, and I kept the reply', 'You say my name like a dare', 'And I show up, and I stay there']);
     await boot(w);
     const sb = await firstIdea();
     expect(calls.length).toBe(2);
-    expect(calls[1]).toContain('"Flat"');
-    expect(calls[1]).not.toContain('"Round"');
+    expect(calls[1]).toContain('"Who Taught You That"');
+    expect(calls[1]).not.toContain('"I\'ll Get My Own"');
     expect(calls[1]).toMatch(/no two lines rhyme; they end on now, it, that, twice/);
     expect(systems[0]).toContain('Rhyme is part of the pleasure'); // p2.1, kept in p2.2
     expect(systems[0]).toContain('would this narrator say it, here, if it didn\'t rhyme'); // p2.2
     expect(calls[0]).toContain('at least two end-rhymes by sound');
     const ideas = (await db.query<{ title: string; lines: Array<{ text: string }> }>(`SELECT title, lines FROM ideas WHERE origin='spark' ORDER BY rowid`)).map((r) => ({ t: r.title, l: r.lines.map((x) => x.text) }));
-    expect(ideas.find((i) => i.t === 'Flat')!.l).toEqual(['I said I would, and I did', 'I kept the receipt, I kept the lid', 'You say my name like a dare', 'And I show up, and I stay there']);
-    expect(ideas.find((i) => i.t === 'Round')!.l).toEqual(rhymed.lines);
+    expect(ideas.find((i) => i.t === 'Who Taught You That')!.l).toEqual(['Who taught you that, and who taught you to lie', 'I kept the receipt, and I kept the reply', 'You say my name like a dare', 'And I show up, and I stay there']);
+    expect(ideas.find((i) => i.t === "I'll Get My Own")!.l).toEqual(rhymed.lines);
     const [run] = await db.query<{ result: any }>(`SELECT result FROM runs WHERE task='spark' ORDER BY created_at DESC LIMIT 1`);
-    expect(run.result.rhyme).toEqual({ before: [0, 2, 2], retried: [0], after: [2, 2, 2] });
-    expect(run.result.ideas[0].rhymes).toBe('did / lid, dare / there'); // the label follows the retried lines
+    expect(run.result.rhyme).toMatchObject({ before: [0, 2, 2], retried: [0], after: [2, 2, 2] });
+    expect(run.result.rhyme.hook.before).toEqual(['passing', 'passing', 'passing']);
+    expect(run.result.ideas[0].rhymes).toBe('lie / reply, dare / there'); // the label follows the retried lines
     void sb;
   });
 
@@ -552,11 +555,11 @@ describe('rhyme is checked, not trusted', () => {
     await boot(w);
     await firstIdea();
     expect(calls.length).toBe(2);
-    const [flat] = await db.query<{ lines: Array<{ text: string }> }>(`SELECT lines FROM ideas WHERE title='Flat'`);
+    const [flat] = await db.query<{ lines: Array<{ text: string }> }>(`SELECT lines FROM ideas WHERE title='Who Taught You That'`);
     expect(flat.lines.map((x) => x.text)).toEqual(unrhymed.lines);
     const calls2: string[] = [];
     await svc.idle(); server.close(); await db.close();
-    await boot(new StandInWriter((req: WriterRequest) => { calls2.push(req.user); return { note: '', ideas: [rhymed, { ...rhymed, title: 'B' }, { ...rhymed, title: 'C' }] }; }));
+    await boot(new StandInWriter((req: WriterRequest) => { calls2.push(req.user); return { note: '', ideas: [rhymed, { ...rhymed, concept: 'B' }, { ...rhymed, concept: 'C' }] }; }));
     await firstIdea();
     expect(calls2.length).toBe(1);
   });

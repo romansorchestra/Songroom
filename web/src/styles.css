@@ -80,6 +80,18 @@ h1.idea-title { font-family: var(--serif); font-weight: 400; font-size: 43px; li
 .lesson-list { list-style: none; margin: 0; padding: 0; }
 .lesson-list li { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--edge); font-size: 14px; line-height: 1.4; }
 .lesson-list li small { display: block; color: var(--sub); font-size: 12px; margin-top: 2px; }
+/* Browse: ten titles at a time (11 Oct, late) */
+.browse-batch { margin-top: 10px; }
+.browse-card { display: block; width: 100%; text-align: left; background: var(--sheet); border: 0; border-bottom: 1px solid var(--edge); margin: 14px 0; padding: 16px 16px 14px; color: var(--ink); box-shadow: 2px 3px 0 var(--shadow); position: relative; cursor: pointer; }
+.browse-card:nth-child(odd) { transform: rotate(-.3deg); }
+.browse-card:nth-child(even) { transform: rotate(.3deg); }
+.browse-card::before { content: ''; position: absolute; width: 46px; height: 12px; background: var(--tint); top: -6px; left: 18px; transform: rotate(-3deg); }
+.browse-title { font-family: var(--serif); font-size: 27px; font-weight: 400; display: block; line-height: 1.12; letter-spacing: -.4px; margin: 2px 0 6px; overflow-wrap: anywhere; }
+.browse-concept { display: block; font-size: 13px; line-height: 1.5; color: var(--sub); margin: 0 0 10px; }
+.browse-lines { display: block; font-family: var(--serif); font-size: 18px; line-height: 1.38; white-space: pre-line; overflow-wrap: anywhere; }
+.browse-open { display: block; margin-top: 10px; font-size: 12px; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.browse .genres + .genres { margin-top: -6px; }
+.browse-link { margin: -8px 0 10px; } .browse-link a { padding-left: 0; }
 .hand { font-family: var(--hand); font-size: 24px; line-height: 1.2; color: var(--accent); margin: 0 0 9px; transform: rotate(-2deg); transform-origin: left; }
 .muted { color: var(--sub); }
 .small { font-size: 12px; }

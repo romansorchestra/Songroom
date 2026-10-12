@@ -16,12 +16,15 @@ import {
   REFERENCE_SYSTEM, referencePrompt, type RefForPrompt, type WorkspaceContext,
 } from './engine/prompts.js';
 import { WriterError, type Usage } from './engine/writer.js';
-import { SUBJECTS, GENRES, genreFor, pickSubjects, shapeNote } from './engine/barometer.js';
+import { SUBJECTS, GENRES, genreFor, pickSubjects, shapeNote, type SubjectScope } from './engine/barometer.js';
 import { rhymeReport, rhymesEnough } from './engine/rhyme.js';
+import { HOOKS, HOOK_NOTE, assignHooks, hookPlacement, type Hook } from './engine/hook.js';
 
 export const PALETTES = ['ochre', 'sage', 'blue'] as const;
 export type Palette = (typeof PALETTES)[number];
 const SPARK_BATCH = 3;
+/** Browse: ten titles at once (11 Oct, late). */
+const LIST_BATCH = 10;
 const SUGGEST_COUNT = 4;
 
 type Direction = { text: string; refId: string | null; genre?: string };
@@ -197,26 +200,28 @@ export class Studio {
     const recent = await this.db.query<{ title: string; subject: string | null }>(`SELECT title, subject FROM ideas WHERE origin='spark' AND state IN ('shown','queued') ORDER BY created_at DESC LIMIT 15`);
     const genre = genreFor(direction.genre, direction.text);
     const subjects = pickSubjects(genre, SPARK_BATCH, recent.slice(0, 3).map((r) => r.subject ?? '').filter(Boolean));
+    const hooks = assignHooks(SPARK_BATCH);
     const craft = this.svc.craftFor(plan, { text: direction.text || 'song ideas', reference: refs.map((r) => r.name).join(', ') || null, task: 'ideas' });
     const taste = await this.svc.tasteFor(direction.text);
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
     const user = sparkPromptV2({
       direction: direction.text, genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: referenceBlock(refs),
-      avoidTitles: recent.map((r) => r.title), subjects: subjects.map((k) => SUBJECTS[k]), shape: shapeNote(genre), craft: craft.block,
+      avoidTitles: recent.map((r) => r.title), subjects: subjects.map((k) => SUBJECTS[k]), hooks: hooks.map((h) => HOOK_NOTE[h]), shape: shapeNote(genre), craft: craft.block,
     });
     const prevCurrent = await this.kv<string | null>('sb.current', null);
     const steer = stableDir(direction);
     const run = await this.svc.startRun({
       task: 'spark', threadId: null, songId: null, clientKey, effort: s.effortCreative,
       promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${IDEA_TEMPLATE}`,
-      request: { direction, genre, subjects, prevCurrent, pack: craft.record, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
+      request: { direction, genre, subjects, hooks, prevCurrent, pack: craft.record, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('spark', system, user, sparkSchema, s.effortCreative, signal, model);
         const parsed = sparkZ.safeParse(r.json);
         if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
-        // Sam, 11 Oct: "usually only 1 rhyme in the whole thing". The engine checks each block
-        // by sound; the ones that fall short go back once, and the better-rhymed version is kept.
-        const { ideas, usage, rhyme } = await this.rhymeOrRetry(parsed.data.ideas, system, s.effortCreative, signal, model, r.usage);
+        // Sam, 11 Oct: "usually only 1 rhyme in the whole thing"; later: the lines should be built
+        // around the title. The engine checks each block by sound and for its title; the ones
+        // that fall short go back once, and the better version is kept.
+        const { ideas, usage, rhyme } = await this.checkOrRetry(parsed.data.ideas, hooks, system, s.effortCreative, signal, model, r.usage);
         return { result: { ...parsed.data, ideas, rhyme } as unknown as Record<string, unknown>, usage, requestId: r.requestId, model: r.model, live: r.live };
       },
       onSuccess: async (runId, result) => {
@@ -260,22 +265,25 @@ export class Studio {
    * board: nothing is saved as an idea, the run and its receipt are kept. (11 Oct: after live
    * tests left his app on a test idea with Diary pop switched on.)
    */
-  async preview(input: { genre?: string; text?: string; clientKey: string | null }) {
+  async preview(input: { genre?: string; text?: string; clientKey: string | null; count?: number; scope?: SubjectScope }) {
     if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected.');
     const s = await this.svc.settings();
     const genre = genreFor(input.genre, input.text ?? '');
-    const subjects = pickSubjects(genre, SPARK_BATCH);
+    const count = Math.min(LIST_BATCH, Math.max(1, input.count ?? SPARK_BATCH));
+    const scope: SubjectScope = input.scope ?? 'all';
+    const subjects = pickSubjects(genre, count, [], Math.random, scope);
+    const hooks = assignHooks(count);
     const taste = await this.svc.tasteFor(input.text ?? '');
     const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
-    const user = sparkPromptV2({ direction: input.text ?? '', genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: '', avoidTitles: [], subjects: subjects.map((k) => SUBJECTS[k]), shape: shapeNote(genre) });
+    const user = sparkPromptV2({ direction: input.text ?? '', genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: '', avoidTitles: [], subjects: subjects.map((k) => SUBJECTS[k]), hooks: hooks.map((h) => HOOK_NOTE[h]), shape: shapeNote(genre), relationshipOnly: scope === 'relationship' });
     const run = await this.svc.startRun({
       task: 'preview', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
-      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { preview: true, genre, text: input.text ?? '', subjects, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
+      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { preview: true, genre, text: input.text ?? '', subjects, hooks, scope, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('preview', system, user, sparkSchema, s.effortCreative, signal, model);
         const parsed = sparkZ.safeParse(r.json);
         if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
-        const { ideas, usage, rhyme } = await this.rhymeOrRetry(parsed.data.ideas, system, s.effortCreative, signal, model, r.usage);
+        const { ideas, usage, rhyme } = await this.checkOrRetry(parsed.data.ideas, hooks, system, s.effortCreative, signal, model, r.usage);
         return { result: { ...parsed.data, ideas, rhyme } as unknown as Record<string, unknown>, usage, requestId: r.requestId, model: r.model, live: r.live };
       },
       onSuccess: async () => {},
@@ -283,19 +291,118 @@ export class Studio {
     return { runId: run.id };
   }
 
-  /** Check every idea's block of lines for rhyme; send the ones that fall short back once. */
-  private async rhymeOrRetry<T extends { title: string; concept: string; lines: string[]; rhymes?: string }>(ideas: T[], system: string, effort: string, signal: AbortSignal, model: string, usage: Usage) {
+  // ------------------------------------------------------------------ browse
+  /**
+   * Ten titles at once (11 Oct, late). Sam: "How am I supposed to just generate and browse a
+   * bunch of ideas that are just good relationship titles (with a concept and a few lines)".
+   * A list is a batch of LIST_BATCH ideas in state 'listed': shown on the Browse page for the
+   * direction they were written to, never pulled into the one-at-a-time queue; opening one
+   * makes it the idea on the Write screen.
+   */
+  async startList(input: { clientKey: string | null; scope?: SubjectScope }): Promise<{ runId: string }> {
+    if (input.clientKey) {
+      const [r] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE client_key=$1`, [input.clientKey]);
+      if (r) return { runId: r.id };
+    }
+    const [running] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE task='list' AND status='running' LIMIT 1`);
+    if (running) return { runId: running.id };
+    if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected. Add the Anthropic API key in Render to generate ideas.');
+    const direction = await this.direction();
+    const scope: SubjectScope = input.scope ?? 'relationship';
+    const s = await this.svc.settings();
+    const plan: PromptPlan = { variant: PROMPT_VERSION, pack: s.craftPack === 'all' };
+    const refs = direction.refId ? await this.refsForPrompt([direction.refId]) : [];
+    const recent = await this.db.query<{ title: string }>(`SELECT title FROM ideas WHERE origin='spark' AND state IN ('shown','queued','listed') ORDER BY created_at DESC LIMIT 30`);
+    const genre = genreFor(direction.genre, direction.text);
+    const subjects = pickSubjects(genre, LIST_BATCH, [], Math.random, scope);
+    const hooks = assignHooks(LIST_BATCH);
+    const craft = this.svc.craftFor(plan, { text: direction.text || 'song ideas', reference: refs.map((r) => r.name).join(', ') || null, task: 'ideas' });
+    const taste = await this.svc.tasteFor(direction.text);
+    const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
+    const user = sparkPromptV2({
+      direction: direction.text, genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: referenceBlock(refs),
+      avoidTitles: recent.map((r) => r.title), subjects: subjects.map((k) => SUBJECTS[k]), hooks: hooks.map((h) => HOOK_NOTE[h]), shape: shapeNote(genre), craft: craft.block,
+      relationshipOnly: scope === 'relationship',
+    });
+    const steer = stableDir(direction);
+    const run = await this.svc.startRun({
+      task: 'list', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
+      promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${IDEA_TEMPLATE}`,
+      request: { direction, genre, scope, subjects, hooks, pack: craft.record, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
+      exec: async (signal, model) => {
+        const r = await this.svc.call('list', system, user, sparkSchema, s.effortCreative, signal, model);
+        const parsed = sparkZ.safeParse(r.json);
+        if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
+        const { ideas, usage, rhyme } = await this.checkOrRetry(parsed.data.ideas, hooks, system, s.effortCreative, signal, model, r.usage);
+        return { result: { ...parsed.data, ideas, rhyme } as unknown as Record<string, unknown>, usage, requestId: r.requestId, model: r.model, live: r.live };
+      },
+      onSuccess: async (runId, result) => {
+        const out = result as unknown as { ideas: Array<{ title: string; titleParts: string[]; concept: string; lines: string[] }>; note: string };
+        const [{ n }] = await this.db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ideas WHERE origin='spark'`);
+        let k = 0;
+        for (const [j, i] of out.ideas.slice(0, LIST_BATCH).entries()) {
+          const lines = i.lines.map((t) => t.trim()).filter(Boolean).slice(0, 4);
+          if (!i.title.trim() || !lines.length) continue;
+          const id = newId('i_');
+          const parts = i.titleParts.map((t) => t.trim()).filter(Boolean);
+          await this.db.query(
+            `INSERT INTO ideas(id, kind, title, concept, lines, original, source_run_id, motif, saved, origin, state, palette, title_parts, steer, note, batch_id, subject)
+             VALUES ($1,'seed',$2,$3,$4,$5,$6,$7,0,'spark','listed',$8,$9,$10,$11,$6,$12)`,
+            [id, i.title.trim().slice(0, 200), i.concept.trim().slice(0, 600), JSON.stringify(lines.map((t) => ({ id: newId('l_'), text: t }))),
+              JSON.stringify({ title: i.title, concept: i.concept, lines }), runId, motifFor(id), PALETTES[(Number(n) + k) % 3],
+              JSON.stringify(parts.length ? parts : null), steer, out.note.trim().slice(0, 300), subjects[j] ?? null],
+          );
+          k++;
+        }
+      },
+    });
+    return { runId: run.id };
+  }
+
+  /** The Browse page: lists written to the current direction, newest first, and the list being written now. */
+  async browse() {
+    const direction = await this.direction();
+    // in writing order within a batch (rowid); batches newest first below
+    const rows = await this.db.query<IdeaRow>(`SELECT * FROM ideas WHERE origin='spark' AND state='listed' AND steer=$1 AND NOT archived ORDER BY rowid ASC`, [stableDir(direction)]);
+    const [running] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE task='list' AND status='running' ORDER BY created_at DESC LIMIT 1`);
+    const [last] = await this.db.query<{ id: string; status: string; error: { message?: string } | null }>(`SELECT id, status, error FROM runs WHERE task='list' ORDER BY created_at DESC LIMIT 1`);
+    // group by batch, newest batch first, ideas in the order they were written
+    const batches = new Map<string, typeof rows>();
+    for (const r of rows) { const b = (r as unknown as { batch_id: string }).batch_id; if (!batches.has(b)) batches.set(b, []); batches.get(b)!.push(r); }
+    return {
+      direction, genres: GENRES,
+      batches: [...batches.entries()].sort((a, b) => b[1][0].created_at.localeCompare(a[1][0].created_at) || b[1][0].id.localeCompare(a[1][0].id)).slice(0, 6).map(([id, ideas]) => ({ id, created_at: ideas[0].created_at, ideas: ideas.map((r) => ({
+        id: r.id, title: r.title, title_parts: r.title_parts, concept: r.concept, lines: r.lines, palette: r.palette ?? PALETTES[motifFor(r.id) % 3], subject: r.subject ?? null, saved: !!r.saved,
+      })) })),
+      runId: running?.id ?? null,
+      lastError: last && last.status !== 'succeeded' && last.status !== 'running' ? (last.error?.message ?? 'That request failed.') : null,
+      writer: { connected: !!this.svc.writer, live: !!this.svc.writer?.live },
+    };
+  }
+
+  /**
+   * Check every idea's block of lines for rhyme and for its title; send the ones that fall
+   * short back once in one call, and keep the better version of each.
+   */
+  private async checkOrRetry<T extends { title: string; concept: string; lines: string[]; rhymes?: string }>(ideas: T[], hooks: Hook[], system: string, effort: string, signal: AbortSignal, model: string, usage: Usage) {
     const clean = (ls: string[]) => ls.map((t) => t.trim()).filter(Boolean).slice(0, 4);
+    // one score per block: rhyme pairs by sound, and 2 for the title being there at all
+    const score = (i: { title: string; lines: string[] }) => rhymeReport(clean(i.lines)).score + (hookPlacement(i.title, clean(i.lines)) === 'none' ? 0 : 2);
     const before = ideas.map((i) => rhymeReport(clean(i.lines)).score);
-    const failing = ideas.map((i, index) => ({ i, index })).filter(({ i }) => !rhymesEnough(clean(i.lines)));
-    const rhyme: { before: number[]; after?: number[]; retried: number[] } = { before, retried: failing.map((f) => f.index) };
+    const hookBefore = ideas.map((i) => hookPlacement(i.title, clean(i.lines)));
+    const failing = ideas.map((i, index) => ({ i, index })).filter(({ i, index }) => !rhymesEnough(clean(i.lines)) || hookBefore[index] === 'none');
+    const rhyme: { before: number[]; after?: number[]; retried: number[]; hook: { want: Hook[]; before: Array<Hook | 'none'>; after?: Array<Hook | 'none'> } } = { before, retried: failing.map((f) => f.index), hook: { want: hooks.slice(0, ideas.length), before: hookBefore } };
     if (!failing.length) return { ideas, usage, rhyme };
-    const found = (ls: string[]) => {
+    const found = (i: { title: string; lines: string[] }, index: number) => {
+      const ls = clean(i.lines);
       const rep = rhymeReport(ls);
       const ends = ls.map((l) => l.trim().split(/\s+/).at(-1) ?? '').join(', ');
-      return rep.pairs.length ? `only ${rep.pairs.map((p) => `${p.words[0]} / ${p.words[1]}`).join(', ')} rhyme; the lines end on ${ends}` : `no two lines rhyme; they end on ${ends}`;
+      const parts: string[] = [];
+      if (!rhymesEnough(ls)) parts.push(rep.pairs.length ? `only ${rep.pairs.map((p) => `${p.words[0]} / ${p.words[1]}`).join(', ')} rhyme; the lines end on ${ends}` : `no two lines rhyme; they end on ${ends}`);
+      if (hookBefore[index] === 'none') parts.push(`the title "${i.title}" is not in the lines word for word`);
+      return parts.join('; ');
     };
-    const user = relinePrompt({ items: failing.map(({ i, index }) => ({ index, title: i.title, concept: i.concept, lines: clean(i.lines), found: found(clean(i.lines)) })) });
+    const user = relinePrompt({ items: failing.map(({ i, index }) => ({ index, title: i.title, concept: i.concept, lines: clean(i.lines), found: found(i, index), hook: hooks[index] ? HOOK_NOTE[hooks[index]] : undefined })) });
     let out = ideas.map((i) => ({ ...i }));
     try {
       const r2 = await this.svc.call('spark', system, user, relineSchema, effort as never, signal, model);
@@ -307,11 +414,12 @@ export class Studio {
           if (!(idx >= 0 && idx < out.length) || !failing.some((f) => f.index === idx)) continue;
           const nl = clean(e.lines);
           // the retried block replaces the lines and the writer's own rhyme label together
-          if (nl.length >= 2 && rhymeReport(nl).score > rhymeReport(clean(out[idx].lines)).score) out[idx] = { ...out[idx], lines: nl, rhymes: e.rhymes ?? '' };
+          if (nl.length >= 2 && score({ title: out[idx].title, lines: nl }) > score(out[idx])) out[idx] = { ...out[idx], lines: nl, rhymes: e.rhymes ?? '' };
         }
       }
     } catch { /* the first draft stands; the receipt shows the retry */ }
     rhyme.after = out.map((i) => rhymeReport(clean(i.lines)).score);
+    rhyme.hook.after = out.map((i) => hookPlacement(i.title, clean(i.lines)));
     return { ideas: out, usage, rhyme };
   }
 

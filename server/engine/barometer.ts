@@ -61,20 +61,29 @@ function weightsFor(genre: Genre): Array<[string, number]> {
   return raw.length ? raw : fallback;
 }
 
+/** The subjects that are about a romantic or sexual relationship: the Browse page's default (11 Oct, late). */
+export const RELATIONSHIP_SUBJECTS = ['desire', 'relationship_trouble', 'breakup_heartbreak', 'romantic_love', 'longing_unrequited'];
+export type SubjectScope = 'all' | 'relationship';
+
 /**
- * Pick `count` different subjects, weighted by the chart mix for this genre; subjects
- * he has just seen are made less likely so consecutive batches don't feel the same.
+ * Pick `count` subjects, weighted by the chart mix for this genre; subjects he has just
+ * seen are made less likely so consecutive batches don't feel the same. Within one round
+ * no subject repeats; a count larger than the pool (a list of ten) runs more rounds.
  */
-export function pickSubjects(genre: Genre, count: number, recent: string[] = [], rand: () => number = Math.random): string[] {
-  const pool = weightsFor(genre).map(([k, w]) => [k, recent.includes(k) ? w * 0.35 : w] as [string, number]);
+export function pickSubjects(genre: Genre, count: number, recent: string[] = [], rand: () => number = Math.random, scope: SubjectScope = 'all'): string[] {
+  const weights = weightsFor(genre).filter(([k]) => scope === 'all' || RELATIONSHIP_SUBJECTS.includes(k));
+  const base = weights.length ? weights : RELATIONSHIP_SUBJECTS.map((k) => [k, 1] as [string, number]);
   const out: string[] = [];
-  while (out.length < count && pool.length) {
-    const total = pool.reduce((a, [, w]) => a + w, 0);
-    let r = rand() * total;
-    let i = 0;
-    for (; i < pool.length - 1; i++) { r -= pool[i][1]; if (r <= 0) break; }
-    out.push(pool[i][0]);
-    pool.splice(i, 1);
+  while (out.length < count) {
+    const pool = base.map(([k, w]) => [k, recent.includes(k) ? w * 0.35 : w] as [string, number]);
+    while (out.length < count && pool.length) {
+      const total = pool.reduce((a, [, w]) => a + w, 0);
+      let r = rand() * total;
+      let i = 0;
+      for (; i < pool.length - 1; i++) { r -= pool[i][1]; if (r <= 0) break; }
+      out.push(pool[i][0]);
+      pool.splice(i, 1);
+    }
   }
   return out;
 }
