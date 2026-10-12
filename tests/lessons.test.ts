@@ -54,7 +54,7 @@ describe('the writer learns from his notes', () => {
     expect(r.status).toBe(200);
     await svc.idle();
     expect(calls.at(-1)!.user).toContain('"lesson"');
-    expect(calls.at(-1)!.user).not.toContain('He has already told you'); // the list was empty
+    expect(calls.at(-1)!.user).not.toContain('already told you'); // the list was empty
     const now = (await api('GET', '/springboard')).body;
     expect(now.current.parent_id).toBe(sb.current.id);
     expect(now.current.lesson).toEqual({ id: expect.any(String), text: HALL });
@@ -71,7 +71,7 @@ describe('the writer learns from his notes', () => {
     expect(run.request.lessons).toBe(1);
     lesson = '';
     await api('POST', `/ideas/${now.current.id}/rework`, { feedback: 'make it sexier', keepTitle: true, clientKey: 'rw2' }); await svc.idle();
-    expect(calls.at(-1)!.user).toContain(`He has already told you:\n  - ${HALL}`);
+    expect(calls.at(-1)!.user).toContain(`which he has already told you:\n  - ${HALL}`);
     expect((await api('GET', '/lessons')).body).toHaveLength(1); // an empty lesson adds nothing
     const latest = (await api('GET', '/springboard')).body.current;
     expect(latest.lesson).toBe(null);
