@@ -255,12 +255,14 @@ export const reworkSchema = {
     titleParts: { type: 'array', items: { type: 'string' } },
     concept: { type: 'string' },
     lines: { type: 'array', items: { type: 'string' } },
+    // 11 Oct, late: the standing instruction in his note, if any (engine/lessons.ts); else ""
+    lesson: { type: 'string' },
     note: { type: 'string' },
   },
-  required: ['title', 'titleParts', 'concept', 'lines', 'note'],
+  required: ['title', 'titleParts', 'concept', 'lines', 'lesson', 'note'],
   additionalProperties: false,
 } as const;
-export const reworkZ = z.object({ title: z.string().min(1), titleParts: z.array(z.string()), concept: z.string(), lines: z.array(z.string()).min(1), note: z.string() });
+export const reworkZ = z.object({ title: z.string().min(1), titleParts: z.array(z.string()), concept: z.string(), lines: z.array(z.string()).min(1), lesson: z.string().optional(), note: z.string() });
 
 export const moreLinesSchema = {
   type: 'object',

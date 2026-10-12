@@ -2,9 +2,9 @@
 // record which instructions produced them. Older variants are kept verbatim so
 // the experiments screen can run them as a baseline.
 
-export type PromptVariant = 'p1.1' | 'p2.0' | 'p2.1';
-export const PROMPT_VERSION: PromptVariant = 'p2.1';
-export const PROMPT_VARIANTS: PromptVariant[] = ['p1.1', 'p2.0', 'p2.1'];
+export type PromptVariant = 'p1.1' | 'p2.0' | 'p2.1' | 'p2.2';
+export const PROMPT_VERSION: PromptVariant = 'p2.2';
+export const PROMPT_VARIANTS: PromptVariant[] = ['p1.1', 'p2.0', 'p2.1', 'p2.2'];
 
 // ---------------------------------------------------------------------------
 // p1.1 — the prompt that shipped on 9 Oct 2026. Kept unchanged as the baseline.
@@ -78,8 +78,23 @@ How to behave
 - If something is genuinely ambiguous and a wrong guess would waste the request, make the most likely reading and state it in one short line in "reply".
 - Lyrics he gives you are his unreleased work. Treat them as the source of truth for the song's facts, voice and spelling.`;
 
+// ---------------------------------------------------------------------------
+// p2.2 — 11 Oct 2026, late. Sam, on an idea that rhymed "call" with "hall" ("Somebody's
+// gonna tell you who walked me down the hall"): "Hall isn't an appropriate word for this
+// subject, it sounds like a wedding or church. Hall shouldn't have been an option." p2.1
+// asked for more rhyme and the writer reached for a word that rhymed but did not belong
+// in the room. p2.2 adds the test the rhyme word has to pass. Everything else is p2.1
+// word for word. What he tells the writer from now on is kept in engine/lessons.ts and
+// read with every request.
+// ---------------------------------------------------------------------------
+const SYSTEM_CORE_P22 = SYSTEM_CORE_P21.replace(
+  `Landing the same word twice is not a rhyme. If you claim a rhyme, it must rhyme by sound, not spelling.`,
+  `Landing the same word twice is not a rhyme. If you claim a rhyme, it must rhyme by sound, not spelling. The word that carries a rhyme has to be a word this scene would contain, with no stray picture attached: "hall" after a night out reads as a wedding or a church, and so would "aisle" or "altar". Test every rhyme word on its own: would this narrator say it, here, if it didn't rhyme? If not, change the earlier line's end word and rhyme on something the room actually has in it.`,
+);
+if (SYSTEM_CORE_P22 === SYSTEM_CORE_P21) throw new Error('p2.2 did not apply: the p2.1 rhyme bullet changed');
+
 export function systemCore(variant: PromptVariant = PROMPT_VERSION): string {
-  return variant === 'p1.1' ? SYSTEM_CORE_P11 : variant === 'p2.0' ? SYSTEM_CORE_P20 : SYSTEM_CORE_P21;
+  return variant === 'p1.1' ? SYSTEM_CORE_P11 : variant === 'p2.0' ? SYSTEM_CORE_P20 : variant === 'p2.1' ? SYSTEM_CORE_P21 : SYSTEM_CORE_P22;
 }
 /** @deprecated kept for older imports; equals the current variant. */
 export const SYSTEM_CORE = SYSTEM_CORE_P20;
@@ -356,7 +371,7 @@ How to answer
 - "title": something he'd sing.
 - "titleParts": the title split into one or two natural phrase chunks that join back into the title exactly (word for word, same punctuation). Split where a singer would breathe or where the hook turns. One chunk is fine for a short title.
 - "concept": the situation and the angle in one or two plain sentences, at most 45 words.
-- "lines": four lyric lines that belong together as one block (the opening of a verse, or a chorus), with a rhyme scheme (AABB, ABAB or ABCB): at least two end-rhymes by sound, and at least one rhyme a songwriter would notice. Lines only, no labels.
+- "lines": four lyric lines that belong together as one block (the opening of a verse, or a chorus), with a rhyme scheme (AABB, ABAB or ABCB): at least two end-rhymes by sound, at least one rhyme a songwriter would notice, and every rhyme word a word this scene would contain. Lines only, no labels.
 - "rhymes": the end-word pairs you rhymed, like "own / home, cute / truth".
 - "note": empty unless something needs saying in one short line.`);
   return blocks.join('\n\n');
@@ -365,17 +380,20 @@ How to answer
 /** The lines of ideas that didn't rhyme, sent back once for a rhymed block. */
 export function relinePrompt(input: { items: Array<{ index: number; title: string; concept: string; lines: string[]; found: string }> }): string {
   return [
-    `These ideas are good, but their lines don't rhyme enough. Keep each title and concept exactly; write the four lines again as one block with a rhyme scheme (AABB, ABAB or ABCB): at least two end-rhymes by sound, one of them worth noticing (multi-syllable, across a word boundary, or an ordinary word against a name). Keep the voice and the situation; you may keep lines that already rhyme with each other.`,
+    `These ideas are good, but their lines don't rhyme enough. Keep each title and concept exactly; write the four lines again as one block with a rhyme scheme (AABB, ABAB or ABCB): at least two end-rhymes by sound, one of them worth noticing (multi-syllable, across a word boundary, or an ordinary word against a name), and every rhyme word a word the scene would contain; never reach for one because it rhymes. Keep the voice and the situation; you may keep lines that already rhyme with each other.`,
     ...input.items.map((i) => `${i.index + 1}. "${i.title}" — ${i.concept}\nLines now:\n${i.lines.map((l) => `- ${l}`).join('\n')}\nWhat the check found: ${i.found}`),
     `How to answer\n- One entry per numbered idea, in order: "index" (the number above, starting at 1), "lines" (four lines), "rhymes" (the end-word pairs, like "own / home, cute / truth").\n- "note": empty unless something needs saying in one short line.`,
   ].join('\n\n');
 }
 
-/** One idea, reworked to his note. What he marked to keep comes back word for word. */
+/**
+ * One idea, reworked to his note. What he marked to keep comes back word for word. The same
+ * call boils his note down to a standing lesson, if there is one in it (engine/lessons.ts).
+ */
 export function reworkPrompt(input: {
   idea: { title: string; concept: string; lines: string[] };
   feedback: string; keepTitle: boolean; keepConcept: boolean; keepLines: string[]; changeLines: string[];
-  direction: string; shape: string; references: string;
+  direction: string; shape: string; references: string; lessons?: string[];
 }): string {
   const blocks: string[] = [];
   blocks.push(`An idea he is reacting to:\nTitle: ${input.idea.title}\nConcept: ${input.idea.concept}\nLines:\n${input.idea.lines.map((l) => `- ${l}`).join('\n')}`);
@@ -389,10 +407,12 @@ export function reworkPrompt(input: {
   if (keep.length) blocks.push(`He likes these. Keep them exactly:\n${keep.join('\n')}`);
   if (input.changeLines.length) blocks.push(`He wants these lines changed:\n${input.changeLines.map((l) => `- "${l}"`).join('\n')}`);
   blocks.push(`His note:\n${input.feedback.trim() || '(no note: rework what he did not mark to keep)'}`);
+  const lessons = (input.lessons ?? []).filter(Boolean);
   blocks.push(`How to answer
 - Rework this one idea to his note. Keep what he marked; change what he asked; leave the rest as it is unless his note reaches it.
 - An adult narrator and an everyday situation, unless his note says otherwise.
-- "title", "titleParts" (one or two chunks that join back into the title exactly), "concept" (at most 45 words), "lines" (four lyric lines as one rhymed block, at least two end-rhymes by sound; kept lines included, in their places).
+- "title", "titleParts" (one or two chunks that join back into the title exactly), "concept" (at most 45 words), "lines" (four lyric lines as one rhymed block, at least two end-rhymes by sound, every rhyme word one the scene would contain; kept lines included, in their places).
+- "lesson": his note may contain something that should hold for every idea from now on: a word or kind of word that is wrong and why, a habit he wants dropped, a register he wants. If it does, write that as one standing instruction in plain words, at most 30 words, general enough to apply to other ideas and specific enough to act on, keeping his reason when he gave one (for example: A rhyme word must belong in the scene: "hall" after a night out reads as a wedding or a church). Leave it empty when the note is only about this idea (keep the title, make it sexier, change this line) or when the standing instructions already say it.${lessons.length ? `\n  He has already told you:\n${lessons.map((l) => `  - ${l}`).join('\n')}` : ''}
 - "note": empty unless something needs saying in one short line.`);
   return blocks.join('\n\n');
 }

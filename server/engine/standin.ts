@@ -26,7 +26,10 @@ export class StandInWriter implements Writer {
       return { note: '', candidates: lines.map((l, i) => ({ kind: (['title', 'line', 'concept'] as const)[i % 3], text: l.split(' ').slice(0, 4).join(' ').replace(/[.,!?]$/, ''), saidBy: '', at: '', context: l, why: '[stand-in] placeholder reason', score: 2 })) };
     }
     if ('titleParts' in props && 'note' in props) {
-      return { title: '[stand-in] Reworked title', titleParts: ['[stand-in] Reworked', 'title'], concept: '[stand-in] Reworked concept. Placeholder, not real writing.', lines: ['[stand-in] reworked line one', '[stand-in] reworked line two'], note: '' };
+      // a rework; the stand-in "learns" only from a note that names a word to avoid
+      const note = (req.user.split('His note:\n')[1] ?? '').split('\n\n')[0];
+      const m = note.match(/[“"']([^“”"']+)[”"']\s+(?:is wrong|isn't right|is bad|shouldn't)/i);
+      return { title: '[stand-in] Reworked title', titleParts: ['[stand-in] Reworked', 'title'], concept: '[stand-in] Reworked concept. Placeholder, not real writing.', lines: ['[stand-in] reworked line one', '[stand-in] reworked line two'], lesson: m ? `[stand-in] Never use "${m[1]}" as a rhyme word.` : '', note: '' };
     }
     if ('lines' in props && 'note' in props && Object.keys(props).length === 2) {
       return { note: '', lines: [1, 2, 3, 4, 5, 6].map((n) => `[stand-in] page line ${n}`) };

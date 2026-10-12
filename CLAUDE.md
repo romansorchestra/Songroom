@@ -10,7 +10,7 @@ Private songwriting app for Sam (single user). Spec: `docs/PRODUCT_SPEC.md` (ame
 - Sam's preferences: plain English, no technical detail unless a decision is needed, manual steps batched into one idiot-proof block.
 
 ## Layout
-- `server/engine/` writer adapter, prompts (versioned; bump `PROMPT_VERSION` on change, keep old variants verbatim), schemas, validators, lyric model, `pack.ts` (research pack loader + retriever)
+- `server/engine/` writer adapter, prompts (versioned; bump `PROMPT_VERSION` on change, keep old variants verbatim), schemas, validators, lyric model, `pack.ts` (research pack loader + retriever), `lessons.ts` (what Sam has told the writer: one standing instruction per note he sends with a rework, read with every request via `svc.tasteFor`, listed in Settings; add rules there, never as new law text in a brief)
 - `server/studio.ts` the approved design's operations (springboard, rework, page lines, fragments, workspace suggestions, references); `server/engine/barometer.ts` picks idea subjects from `research/charts/barometer.json` (what charted on Spotify US, see `research/charts/SUMMARY.md`); `shared/lyricShape.ts` line rules used by server and browser
 - `server/hang.ts` the hang (a session's talk read for titles/concepts/lines; `engine/transcribe.ts` is the Deepgram adapter; nothing not in the transcript reaches him)
 - `server/service.ts` all domain operations; `server/app.ts` routes; `server/evals.ts` the 12-brief test pack; `server/experiments.ts` blind prompt/research comparison

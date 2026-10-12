@@ -535,7 +535,8 @@ describe('rhyme is checked, not trusted', () => {
     expect(calls[1]).toContain('"Flat"');
     expect(calls[1]).not.toContain('"Round"');
     expect(calls[1]).toMatch(/no two lines rhyme; they end on now, it, that, twice/);
-    expect(systems[0]).toContain('Rhyme is part of the pleasure'); // p2.1
+    expect(systems[0]).toContain('Rhyme is part of the pleasure'); // p2.1, kept in p2.2
+    expect(systems[0]).toContain('would this narrator say it, here, if it didn\'t rhyme'); // p2.2
     expect(calls[0]).toContain('at least two end-rhymes by sound');
     const ideas = (await db.query<{ title: string; lines: Array<{ text: string }> }>(`SELECT title, lines FROM ideas WHERE origin='spark' ORDER BY rowid`)).map((r) => ({ t: r.title, l: r.lines.map((x) => x.text) }));
     expect(ideas.find((i) => i.t === 'Flat')!.l).toEqual(['I said I would, and I did', 'I kept the receipt, I kept the lid', 'You say my name like a dare', 'And I show up, and I stay there']);

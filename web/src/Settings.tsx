@@ -47,6 +47,7 @@ export function Settings({ section }: { section?: string }) {
         </div>
       </section>
 
+      <section id="lessons"><LessonsList /></section>
       <section id="spending"><Spending /></section>
       <section id="voice"><Voice taste={s.taste} onSaveTaste={(taste) => set({ taste })} /></section>
       <section id="experiments"><Experiments /></section>
@@ -111,6 +112,45 @@ function Spending() {
           </table>
         </details>
       )}
+    </>
+  );
+}
+
+// What he has told the writer (11 Oct 2026): boiled down from his notes on reworked ideas,
+// or typed here; read with every request; cross one out and it stops at once.
+function LessonsList() {
+  const { toast } = useApp();
+  const [list, setList] = useState<Array<{ id: string; text: string; source: string; note: string; created_at: string }> | null>(null);
+  const [text, setText] = useState('');
+  const load = () => api('GET', '/lessons').then(setList).catch(() => setList([]));
+  useEffect(() => { void load(); }, []);
+  async function add() {
+    if (text.trim().length < 4) return;
+    try { await api('POST', '/lessons', { text }); setText(''); await load(); toast('The writer has it.'); } catch (e) { toast((e as Error).message); }
+  }
+  return (
+    <>
+      <h2>What you've told the writer</h2>
+      <p className="small muted">Every note you send with “What do you think?” is boiled down to one standing instruction and kept here. The writer reads the whole list with every idea, line and edit. Cross out anything it got wrong, or add one in your own words.</p>
+      {list === null && <p className="small muted">Loading…</p>}
+      {list?.length === 0 && <p className="small muted" style={{ marginTop: 10 }}>Nothing yet. The first note you send that has a rule in it (“‘hall’ sounds like a wedding, not a night out”) will show up here.</p>}
+      {!!list?.length && (
+        <ul className="lesson-list">
+          {list.map((l) => (
+            <li key={l.id}>
+              <div>
+                {l.text}
+                <small>{l.source === 'rework' && l.note ? `From your note: “${l.note}”` : 'Added here'} · {timeAgo(l.created_at)}</small>
+              </div>
+              <button className="btn quiet sm" aria-label={`Forget: ${l.text}`} onClick={async () => { try { await api('DELETE', `/lessons/${l.id}`); await load(); } catch (e) { toast((e as Error).message); } }}>Forget</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="row" style={{ marginTop: 12 }}>
+        <input type="text" style={{ flex: 1, minWidth: 200 }} placeholder="e.g. Titles should be things people actually say" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void add(); }} aria-label="Tell the writer something" />
+        <button className="btn quiet sm" disabled={text.trim().length < 4} onClick={add}>Tell the writer</button>
+      </div>
     </>
   );
 }

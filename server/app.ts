@@ -91,6 +91,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
       feedback: z.string().max(2000).default(''), keepTitle: z.boolean().default(false), keepConcept: z.boolean().default(false),
       keepLineIds: z.array(z.string().max(40)).max(12).default([]), changeLineIds: z.array(z.string().max(40)).max(12).default([]),
       applyToNew: z.boolean().default(false), clientKey: key,
+      preview: z.boolean().default(false), // the same call for checking the writer; saves nothing
     }).parse(req.body);
     return studio.rework(String(req.params.id), { ...b, clientKey: b.clientKey ?? null });
   }));
@@ -232,6 +233,15 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
     return svc.addVoice(b.direction, b.text);
   }));
   api.delete('/voice/:id', h(async (req) => svc.deleteVoice(String(req.params.id))));
+  // What he has told the writer (engine/lessons.ts): boiled down from his notes, or typed here.
+  api.get('/lessons', h(async () => svc.lessons.list()));
+  api.post('/lessons', h(async (req) => {
+    const b = z.object({ text: z.string().min(4).max(400) }).parse(req.body);
+    const l = await svc.lessons.add(b.text, 'settings');
+    if (!l) throw new AppError(409, 'duplicate', 'The writer already has that one.');
+    return l;
+  }));
+  api.delete('/lessons/:id', h(async (req) => { await svc.lessons.remove(String(req.params.id)); return { ok: true }; }));
 
   // Test pack
   api.get('/evals', h(async () => latestResults(svc)));

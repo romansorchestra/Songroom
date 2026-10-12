@@ -30,6 +30,7 @@ type IdeaRow = {
   starred: number; original: { title: string; concept: string; lines: string[] }; saved: number; origin: string; state: string;
   shown_at: string | null; palette: string | null; title_parts: string[] | null; steer: Direction | Record<string, never>;
   pending: string; note: string; song_id: string | null; archived: number; created_at: string; updated_at: string; saved_at: string | null;
+  subject?: string | null; parent_id?: string | null; feedback?: string;
 };
 type FragmentRow = { id: string; idea_id: string | null; song_id: string | null; text: string; saved: number; source: string; ask?: string; created_at: string; saved_at: string | null };
 type StoredContext = {
@@ -141,12 +142,15 @@ export class Studio {
     if (row.song_id) [song] = await this.db.query<{ id: string; title: string }>(`SELECT id, title FROM songs WHERE id=$1 AND NOT archived`, [row.song_id]);
     const legacySongs = await this.db.query<{ id: string; title: string }>(`SELECT id, title FROM songs WHERE idea_id=$1 AND NOT archived AND id<>COALESCE($2,'')`, [id, row.song_id]);
     const steer = (row.steer && 'text' in row.steer) ? row.steer as Direction : { text: '', refId: null };
+    const lesson = row.parent_id ? await this.svc.lessons.forIdea(row.id) : null;
     return {
       ...row, saved: !!row.saved, starred: !!row.starred, archived: !!row.archived,
       palette: (row.palette ?? PALETTES[motifFor(row.id) % 3]) as Palette,
       title_parts: row.title_parts && row.title_parts.join(' ').replace(/\s+/g, ' ').trim() === row.title.replace(/\s+/g, ' ').trim() ? row.title_parts : null,
       steer, fragments: fragments.map((f) => ({ ...f, saved: !!f.saved })),
       song: song ?? legacySongs[0] ?? null,
+      // the standing instruction his note on this rework taught the writer, if any
+      lesson: lesson ? { id: lesson.id, text: lesson.text } : null,
     };
   }
 
@@ -205,7 +209,7 @@ export class Studio {
     const run = await this.svc.startRun({
       task: 'spark', threadId: null, songId: null, clientKey, effort: s.effortCreative,
       promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${IDEA_TEMPLATE}`,
-      request: { direction, genre, subjects, prevCurrent, pack: craft.record }, inputChars: system.length + user.length,
+      request: { direction, genre, subjects, prevCurrent, pack: craft.record, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('spark', system, user, sparkSchema, s.effortCreative, signal, model);
         const parsed = sparkZ.safeParse(r.json);
@@ -266,7 +270,7 @@ export class Studio {
     const user = sparkPromptV2({ direction: input.text ?? '', genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: '', avoidTitles: [], subjects: subjects.map((k) => SUBJECTS[k]), shape: shapeNote(genre) });
     const run = await this.svc.startRun({
       task: 'preview', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
-      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { preview: true, genre, text: input.text ?? '', subjects }, inputChars: system.length + user.length,
+      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { preview: true, genre, text: input.text ?? '', subjects, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('preview', system, user, sparkSchema, s.effortCreative, signal, model);
         const parsed = sparkZ.safeParse(r.json);
@@ -315,7 +319,7 @@ export class Studio {
    * word (the engine puts it back if the writer drifts); the result becomes the idea on
    * screen, and Previous still reaches the one it came from.
    */
-  async rework(ideaId: string, input: { feedback: string; keepTitle: boolean; keepConcept: boolean; keepLineIds: string[]; changeLineIds: string[]; applyToNew: boolean; clientKey: string | null }) {
+  async rework(ideaId: string, input: { feedback: string; keepTitle: boolean; keepConcept: boolean; keepLineIds: string[]; changeLineIds: string[]; applyToNew: boolean; clientKey: string | null; preview?: boolean }) {
     if (input.clientKey) {
       const [r] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE client_key=$1`, [input.clientKey]);
       if (r) return { runId: r.id };
@@ -325,7 +329,9 @@ export class Studio {
     if (!input.feedback.trim() && !input.keepTitle && !input.keepConcept && !input.keepLineIds.length && !input.changeLineIds.length)
       throw new AppError(400, 'empty', 'Say what you think, or tap what to keep, first.');
     if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected.');
-    if (input.applyToNew && input.feedback.trim()) {
+    // preview: the same call for checking the writer, saving nothing (no idea, no lesson, no direction)
+    const preview = !!input.preview;
+    if (input.applyToNew && input.feedback.trim() && !preview) {
       const d = await this.direction();
       const add = input.feedback.trim().replace(/\s+/g, ' ');
       if (!d.text.includes(add)) await this.setDirection({ text: [d.text.trim(), add].filter(Boolean).join('\n') });
@@ -337,26 +343,29 @@ export class Studio {
     const s = await this.svc.settings();
     const taste = await this.svc.tasteFor(direction.text);
     const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
+    const lessons = await this.svc.lessons.list();
     const user = reworkPrompt({
       idea: { title: idea.title, concept: idea.concept, lines: idea.lines.map((l) => l.text) },
       feedback: input.feedback, keepTitle: input.keepTitle, keepConcept: input.keepConcept,
       keepLines: keepLines.map((l) => l.text), changeLines: changeLines.map((l) => l.text),
       direction: direction.text, shape: shapeNote(genreFor(direction.genre, direction.text)), references: referenceBlock(refs),
+      lessons: lessons.map((l) => l.text),
     });
     const prevCurrent = await this.kv<string | null>('sb.current', null);
     const run = await this.svc.startRun({
-      task: 'rework', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
+      task: preview ? 'preview' : 'rework', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
       promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`,
-      request: { ideaId, feedback: input.feedback, keepTitle: input.keepTitle, keepConcept: input.keepConcept, keepLineIds: input.keepLineIds, changeLineIds: input.changeLineIds },
+      request: { ideaId, feedback: input.feedback, keepTitle: input.keepTitle, keepConcept: input.keepConcept, keepLineIds: input.keepLineIds, changeLineIds: input.changeLineIds, lessons: lessons.length, preview },
       inputChars: system.length + user.length,
       exec: async (signal, model) => {
-        const r = await this.svc.call('rework', system, user, reworkSchema, s.effortCreative, signal, model);
+        const r = await this.svc.call(preview ? 'preview' : 'rework', system, user, reworkSchema, s.effortCreative, signal, model);
         const parsed = reworkZ.safeParse(r.json);
         if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
         return { result: parsed.data as unknown as Record<string, unknown>, usage: r.usage, requestId: r.requestId, model: r.model, live: r.live };
       },
       onSuccess: async (runId, result) => {
-        const out = result as unknown as { title: string; titleParts: string[]; concept: string; lines: string[]; note: string };
+        if (preview) return;
+        const out = result as unknown as { title: string; titleParts: string[]; concept: string; lines: string[]; lesson?: string; note: string };
         const title = input.keepTitle ? idea.title : out.title.trim().slice(0, 200) || idea.title;
         const concept = input.keepConcept ? idea.concept : out.concept.trim().slice(0, 600);
         let lines = out.lines.map((t) => t.trim()).filter(Boolean).slice(0, 4);
@@ -378,6 +387,8 @@ export class Studio {
             runId, motifFor(id), now, idea.palette ?? PALETTES[0], JSON.stringify(parts.length ? parts : null), stableDir(direction), out.note.trim().slice(0, 300),
             idea.subject ?? null, idea.id, input.feedback.trim().slice(0, 1000)],
         );
+        // what his note taught the writer, kept for every idea from now on (engine/lessons.ts)
+        if (out.lesson?.trim() && input.feedback.trim()) await this.svc.lessons.add(out.lesson, 'rework', { ideaId: id, note: input.feedback });
         const nowCurrent = await this.kv<string | null>('sb.current', null);
         if (nowCurrent === prevCurrent) await this.setKv('sb.current', id);
       },

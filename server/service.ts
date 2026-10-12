@@ -12,6 +12,7 @@ import { writeSchema, writeZ, editSchema, editZ, sunoSchema, sunoZ } from './eng
 import { systemCore, PROMPT_VERSION, type PromptVariant, tasteBlock, writePrompt, editPrompt, sunoPrompt, type Turn, type VoiceExample, type SongContext } from './engine/prompts.js';
 import { type Writer, type Effort, type Usage, WriterError, costOf, worstCaseCost, RATES } from './engine/writer.js';
 import { type Pack, type PackTask, selectPack, renderPack, inferTask } from './engine/pack.js';
+import { Lessons } from './engine/lessons.js';
 
 /** How one request should be prompted. Experiments set this explicitly; normal use follows Settings. */
 export type PromptPlan = { variant: PromptVariant; pack: boolean };
@@ -113,6 +114,14 @@ export class Service {
 
   async deleteVoice(id: string) { await this.db.query(`DELETE FROM voice_examples WHERE id=$1`, [id]); }
 
+  /** What he has told the writer (engine/lessons.ts). */
+  get lessons(): Lessons { return (this._lessons ??= new Lessons(this.db)); }
+  private _lessons?: Lessons;
+
+  /**
+   * The standing part of every system prompt after the core: his taste notes, a few of his
+   * lyrics, and the lessons boiled down from his notes on earlier ideas (11 Oct 2026).
+   */
   async tasteFor(request: string): Promise<string> {
     const s = await this.settings();
     const all = await this.voiceExamples();
@@ -125,7 +134,7 @@ export class Service {
       if (picked.length >= 4 || size + e.text.length > 6000) continue;
       picked.push(e); size += e.text.length;
     }
-    return tasteBlock(s.taste, picked);
+    return [tasteBlock(s.taste, picked), await this.lessons.block()].filter(Boolean).join('\n\n');
   }
 
   // ---------------- budget ----------------
@@ -658,7 +667,7 @@ export class Service {
   // ---------------- export ----------------
   async exportAll() {
     const tables = ['settings', 'threads', 'messages', 'runs', 'ideas', 'fragments', 'songs', 'song_revisions', 'suggestion_sets', 'refs',
-      'voice_examples', 'eval_results', 'experiments'];
+      'voice_examples', 'eval_results', 'experiments', 'hangs', 'lessons'];
     const out: Record<string, unknown> = { format: 'songroom-backup', version: 2, exportedAt: new Date().toISOString() };
     for (const t of tables) out[t] = await this.db.query(`SELECT * FROM ${t}`);
     return out;

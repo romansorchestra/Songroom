@@ -167,6 +167,12 @@ export const MIGRATIONS: string[] = [
      id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', status TEXT NOT NULL, source TEXT NOT NULL,
      minutes REAL, speakers INTEGER, transcript TEXT, candidates TEXT NOT NULL DEFAULT '[]', dismissed TEXT NOT NULL DEFAULT '[]',
      error TEXT, run_id TEXT, created_at ${TS}, updated_at ${TS})`,
+  // 6 (11 Oct 2026): what Sam has told the writer. One standing instruction per row, boiled
+  // down from a note he sent with a rework (idea_id = the reworked idea; note = his words)
+  // or typed in Settings. Read by the writer on every request; removable in Settings.
+  `CREATE TABLE lessons (
+     id TEXT PRIMARY KEY, text TEXT NOT NULL, source TEXT NOT NULL, idea_id TEXT, note TEXT NOT NULL DEFAULT '',
+     created_at ${TS})`,
 ];
 
 export async function migrate(db: Db): Promise<void> {
