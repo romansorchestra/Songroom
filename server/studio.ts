@@ -284,7 +284,7 @@ export class Studio {
   }
 
   /** Check every idea's block of lines for rhyme; send the ones that fall short back once. */
-  private async rhymeOrRetry<T extends { title: string; concept: string; lines: string[] }>(ideas: T[], system: string, effort: string, signal: AbortSignal, model: string, usage: Usage) {
+  private async rhymeOrRetry<T extends { title: string; concept: string; lines: string[]; rhymes?: string }>(ideas: T[], system: string, effort: string, signal: AbortSignal, model: string, usage: Usage) {
     const clean = (ls: string[]) => ls.map((t) => t.trim()).filter(Boolean).slice(0, 4);
     const before = ideas.map((i) => rhymeReport(clean(i.lines)).score);
     const failing = ideas.map((i, index) => ({ i, index })).filter(({ i }) => !rhymesEnough(clean(i.lines)));
@@ -306,7 +306,8 @@ export class Studio {
           const idx = e.index - 1;
           if (!(idx >= 0 && idx < out.length) || !failing.some((f) => f.index === idx)) continue;
           const nl = clean(e.lines);
-          if (nl.length >= 2 && rhymeReport(nl).score > rhymeReport(clean(out[idx].lines)).score) out[idx] = { ...out[idx], lines: nl };
+          // the retried block replaces the lines and the writer's own rhyme label together
+          if (nl.length >= 2 && rhymeReport(nl).score > rhymeReport(clean(out[idx].lines)).score) out[idx] = { ...out[idx], lines: nl, rhymes: e.rhymes ?? '' };
         }
       }
     } catch { /* the first draft stands; the receipt shows the retry */ }

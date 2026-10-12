@@ -521,7 +521,7 @@ describe('rhyme is checked, not trusted', () => {
     const w = new StandInWriter((req: WriterRequest) => {
       calls.push(req.user); systems.push(req.system);
       const props = (req.schema as any).properties;
-      if ('index' in (props.ideas?.items?.properties ?? {})) return { note: '', ideas: [{ index: 1, lines: relined, rhymes: '' }] };
+      if ('index' in (props.ideas?.items?.properties ?? {})) return { note: '', ideas: [{ index: 1, lines: relined, rhymes: 'did / lid, dare / there' }] };
       return { note: '', ideas: [unrhymed, rhymed, { ...rhymed, title: 'Round 2' }] };
     });
     return { w, calls };
@@ -543,6 +543,7 @@ describe('rhyme is checked, not trusted', () => {
     expect(ideas.find((i) => i.t === 'Round')!.l).toEqual(rhymed.lines);
     const [run] = await db.query<{ result: any }>(`SELECT result FROM runs WHERE task='spark' ORDER BY created_at DESC LIMIT 1`);
     expect(run.result.rhyme).toEqual({ before: [0, 2, 2], retried: [0], after: [2, 2, 2] });
+    expect(run.result.ideas[0].rhymes).toBe('did / lid, dare / there'); // the label follows the retried lines
     void sb;
   });
 
