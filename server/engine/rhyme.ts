@@ -31,18 +31,46 @@ export function rhymeTail(ph: string[]): { tail: string[]; syllables: number } |
   return { tail, syllables: tail.filter((p) => /^[AEIOU]/.test(p)).length };
 }
 
-// consonants that sound alike at a line end (slant rhyme)
-const CLOSE: Array<Set<string>> = [new Set(['T', 'D', 'TH', 'DH']), new Set(['S', 'Z']), new Set(['N', 'M', 'NG']), new Set(['F', 'V']), new Set(['K', 'G']), new Set(['P', 'B']), new Set(['SH', 'ZH', 'CH', 'JH'])];
+// consonants that sound alike at a line end (slant rhyme). The fricatives joined on the night
+// of 11 Oct, when "house / mouth" was sent back for not rhyming.
+const CLOSE: Array<Set<string>> = [new Set(['T', 'D', 'TH', 'DH']), new Set(['S', 'Z', 'TH', 'DH']), new Set(['N', 'M', 'NG']), new Set(['F', 'V']), new Set(['K', 'G']), new Set(['P', 'B']), new Set(['SH', 'ZH', 'CH', 'JH'])];
 const close = (a: string, b: string) => a === b || CLOSE.some((s) => s.has(a) && s.has(b));
 
 export type RhymeKind = 'perfect' | 'slant' | 'none' | 'identical' | 'unknown';
+
+/**
+ * The readings of a word group. In "try it" or "start it" the dictionary stresses "it", which
+ * would make the rhyme hang on that syllable alone; sung, the stress is on "try", and "it" is
+ * the unstressed tail that rhymes with "quiet" (a mosaic rhyme). So a two-word group is also
+ * read with its last word unstressed.
+ */
+const UNSTRESSED_TAIL = new Set(['it', 'a', 'the', 'to', 'of', 'in', 'on', 'at', 'for', 'him', 'her', 'them', 'us', 'up', 'me', 'you']);
+function readings(words: string[], ph: Array<string[]>): Array<string[]> {
+  const plain = ph.flat();
+  if (ph.length < 2 || !UNSTRESSED_TAIL.has(words[words.length - 1].toLowerCase().replace(/[^a-z]/g, ''))) return [plain];
+  const last = ph[ph.length - 1];
+  return [plain, [...ph.slice(0, -1).flat(), ...last.map((p) => (isVowel(p) ? p.replace(/\d$/, '0') : p))]];
+}
+
+// an r-coloured vowel sung the same way: "yours / floor", "sure / door"
+const R_VOWELS = new Set(['UH', 'AO', 'UW']);
+const sameVowel = (ta: string[], tb: string[]) => ta[0] === tb[0] || (ta[1] === 'R' && tb[1] === 'R' && R_VOWELS.has(ta[0]) && R_VOWELS.has(tb[0]));
 
 /** How two end-words rhyme. Multi-word tails let "see her" rhyme with "fever" (mosaic rhyme). */
 export function rhymeKind(aWords: string[], bWords: string[]): { kind: RhymeKind; rich: boolean } {
   const a = aWords.map(phones), b = bWords.map(phones);
   if (a.some((x) => !x) || b.some((x) => !x)) return { kind: 'unknown', rich: false };
   if (aWords.join(' ').toLowerCase() === bWords.join(' ').toLowerCase()) return { kind: 'identical', rich: false };
-  const ta = rhymeTail(a.flat() as string[]), tb = rhymeTail(b.flat() as string[]);
+  let best: { kind: RhymeKind; rich: boolean } = { kind: 'none', rich: false };
+  for (const ra of readings(aWords, a as string[][])) for (const rb of readings(bWords, b as string[][])) {
+    const r = kindOf(aWords, bWords, ra, rb);
+    if (rank(r.kind) > rank(best.kind) || (r.kind === best.kind && r.rich && !best.rich)) best = r;
+  }
+  return best;
+}
+
+function kindOf(aWords: string[], bWords: string[], a: string[], b: string[]): { kind: RhymeKind; rich: boolean } {
+  const ta = rhymeTail(a), tb = rhymeTail(b);
   if (!ta || !tb) return { kind: 'unknown', rich: false };
   const rich = ta.syllables >= 2 && tb.syllables >= 2;
   if (ta.tail.join(' ') === tb.tail.join(' ')) {
@@ -52,7 +80,7 @@ export function rhymeKind(aWords: string[], bWords: string[]): { kind: RhymeKind
     return { kind: 'perfect', rich };
   }
   // slant: same stressed vowel, and the sounds after it close enough (mind/fine, home/alone, again/friend)
-  if (ta.tail[0] === tb.tail[0]) {
+  if (sameVowel(ta.tail, tb.tail)) {
     const ea = ta.tail.slice(1), eb = tb.tail.slice(1);
     if (!ea.length || !eb.length) return { kind: 'slant', rich: false };
     if (ea.length === eb.length && ea.every((p, i) => close(p, eb[i]))) return { kind: 'slant', rich };

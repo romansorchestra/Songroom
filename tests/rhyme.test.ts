@@ -18,6 +18,14 @@ describe('rhyme by sound', () => {
     expect(k('all', 'while')).toBe('none');
     expect(k('through', 'threw')).toBe('perfect');  // sound, not spelling
     expect(['perfect', 'slant']).toContain(k('darlin\'', 'starling')); // the dictionary's own dropped-g entry
+    // the night of 11 Oct: four blocks a pop ear accepts were sent back; these are the pairs
+    expect(k('house', 'mouth')).toBe('slant');
+    expect(k('home', 'phone')).toBe('slant');
+    expect(k('yours', 'floor')).toBe('slant');
+    expect(k('quiet', 'try it')).toBe('slant');       // "it" is unstressed when sung
+    expect(k('start it', 'Target')).toBe('slant');
+    expect(k('anyway', 'away')).toBe('perfect');      // way / away: a rhyme, if a cheap one
+    expect(k('at all', 'that')).toBe('none');          // a content word keeps its stress
   });
   it('reports end-rhymes across a block and judges whether it is enough', () => {
     const his = ["You fold the towels in three now, you never folded towels at all", "You say darlin' like it's been in your mouth a while", 'Who taught you that', "I won't ask twice, I'll just watch"];
