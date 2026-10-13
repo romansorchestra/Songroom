@@ -65,6 +65,7 @@ describe('the writer learns from what he does', () => {
     expect(by(list[0].id)).toMatchObject({ what: 'left it in the list', strength: 'weak' });
     expect(outcomes[0].id).toBe(a.id); // oldest first
     const prompt = reflectPrompt(outcomes, null);
+    expect(prompt).toContain('What he was chasing that day');
     expect(prompt).toContain(`"${c2.title}"`);
     expect(prompt).toContain('his direction then: Heartbreak King');
     expect(prompt).toContain('→ made a page of it');

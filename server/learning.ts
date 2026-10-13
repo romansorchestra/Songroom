@@ -13,7 +13,7 @@ import { reflectSchema, reflectZ } from './engine/schemas.js';
 import { WriterError } from './engine/writer.js';
 
 export type Outcome = { id: string; title: string; concept: string; line: string; direction: string; genre: string; what: string; strength: 'strong' | 'weak' };
-export type Learned = { goesFor: string[]; passesOn: string[]; basis: number; at: string; runId: string | null };
+export type Learned = { goesFor: string[]; passesOn: string[]; basis: number; at: string; runId: string | null; note?: string };
 
 /** How many new outcomes between reflections. */
 export const REFLECT_EVERY = 10;
@@ -27,10 +27,11 @@ export function reflectPrompt(outcomes: Outcome[], current: Learned | null): str
     `The last ${outcomes.length} ideas Sam saw, oldest first, each with what he did:\n${lines.join('\n')}`,
     current ? `What you had noticed before (revise it; keep what still holds):\nHe goes for:\n${current.goesFor.map((b) => `- ${b}`).join('\n') || '- (nothing yet)'}\nHe passes on:\n${current.passesOn.map((b) => `- ${b}`).join('\n') || '- (nothing yet)'}` : '',
     `How to answer
-- "goesFor": up to five short instructions to yourself about what to write more of, each at most 25 words, each naming one or two titles as evidence. Only from strong signals (a page, a save, a rework note, opened from a list). Fewer is fine; none is fine.
-- "passesOn": up to four, same shape, about what to write less of. Passing over is weak evidence, so only name a pattern that shows across several ideas; never one idea alone. If he was chasing one title that day (his direction was a title), passes on the others say nothing.
-- Write about the writing (subjects, scale of concept, register, kinds of detail, how titles work), never facts about Sam as a person. No praise, no hedging words, no "it seems".
-- "note": one short line, or empty.`,
+- First separate two things. What he was chasing that day: a title or a story his direction named, and everything he did in its service (a rework asking for that song's image, a page for that song, notes about that song's artist). And what holds across songs: the scale of concept he keeps, the register, the kinds of detail, how titles work, what he never stops on. Only the second kind goes below. A note about one song's artist or one song's image is not a taste.
+- "goesFor": up to five short instructions to yourself about what to write more of, each at most 25 words, each naming one or two titles as evidence, each one you would still trust on a different song. Only from strong signals (a page, a save, a rework note, opened from a list). Fewer is fine; none is fine. When nearly all the evidence is one chase, one or two instructions at most.
+- "passesOn": up to four, same shape, about what to write less of. Passing over is weak evidence, so only name a pattern that shows across several ideas and more than one direction; never one idea alone. If he was chasing one title that day, passes on the others say nothing.
+- Write about the writing, never facts about Sam as a person. No praise, no hedging words, no "it seems".
+- "note": one short line: what he was chasing, if the day was mostly one chase; or empty.`,
   ].filter(Boolean).join('\n\n');
 }
 
@@ -111,9 +112,9 @@ export class Learning {
         return { result: parsed.data as unknown as Record<string, unknown>, usage: r.usage, requestId: r.requestId, model: r.model, live: r.live };
       },
       onSuccess: async (runId, result) => {
-        const out = result as unknown as { goesFor: string[]; passesOn: string[] };
+        const out = result as unknown as { goesFor: string[]; passesOn: string[]; note: string };
         const tidy = (xs: string[], max: number) => xs.map((x) => x.replace(/\s+/g, ' ').trim().slice(0, 220)).filter((x) => x.length > 3).slice(0, max);
-        const learned: Learned = { goesFor: tidy(out.goesFor, 5), passesOn: tidy(out.passesOn, 4), basis: outcomes.length, at: new Date().toISOString(), runId };
+        const learned: Learned = { goesFor: tidy(out.goesFor, 5), passesOn: tidy(out.passesOn, 4), basis: outcomes.length, at: new Date().toISOString(), runId, note: (out.note ?? '').trim().slice(0, 200) };
         await this.db.query(`INSERT INTO settings(key, value) VALUES ('taste.learned', $1) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`, [JSON.stringify(learned)]);
         await this.db.query(`INSERT INTO settings(key, value) VALUES ('taste.learned.seen', $1) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`, [JSON.stringify(Number(n))]);
       },

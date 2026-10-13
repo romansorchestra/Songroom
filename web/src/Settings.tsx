@@ -160,7 +160,7 @@ function LessonsList() {
 // with each idea, taken stock of every ten or so; weaker than his own words, which it reads first.
 function Learned() {
   const { toast } = useApp();
-  const [data, setData] = useState<{ learned: { goesFor: string[]; passesOn: string[]; basis: number; at: string } | null; outcomes: number; running: string | null } | null>(null);
+  const [data, setData] = useState<{ learned: { goesFor: string[]; passesOn: string[]; basis: number; at: string; note?: string } | null; outcomes: number; running: string | null } | null>(null);
   const load = () => api('GET', '/learning').then(setData).catch(() => setData({ learned: null, outcomes: 0, running: null }));
   useEffect(() => { void load(); }, []);
   useEffect(() => { if (!data?.running) return; const t = setInterval(load, 3000); return () => clearInterval(t); }, [data?.running]);
@@ -178,6 +178,7 @@ function Learned() {
         <div className="learned">
           {!!l.goesFor.length && <><div className="eyebrow">You go for</div><ul>{l.goesFor.map((b, i) => <li key={i}>{b}</li>)}</ul></>}
           {!!l.passesOn.length && <><div className="eyebrow">You pass on</div><ul>{l.passesOn.map((b, i) => <li key={i}>{b}</li>)}</ul></>}
+          {l.note && <p className="small muted">{l.note}</p>}
           <p className="small muted">From your last {l.basis} ideas · {timeAgo(l.at)}</p>
         </div>
       )}
