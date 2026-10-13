@@ -48,6 +48,7 @@ export function Settings({ section }: { section?: string }) {
       </section>
 
       <section id="lessons"><LessonsList /></section>
+      <section id="learning"><Learned /></section>
       <section id="spending"><Spending /></section>
       <section id="voice"><Voice taste={s.taste} onSaveTaste={(taste) => set({ taste })} /></section>
       <section id="experiments"><Experiments /></section>
@@ -120,7 +121,7 @@ function Spending() {
 // or typed here; read with every request; cross one out and it stops at once.
 function LessonsList() {
   const { toast } = useApp();
-  const [list, setList] = useState<Array<{ id: string; text: string; source: string; note: string; created_at: string }> | null>(null);
+  const [list, setList] = useState<Array<{ id: string; text: string; source: string; note: string; created_at: string; scope?: string; expires_at?: string | null }> | null>(null);
   const [text, setText] = useState('');
   const load = () => api('GET', '/lessons').then(setList).catch(() => setList([]));
   useEffect(() => { void load(); }, []);
@@ -131,7 +132,7 @@ function LessonsList() {
   return (
     <>
       <h2>What you've told the writer</h2>
-      <p className="small muted">Every note you send with “What do you think?” is boiled down to one standing instruction and kept here. The writer reads the whole list with every idea, line and edit. Cross out anything it got wrong, or add one in your own words.</p>
+      <p className="small muted">Every note you send with “What do you think?” is boiled down to one instruction and kept here: for every idea from now on, or, when it's about the artist or song you're writing today, for today only. The writer reads the list with every idea, line and edit. Cross out anything it got wrong, or add one in your own words.</p>
       {list === null && <p className="small muted">Loading…</p>}
       {list?.length === 0 && <p className="small muted" style={{ marginTop: 10 }}>Nothing yet. The first note you send that has a rule in it (“‘hall’ sounds like a wedding, not a night out”) will show up here.</p>}
       {!!list?.length && (
@@ -140,7 +141,7 @@ function LessonsList() {
             <li key={l.id}>
               <div>
                 {l.text}
-                <small>{l.source === 'rework' && l.note ? `From your note: “${l.note}”` : 'Added here'} · {timeAgo(l.created_at)}</small>
+                <small>{l.scope === 'session' ? `Today's session only${l.expires_at ? `, until ${new Date(l.expires_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''} · ` : ''}{l.source === 'rework' && l.note ? `From your note: “${l.note}”` : 'Added here'} · {timeAgo(l.created_at)}</small>
               </div>
               <button className="btn quiet sm" aria-label={`Forget: ${l.text}`} onClick={async () => { try { await api('DELETE', `/lessons/${l.id}`); await load(); } catch (e) { toast((e as Error).message); } }}>Forget</button>
             </li>
@@ -150,6 +151,39 @@ function LessonsList() {
       <div className="row" style={{ marginTop: 12 }}>
         <input type="text" style={{ flex: 1, minWidth: 200 }} placeholder="e.g. Titles should be things people actually say" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void add(); }} aria-label="Tell the writer something" />
         <button className="btn quiet sm" disabled={text.trim().length < 4} onClick={add}>Tell the writer</button>
+      </div>
+    </>
+  );
+}
+
+// What the writer has noticed about what he keeps (12 Oct 2026): learned from what he does
+// with each idea, taken stock of every ten or so; weaker than his own words, which it reads first.
+function Learned() {
+  const { toast } = useApp();
+  const [data, setData] = useState<{ learned: { goesFor: string[]; passesOn: string[]; basis: number; at: string } | null; outcomes: number; running: string | null } | null>(null);
+  const load = () => api('GET', '/learning').then(setData).catch(() => setData({ learned: null, outcomes: 0, running: null }));
+  useEffect(() => { void load(); }, []);
+  useEffect(() => { if (!data?.running) return; const t = setInterval(load, 3000); return () => clearInterval(t); }, [data?.running]);
+  async function again() {
+    try { await api('POST', '/learning/reflect', {}); await load(); } catch (e) { toast((e as Error).message); }
+  }
+  const l = data?.learned;
+  return (
+    <>
+      <h2>What it's noticed</h2>
+      <p className="small muted">Learned from what you do, not just what you type: the ideas you make pages of, save, rework or pick out of a list, and the ones you pass over. It takes stock every ten ideas or so and reads this with every brief, after your own notes, which always win.</p>
+      {data === null && <p className="small muted">Loading…</p>}
+      {data && !l && <p className="small muted" style={{ marginTop: 10 }}>Nothing yet{data.outcomes ? ` (${data.outcomes} ideas seen so far)` : ''}.</p>}
+      {l && (
+        <div className="learned">
+          {!!l.goesFor.length && <><div className="eyebrow">You go for</div><ul>{l.goesFor.map((b, i) => <li key={i}>{b}</li>)}</ul></>}
+          {!!l.passesOn.length && <><div className="eyebrow">You pass on</div><ul>{l.passesOn.map((b, i) => <li key={i}>{b}</li>)}</ul></>}
+          <p className="small muted">From your last {l.basis} ideas · {timeAgo(l.at)}</p>
+        </div>
+      )}
+      <div className="row" style={{ marginTop: 10 }}>
+        <button className="btn quiet sm" disabled={!!data?.running} onClick={again}>{data?.running ? 'Taking stock…' : 'Take stock now'}</button>
+        {l && <button className="btn quiet sm" onClick={async () => { await api('DELETE', '/learning'); await load(); }}>Forget it</button>}
       </div>
     </>
   );

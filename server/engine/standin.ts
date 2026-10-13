@@ -25,11 +25,19 @@ export class StandInWriter implements Writer {
       const lines = body.split('\n').map((l) => l.replace(/^\[[^\]]*\]\s*(Speaker \d+:\s*)?/, '').trim()).filter((l) => l.split(' ').length >= 4).slice(0, 3);
       return { note: '', candidates: lines.map((l, i) => ({ kind: (['title', 'line', 'concept'] as const)[i % 3], text: l.split(' ').slice(0, 4).join(' ').replace(/[.,!?]$/, ''), saidBy: '', at: '', context: l, why: '[stand-in] placeholder reason', score: 2 })) };
     }
+    if ('goesFor' in props) {
+      // taking stock of what he keeps: the stand-in names the first title it was shown
+      const first = (req.user.match(/^1\. "([^"]+)"/m) ?? [])[1] ?? 'the first idea';
+      return { goesFor: [`[stand-in] More like "${first}".`], passesOn: [], note: '' };
+    }
     if ('titleParts' in props && 'note' in props) {
-      // a rework; the stand-in "learns" only from a note that names a word to avoid
+      // a rework; the stand-in "learns" only from a note that names a word to avoid (standing)
+      // or names the artist (this session)
       const note = (req.user.split('His note:\n')[1] ?? '').split('\n\n')[0];
       const m = note.match(/[“"']([^“”"']+)[”"']\s+(?:is wrong|isn't right|is bad|shouldn't)/i);
-      return { title: '[stand-in] Reworked title', titleParts: ['[stand-in] Reworked', 'title'], concept: '[stand-in] Reworked concept. Placeholder, not real writing.', lines: ['[stand-in] reworked line one', '[stand-in] reworked line two'], lesson: m ? `[stand-in] Never use "${m[1]}" as a rhyme word.` : '', note: '' };
+      const artist = /artist is/i.test(note);
+      return { title: '[stand-in] Reworked title', titleParts: ['[stand-in] Reworked', 'title'], concept: '[stand-in] Reworked concept. Placeholder, not real writing.', lines: ['[stand-in] reworked line one', '[stand-in] reworked line two'],
+        lesson: m ? `[stand-in] Never use "${m[1]}" as a rhyme word.` : artist ? `[stand-in] ${note.trim()}` : '', scope: m ? 'standing' : artist ? 'session' : 'none', replaces: [], note: '' };
     }
     if ('lines' in props && 'note' in props && Object.keys(props).length === 2) {
       return { note: '', lines: [1, 2, 3, 4, 5, 6].map((n) => `[stand-in] page line ${n}`) };

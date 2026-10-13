@@ -13,6 +13,7 @@ import { systemCore, PROMPT_VERSION, type PromptVariant, tasteBlock, writePrompt
 import { type Writer, type Effort, type Usage, WriterError, costOf, worstCaseCost, RATES } from './engine/writer.js';
 import { type Pack, type PackTask, selectPack, renderPack, inferTask } from './engine/pack.js';
 import { Lessons } from './engine/lessons.js';
+import { Learning, learnedBlock } from './learning.js';
 
 /** How one request should be prompted. Experiments set this explicitly; normal use follows Settings. */
 export type PromptPlan = { variant: PromptVariant; pack: boolean };
@@ -46,9 +47,9 @@ const DEFAULTS: Settings = {
   craftPack: 'edits',
 };
 
-const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 24000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000, list: 24000 };
+const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 24000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000, list: 24000, reflect: 4000 };
 
-export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines' | 'hang' | 'list';
+export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines' | 'hang' | 'list' | 'reflect';
 
 export class Service {
   private aborts = new Map<string, AbortController>();
@@ -117,6 +118,9 @@ export class Service {
   /** What he has told the writer (engine/lessons.ts). */
   get lessons(): Lessons { return (this._lessons ??= new Lessons(this.db)); }
   private _lessons?: Lessons;
+  /** What the writer has noticed about what he keeps (learning.ts). */
+  get learning(): Learning { return (this._learning ??= new Learning(this)); }
+  private _learning?: Learning;
 
   /**
    * The standing part of every system prompt after the core: his taste notes, a few of his
@@ -134,7 +138,7 @@ export class Service {
       if (picked.length >= 4 || size + e.text.length > 6000) continue;
       picked.push(e); size += e.text.length;
     }
-    return [tasteBlock(s.taste, picked), await this.lessons.block()].filter(Boolean).join('\n\n');
+    return [tasteBlock(s.taste, picked), await this.lessons.block(), learnedBlock(await this.learning.current())].filter(Boolean).join('\n\n');
   }
 
   // ---------------- budget ----------------

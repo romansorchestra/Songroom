@@ -236,7 +236,8 @@ export const WORKSPACE_TEMPLATE = 'ws1';
 /** 11 Oct 2026: ideas get an engine-chosen subject from the chart barometer; rework and page lines. */
 /** ws3 (11 Oct, later): the first few lines are one rhymed block, and the writer names its rhymes. */
 /** ws4 (11 Oct, late): the lines are the part of the chorus where the title lands; the engine assigns and checks where. */
-export const IDEA_TEMPLATE = 'ws4';
+/** ws5 (12 Oct): concepts at the scale of real hits (one-breath stances, shown examples), and what the writer has learned from what he keeps. */
+export const IDEA_TEMPLATE = 'ws5';
 
 export type RefForPrompt = { name: string; identity: string; source: string; characteristics: string[]; want: string; pastedText?: string };
 
@@ -351,11 +352,12 @@ For "resolved" give exactly one candidate. For "ambiguous" give two to four. For
 // engine/barometer.ts); this template tells the writer how charting songs are
 // told. sparkPrompt (ws1) above is kept verbatim.
 // ---------------------------------------------------------------------------
-export function sparkPromptV2(input: { direction: string; genreLabel: string; references: string; avoidTitles: string[]; subjects: string[]; hooks?: string[]; shape: string; craft?: string; relationshipOnly?: boolean }): string {
+export function sparkPromptV2(input: { direction: string; genreLabel: string; references: string; avoidTitles: string[]; subjects: string[]; hooks?: string[]; shape: string; craft?: string; relationshipOnly?: boolean; hitConcepts?: string }): string {
   const blocks: string[] = [];
   blocks.push(input.direction.trim() ? `His direction for these ideas (this overrides anything below):\n${input.direction.trim()}` : `He gave no direction beyond the genre: ${input.genreLabel}.`);
   if (input.references) blocks.push(input.references);
   if (input.shape) blocks.push(input.shape);
+  if (input.hitConcepts) blocks.push(input.hitConcepts);
   const hooks = input.hooks ?? [];
   blocks.push(hooks.length
     ? `Subject and title placement for this batch, one per idea, in order (subjects chosen from that chart mix${input.relationshipOnly ? ', relationships only, as he asked' : ''}; if his direction names a subject, his direction wins):\n${input.subjects.map((s, i) => `${i + 1}. ${s}\n   Title: ${hooks[i] ?? hooks[hooks.length - 1]}.`).join('\n')}`
@@ -374,7 +376,7 @@ How to answer
 - Give ${input.subjects.length} distinct song ideas, one per subject above. He sees them one at a time, so each must stand on its own.
 - "title": something he'd sing.
 - "titleParts": the title split into one or two natural phrase chunks that join back into the title exactly (word for word, same punctuation). Split where a singer would breathe or where the hook turns. One chunk is fine for a short title.
-- "concept": the situation and the angle in one or two plain sentences, at most 45 words.
+- "concept": the song in one breath, the way you'd tell someone what a hit is about: who is singing to whom and where they stand, at most 25 words, a situation a few million people have been in. Not a short-film premise, not a sitcom cold open, not a backstory or a character study (no childhoods, no fathers, no "he pictures the version of himself"). If it only works as a story, it isn't a song yet. The detail goes in the lines.
 - "lines": the chorus, or the part of the chorus where the title lands: four lyric lines that belong together, built around the title the way it would be sung, with the title in them word for word, placed as assigned above (opening the block, ending it, or said in passing inside a line). A rhyme scheme (AABB, ABAB or ABCB): at least two end-rhymes by sound, at least one rhyme a songwriter would notice, and every rhyme word a word this scene would contain. Lines only, no labels.
 - "rhymes": the end-word pairs you rhymed, like "own / home, cute / truth".
 - "note": empty unless something needs saying in one short line.`);
@@ -416,7 +418,12 @@ export function reworkPrompt(input: {
 - Rework this one idea to his note. Keep what he marked; change what he asked; leave the rest as it is unless his note reaches it.
 - An adult narrator and an everyday situation, unless his note says otherwise.
 - "title", "titleParts" (one or two chunks that join back into the title exactly), "concept" (at most 45 words), "lines" (the part of the chorus where the title lands: four lyric lines as one rhymed block with the title in them word for word, opening it, ending it or said in passing, as the idea had it; at least two end-rhymes by sound, every rhyme word one the scene would contain; kept lines included, in their places).
-- "lesson": his note may contain something that should hold for every idea from now on: a word or kind of word that is wrong and why, a habit he wants dropped, a register he wants. If it does, write that as one standing instruction in plain words, at most 30 words, general enough to apply to other ideas and specific enough to act on, keeping his reason when he gave one (for example: A rhyme word must belong in the scene: "hall" after a night out reads as a wedding or a church). This is his record of what he has told you, so write it even when you would have known it anyway. Leave it empty only when the note is about this idea alone (keep the title, make it sexier, change this line)${lessons.length ? `, or when it repeats one of these, which he has already told you:\n${lessons.map((l) => `  - ${l}`).join('\n')}` : '.'}
+- "lesson" and "scope": his note may contain an instruction that reaches beyond this one idea. Write it as one instruction about the writing, in plain words, at most 30 words, keeping his reason when he gave one. Never a fact about Sam or about an artist ("Sam is British" is not a lesson; "no American place names or brands" is). Then say how far it reaches:
+  - "standing": it should hold for every idea from now on (a word or kind of word that is wrong and why, a habit to drop, how rhymes or titles should work). Example: A rhyme word must belong in the scene: "hall" after a night out reads as a wedding or a church.
+  - "session": it is about what he is writing right now: the artist he's writing for, where they're from, this song's genre, this title, this story. It will steer the next ideas until he changes direction, not for ever.
+  - "none": the note is about this idea alone (keep the title, make it sexier, change this line). Then "lesson" is empty.
+  This is his record of what he has told you, so write a lesson even when you would have known it anyway.
+- "replaces": ${lessons.length ? `he has already told you these, numbered:\n${lessons.map((l, i) => `  ${i + 1}. ${l}`).join('\n')}\n  If his note corrects, narrows or contradicts any of them, write the corrected lesson and list the numbers it replaces. If it only repeats one, leave "lesson" empty and "replaces" empty.` : 'an empty list (he has told you nothing yet).'}
 - "note": empty unless something needs saying in one short line.`);
   return blocks.join('\n\n');
 }

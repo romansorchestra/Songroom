@@ -13,7 +13,7 @@ export type Idea = {
   palette: string; saved: boolean; pending: string; note: string; notes: string; origin: string; kind: string;
   fragments: Fragment[]; song: { id: string; title: string } | null; shown_at: string | null;
   parent_id?: string | null; feedback?: string;
-  lesson?: { id: string; text: string } | null;
+  lesson?: { id: string; text: string; scope?: 'standing' | 'session' } | null;
 };
 type Mark = 'keep' | 'change';
 type Board = {
@@ -257,7 +257,7 @@ export function Springboard({ ideaId }: { ideaId?: string }) {
         )}
         {idea.feedback && <p className="writer-note">Reworked from your note: “{idea.feedback}”{idea.parent_id && board?.prevId === idea.parent_id && <> · <button className="tb under inline" onClick={() => move(idea.parent_id!)}>see the one before</button></>}</p>}
         {idea.lesson && (
-          <p className="writer-note lesson-note">Noted for every idea from now on: “{idea.lesson.text}” · <button className="tb under inline" onClick={async () => {
+          <p className="writer-note lesson-note">{idea.lesson.scope === 'session' ? 'Noted for today’s session' : 'Noted for every idea from now on'}: “{idea.lesson.text}” · <button className="tb under inline" onClick={async () => {
             try { await api('DELETE', `/lessons/${idea.lesson!.id}`); setIdea({ ...idea, lesson: null }); toast('Forgotten.'); } catch (e) { toast((e as Error).message); }
           }}>forget it</button> · <a className="tb under inline" href="#/settings/lessons">all notes</a></p>
         )}

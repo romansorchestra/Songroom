@@ -57,7 +57,9 @@ describe('where the title lands', () => {
 describe('browse: ten titles at once', () => {
   it('writes ten relationship ideas with placements, lists them newest first, never feeds them to the one-at-a-time queue, and opens one on Write', async () => {
     const calls: WriterRequest[] = [];
-    await boot(new StandInWriter((req: WriterRequest) => { calls.push(req); return { note: '', ideas: Array.from({ length: batchOf(req) }, (_, i) => idea(i + calls.length * 100)) }; }));
+    // titles number the writing calls (100s, 200s, …); the stock-taking call (learning.ts) answers its own shape
+    let writes = 0;
+    await boot(new StandInWriter((req: WriterRequest) => { calls.push(req); if ('goesFor' in (req.schema as any).properties) return { goesFor: [], passesOn: [], note: '' }; writes++; return { note: '', ideas: Array.from({ length: batchOf(req) }, (_, i) => idea(i + writes * 100)) }; }));
     expect((await api('GET', '/browse')).body.batches).toEqual([]);
     await api('PUT', '/springboard/direction', { genre: 'pop' });
     const r = await api('POST', '/browse/list', { clientKey: 'l1' });
@@ -89,14 +91,15 @@ describe('browse: ten titles at once', () => {
     await api('POST', '/springboard/next', { clientKey: 'n1' }); await svc.idle();
     const sb = (await api('GET', '/springboard')).body;
     expect(sb.current.title).not.toMatch(/^Title 1\d\d$/);
-    expect(calls).toHaveLength(2); // the list, then a batch of three
+    const writing = () => calls.filter((c) => !('goesFor' in (c.schema as any).properties)); // the writer also takes stock after ten ideas (learning.ts)
+    expect(writing()).toHaveLength(2); // the list, then a batch of three
     // a second list goes above the first
     await api('POST', '/browse/list', { clientKey: 'l2', scope: 'all' }); await svc.idle();
     const b2 = (await api('GET', '/browse')).body;
     expect(b2.batches).toHaveLength(2);
     expect(b2.batches[0].ideas[0].title).toBe('Title 300');
     expect(b2.batches[1].ideas[0].title).toBe('Title 100');
-    expect(calls[2].user).not.toContain('relationships only');
+    expect(writing()[2].user).not.toContain('relationships only');
     // opening one makes it the idea on the Write screen; it leaves the list
     const pick = b2.batches[1].ideas[3];
     const opened = await api('POST', '/springboard/current', { ideaId: pick.id });

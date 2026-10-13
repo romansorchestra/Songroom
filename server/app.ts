@@ -245,6 +245,10 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
     return l;
   }));
   api.delete('/lessons/:id', h(async (req) => { await svc.lessons.remove(String(req.params.id)); return { ok: true }; }));
+  // What the writer has noticed about what he keeps (learning.ts)
+  api.get('/learning', h(async () => ({ learned: await svc.learning.current(), outcomes: (await svc.learning.outcomes()).length, running: (await svc.db.query<{ id: string }>(`SELECT id FROM runs WHERE task='reflect' AND status='running' LIMIT 1`))[0]?.id ?? null })));
+  api.post('/learning/reflect', h(async (req) => { const b = z.object({ clientKey: key }).parse(req.body ?? {}); const runId = await svc.learning.reflect(b.clientKey ?? null); if (!runId) throw new AppError(400, 'too_little', 'Not enough to learn from yet: see a few more ideas first.'); return { runId }; }));
+  api.delete('/learning', h(async () => { await svc.learning.forget(); return { ok: true }; }));
 
   // Test pack
   api.get('/evals', h(async () => latestResults(svc)));

@@ -44,7 +44,7 @@ describe('the writer learns from his notes', () => {
     let lesson = HALL;
     await boot(new StandInWriter((req: WriterRequest) => {
       calls.push(req);
-      if (isRework(req)) return { title: 'T', titleParts: ['T'], concept: 'c', lines: ['a', 'b', 'c', 'd'], lesson, note: '' };
+      if (isRework(req)) return { title: 'T', titleParts: ['T'], concept: 'c', lines: ['a', 'b', 'c', 'd'], lesson, scope: lesson ? 'standing' : 'none', replaces: [], note: '' };
       return sparkJson();
     }));
     const sb = await firstIdea();
@@ -57,7 +57,7 @@ describe('the writer learns from his notes', () => {
     expect(calls.at(-1)!.user).not.toContain('already told you'); // the list was empty
     const now = (await api('GET', '/springboard')).body;
     expect(now.current.parent_id).toBe(sb.current.id);
-    expect(now.current.lesson).toEqual({ id: expect.any(String), text: HALL });
+    expect(now.current.lesson).toEqual({ id: expect.any(String), text: HALL, scope: 'standing' });
     const list = (await api('GET', '/lessons')).body;
     expect(list).toHaveLength(1);
     expect(list[0]).toMatchObject({ text: HALL, source: 'rework', idea_id: now.current.id, note: "'hall' is wrong here, sounds like a wedding or a church" });
@@ -71,14 +71,14 @@ describe('the writer learns from his notes', () => {
     expect(run.request.lessons).toBe(1);
     lesson = '';
     await api('POST', `/ideas/${now.current.id}/rework`, { feedback: 'make it sexier', keepTitle: true, clientKey: 'rw2' }); await svc.idle();
-    expect(calls.at(-1)!.user).toContain(`which he has already told you:\n  - ${HALL}`);
+    expect(calls.at(-1)!.user).toContain(`he has already told you these, numbered:\n  1. ${HALL}`);
     expect((await api('GET', '/lessons')).body).toHaveLength(1); // an empty lesson adds nothing
     const latest = (await api('GET', '/springboard')).body.current;
     expect(latest.lesson).toBe(null);
   });
 
   it('the same lesson twice is one; a rework with no note learns nothing; a preview rework saves nothing at all', async () => {
-    await boot(new StandInWriter((req: WriterRequest) => (isRework(req) ? { title: 'T', titleParts: ['T'], concept: 'c', lines: ['a'], lesson: HALL, note: '' } : sparkJson())));
+    await boot(new StandInWriter((req: WriterRequest) => (isRework(req) ? { title: 'T', titleParts: ['T'], concept: 'c', lines: ['a'], lesson: HALL, scope: 'standing', replaces: [], note: '' } : sparkJson())));
     const sb = await firstIdea();
     await api('POST', `/ideas/${sb.current.id}/rework`, { feedback: 'hall is wrong', clientKey: 'a' }); await svc.idle();
     const second = (await api('GET', '/springboard')).body.current;
@@ -127,11 +127,50 @@ describe('the writer learns from his notes', () => {
     expect(((await r.json()) as any).lessons).toHaveLength(1);
   });
 
+  it('a note about the artist he is writing for holds for the session, not for ever; a corrected lesson retires the one it replaces', async () => {
+    const calls: WriterRequest[] = [];
+    let answer: Record<string, unknown> = {};
+    await boot(new StandInWriter((req: WriterRequest) => { calls.push(req); return isRework(req) ? { title: 'T', titleParts: ['T'], concept: 'c', lines: ['a'], note: '', ...answer } : sparkJson(); }));
+    const sb = await firstIdea();
+    // 12 Oct: "Artist is British, shouldn't be specifically American references" became "Sam is British and wants folk"
+    answer = { lesson: 'No American place names, brands or vehicles.', scope: 'session', replaces: [] };
+    await api('POST', `/ideas/${sb.current.id}/rework`, { feedback: 'Artist is British, shouldn’t be specifically American references', clientKey: 'a' }); await svc.idle();
+    let list = (await api('GET', '/lessons')).body;
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({ text: 'No American place names, brands or vehicles.', scope: 'session' });
+    expect(new Date(list[0].expires_at).getTime()).toBeGreaterThan(Date.now() + 11 * 3600 * 1000);
+    expect((await api('GET', '/springboard')).body.current.lesson.scope).toBe('session');
+    await api('PUT', '/springboard/direction', { genre: 'country' });
+    await api('POST', '/springboard/next', { clientKey: 'n2' }); await svc.idle();
+    expect(calls.at(-1)!.system).toContain('What Sam has said about what he is writing today');
+    expect(calls.at(-1)!.system).toContain('- No American place names, brands or vehicles.');
+    expect(calls.at(-1)!.system).not.toContain('Standing instructions');
+    // his correction replaces it: "shouldn't be English-coded either"
+    const cur = (await api('GET', '/springboard')).body.current;
+    answer = { lesson: 'Keep places and brands neutral: no American markers and no English-coded ones either.', scope: 'session', replaces: [1] };
+    await api('POST', `/ideas/${cur.id}/rework`, { feedback: 'They definitely shouldn’t be trying to be English coded either', clientKey: 'b' }); await svc.idle();
+    expect(calls.at(-1)!.user).toContain('he has already told you these, numbered:\n  1. No American place names, brands or vehicles.');
+    list = (await api('GET', '/lessons')).body;
+    expect(list.map((l: any) => l.text)).toEqual(['Keep places and brands neutral: no American markers and no English-coded ones either.']);
+    // an expired session lesson leaves the brief and the list
+    await db.query(`UPDATE lessons SET expires_at='2000-01-01T00:00:00.000Z'`);
+    expect((await api('GET', '/lessons')).body).toEqual([]);
+    await api('PUT', '/springboard/direction', { genre: 'pop' });
+    await api('POST', '/springboard/next', { clientKey: 'n3' }); await svc.idle();
+    expect(calls.at(-1)!.system).not.toContain('what he is writing today');
+    // scope none files nothing
+    answer = { lesson: '', scope: 'none', replaces: [] };
+    const cur2 = (await api('GET', '/springboard')).body.current;
+    await api('POST', `/ideas/${cur2.id}/rework`, { feedback: 'make it sexier', clientKey: 'c' }); await svc.idle();
+    expect((await api('GET', '/lessons')).body).toEqual([]);
+  });
+
   it('newest first in the brief, capped; near-duplicates are one', () => {
     expect(sameLesson('Never use "hall" as a rhyme word.', 'never use hall as a rhyme word')).toBe(true);
     expect(sameLesson('Never use "hall".', 'A rhyme word must belong in the scene: never use "hall".')).toBe(true);
     expect(sameLesson('Never use "hall".', 'Never use "aisle".')).toBe(false);
     expect(lessonsBlock([])).toBe('');
-    expect(lessonsBlock(['b', 'a'])).toBe(`What Sam has told the writer, from his notes on earlier ideas. Standing instructions, newest first; they hold for every idea, line and edit unless today's request says otherwise:\n- b\n- a`);
+    expect(lessonsBlock(['b', 'a'])).toContain(`unless today's request says otherwise. Apply each by avoiding the mistake it names; never build an idea around a lesson or echo its example:\n- b\n- a`);
+    expect(lessonsBlock([], ['s'])).toContain('what he is writing today');
   });
 });

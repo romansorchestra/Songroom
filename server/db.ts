@@ -173,6 +173,10 @@ export const MIGRATIONS: string[] = [
   `CREATE TABLE lessons (
      id TEXT PRIMARY KEY, text TEXT NOT NULL, source TEXT NOT NULL, idea_id TEXT, note TEXT NOT NULL DEFAULT '',
      created_at ${TS})`,
+  // 7 (12 Oct 2026): a lesson reaches either every idea from now on ('standing') or the rest of
+  // today's writing session ('session', about the artist or song he's writing for, expires).
+  `ALTER TABLE lessons ADD COLUMN scope TEXT NOT NULL DEFAULT 'standing';
+   ALTER TABLE lessons ADD COLUMN expires_at TEXT`,
 ];
 
 export async function migrate(db: Db): Promise<void> {

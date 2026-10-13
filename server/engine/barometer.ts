@@ -106,6 +106,36 @@ export function shapeNote(genre: Genre): string {
   ].join('\n');
 }
 
+// Real hits at the scale a concept should be (12 Oct 2026). Sam: "the concepts that it sends
+// me are things I would never hear in songs". The research holds a one-line situation, in
+// our words, for every charting song; the ones that sat a month or more in the top 50 are
+// shown to the writer as the scale to write at. Never titles, artists or lyrics.
+type Classified = { known: string; relationship: boolean; situation?: string; subject?: string; genre?: string; snapshots_in_top50?: number; concept_scale?: string };
+let hitsCache: Classified[] | null | undefined;
+export function loadHits(file = path.resolve(process.cwd(), 'research', 'charts', 'classified.json')): Classified[] {
+  if (hitsCache !== undefined) return hitsCache ?? [];
+  try {
+    const all = JSON.parse(fs.readFileSync(file, 'utf8')) as Classified[];
+    hitsCache = all.filter((x) => x.known === 'yes' && x.situation && (x.snapshots_in_top50 ?? 0) >= 30 && x.concept_scale !== 'high_concept');
+  } catch { hitsCache = null; }
+  return hitsCache ?? [];
+}
+
+/** A handful of real hits' situations, one line each, for the brief. */
+export function hitConcepts(scope: SubjectScope, n = 8, rand: () => number = Math.random): string[] {
+  const pool = loadHits().filter((x) => scope === 'all' || x.relationship);
+  const out: string[] = [];
+  const left = [...pool];
+  while (out.length < n && left.length) { const i = Math.floor(rand() * left.length); out.push(left.splice(i, 1)[0].situation!.trim()); }
+  return out;
+}
+
+export function hitConceptsNote(scope: SubjectScope, rand: () => number = Math.random): string {
+  const ex = hitConcepts(scope, 8, rand);
+  if (!ex.length) return '';
+  return `The scale a concept lives at. Here are real songs that sat a month or more in the Spotify US top 50, each in one plain line (our words, not theirs):\n${ex.map((e) => `- ${e}`).join('\n')}\nNotice what they are: a stance anyone has been in, said in a breath, with no backstory. The detail that makes a song belongs in its lines, not in its concept.`;
+}
+
 // The diary-pop lane (Gracie Abrams, Olivia Rodrigo, Sabrina Carpenter, Tate McRae, Olivia
 // Dean…), from research/charts/COHORT.md: 233 of their tracks with 80M+ streams, 2023–2026.
 // Figures in our words; never song lines.

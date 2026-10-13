@@ -255,14 +255,30 @@ export const reworkSchema = {
     titleParts: { type: 'array', items: { type: 'string' } },
     concept: { type: 'string' },
     lines: { type: 'array', items: { type: 'string' } },
-    // 11 Oct, late: the standing instruction in his note, if any (engine/lessons.ts); else ""
+    // 11 Oct, late: the instruction in his note, if any (engine/lessons.ts); 12 Oct: how far it
+    // reaches (standing / this session / none) and which earlier lessons it replaces (1-based)
     lesson: { type: 'string' },
+    scope: { type: 'string', enum: ['standing', 'session', 'none'] },
+    replaces: { type: 'array', items: { type: 'integer' } },
     note: { type: 'string' },
   },
-  required: ['title', 'titleParts', 'concept', 'lines', 'lesson', 'note'],
+  required: ['title', 'titleParts', 'concept', 'lines', 'lesson', 'scope', 'replaces', 'note'],
   additionalProperties: false,
 } as const;
-export const reworkZ = z.object({ title: z.string().min(1), titleParts: z.array(z.string()), concept: z.string(), lines: z.array(z.string()).min(1), lesson: z.string().optional(), note: z.string() });
+export const reworkZ = z.object({ title: z.string().min(1), titleParts: z.array(z.string()), concept: z.string(), lines: z.array(z.string()).min(1), lesson: z.string().optional(), scope: z.enum(['standing', 'session', 'none']).optional(), replaces: z.array(z.number()).optional(), note: z.string() });
+
+// ---- 12 Oct 2026: what the writer has noticed about what Sam keeps (server/learning.ts) ----
+export const reflectSchema = {
+  type: 'object',
+  properties: {
+    goesFor: { type: 'array', items: { type: 'string' } },
+    passesOn: { type: 'array', items: { type: 'string' } },
+    note: { type: 'string' },
+  },
+  required: ['goesFor', 'passesOn', 'note'],
+  additionalProperties: false,
+} as const;
+export const reflectZ = z.object({ goesFor: z.array(z.string()), passesOn: z.array(z.string()), note: z.string() });
 
 export const moreLinesSchema = {
   type: 'object',

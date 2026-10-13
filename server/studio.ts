@@ -16,7 +16,7 @@ import {
   REFERENCE_SYSTEM, referencePrompt, type RefForPrompt, type WorkspaceContext,
 } from './engine/prompts.js';
 import { WriterError, type Usage } from './engine/writer.js';
-import { SUBJECTS, GENRES, genreFor, pickSubjects, shapeNote, type SubjectScope } from './engine/barometer.js';
+import { SUBJECTS, GENRES, genreFor, pickSubjects, shapeNote, hitConceptsNote, type SubjectScope } from './engine/barometer.js';
 import { rhymeReport, rhymesEnough } from './engine/rhyme.js';
 import { HOOKS, HOOK_NOTE, assignHooks, hookPlacement, type Hook } from './engine/hook.js';
 
@@ -153,7 +153,7 @@ export class Studio {
       steer, fragments: fragments.map((f) => ({ ...f, saved: !!f.saved })),
       song: song ?? legacySongs[0] ?? null,
       // the standing instruction his note on this rework taught the writer, if any
-      lesson: lesson ? { id: lesson.id, text: lesson.text } : null,
+      lesson: lesson ? { id: lesson.id, text: lesson.text, scope: lesson.scope } : null,
     };
   }
 
@@ -207,9 +207,12 @@ export class Studio {
     const user = sparkPromptV2({
       direction: direction.text, genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: referenceBlock(refs),
       avoidTitles: recent.map((r) => r.title), subjects: subjects.map((k) => SUBJECTS[k]), hooks: hooks.map((h) => HOOK_NOTE[h]), shape: shapeNote(genre), craft: craft.block,
+      hitConcepts: hitConceptsNote('all'),
     });
     const prevCurrent = await this.kv<string | null>('sb.current', null);
     const steer = stableDir(direction);
+    // enough has happened since the writer last took stock of what he keeps? (learning.ts; never blocks a batch)
+    this.svc.track(this.svc.learning.maybeReflect().catch(() => null));
     const run = await this.svc.startRun({
       task: 'spark', threadId: null, songId: null, clientKey, effort: s.effortCreative,
       promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${IDEA_TEMPLATE}`,
@@ -275,7 +278,7 @@ export class Studio {
     const hooks = assignHooks(count);
     const taste = await this.svc.tasteFor(input.text ?? '');
     const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
-    const user = sparkPromptV2({ direction: input.text ?? '', genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: '', avoidTitles: [], subjects: subjects.map((k) => SUBJECTS[k]), hooks: hooks.map((h) => HOOK_NOTE[h]), shape: shapeNote(genre), relationshipOnly: scope === 'relationship' });
+    const user = sparkPromptV2({ direction: input.text ?? '', genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: '', avoidTitles: [], subjects: subjects.map((k) => SUBJECTS[k]), hooks: hooks.map((h) => HOOK_NOTE[h]), shape: shapeNote(genre), relationshipOnly: scope === 'relationship', hitConcepts: hitConceptsNote(scope) });
     const run = await this.svc.startRun({
       task: 'preview', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
       promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { preview: true, genre, text: input.text ?? '', subjects, hooks, scope, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
@@ -322,9 +325,10 @@ export class Studio {
     const user = sparkPromptV2({
       direction: direction.text, genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: referenceBlock(refs),
       avoidTitles: recent.map((r) => r.title), subjects: subjects.map((k) => SUBJECTS[k]), hooks: hooks.map((h) => HOOK_NOTE[h]), shape: shapeNote(genre), craft: craft.block,
-      relationshipOnly: scope === 'relationship',
+      relationshipOnly: scope === 'relationship', hitConcepts: hitConceptsNote(scope),
     });
     const steer = stableDir(direction);
+    this.svc.track(this.svc.learning.maybeReflect().catch(() => null));
     const run = await this.svc.startRun({
       task: 'list', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
       promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${IDEA_TEMPLATE}`,
@@ -474,7 +478,7 @@ export class Studio {
       },
       onSuccess: async (runId, result) => {
         if (preview) return;
-        const out = result as unknown as { title: string; titleParts: string[]; concept: string; lines: string[]; lesson?: string; note: string };
+        const out = result as unknown as { title: string; titleParts: string[]; concept: string; lines: string[]; lesson?: string; scope?: 'standing' | 'session' | 'none'; replaces?: number[]; note: string };
         const title = input.keepTitle ? idea.title : out.title.trim().slice(0, 200) || idea.title;
         const concept = input.keepConcept ? idea.concept : out.concept.trim().slice(0, 600);
         let lines = out.lines.map((t) => t.trim()).filter(Boolean).slice(0, 4);
@@ -496,8 +500,12 @@ export class Studio {
             runId, motifFor(id), now, idea.palette ?? PALETTES[0], JSON.stringify(parts.length ? parts : null), stableDir(direction), out.note.trim().slice(0, 300),
             idea.subject ?? null, idea.id, input.feedback.trim().slice(0, 1000)],
         );
-        // what his note taught the writer, kept for every idea from now on (engine/lessons.ts)
-        if (out.lesson?.trim() && input.feedback.trim()) await this.svc.lessons.add(out.lesson, 'rework', { ideaId: id, note: input.feedback });
+        // what his note taught the writer (engine/lessons.ts): for every idea from now on, or for
+        // today's session; a corrected lesson retires the ones it replaces
+        if (out.lesson?.trim() && input.feedback.trim() && out.scope !== 'none') {
+          for (const n of out.replaces ?? []) { const old = lessons[n - 1]; if (old) await this.svc.lessons.remove(old.id); }
+          await this.svc.lessons.add(out.lesson, 'rework', { ideaId: id, note: input.feedback, scope: out.scope === 'session' ? 'session' : 'standing' });
+        }
         const nowCurrent = await this.kv<string | null>('sb.current', null);
         if (nowCurrent === prevCurrent) await this.setKv('sb.current', id);
       },
