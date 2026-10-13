@@ -25,6 +25,10 @@ export class StandInWriter implements Writer {
       const lines = body.split('\n').map((l) => l.replace(/^\[[^\]]*\]\s*(Speaker \d+:\s*)?/, '').trim()).filter((l) => l.split(' ').length >= 4).slice(0, 3);
       return { note: '', candidates: lines.map((l, i) => ({ kind: (['title', 'line', 'concept'] as const)[i % 3], text: l.split(' ').slice(0, 4).join(' ').replace(/[.,!?]$/, ''), saidBy: '', at: '', context: l, why: '[stand-in] placeholder reason', score: 2 })) };
     }
+    if ('titles' in props) {
+      // titles for the next section: the stand-in reads the last word of his lyric and makes eight placeholders
+      return { note: '', titles: Array.from({ length: 8 }, (_, i) => ({ title: `[stand-in] Title ${i + 1}`, lines: [`[stand-in] Title ${i + 1}, end of day`, '[stand-in] we play'], why: '[stand-in] placeholder reason' })) };
+    }
     if ('goesFor' in props) {
       // taking stock of what he keeps: the stand-in names the first title it was shown
       const first = (req.user.match(/^1\. "([^"]+)"/m) ?? [])[1] ?? 'the first idea';

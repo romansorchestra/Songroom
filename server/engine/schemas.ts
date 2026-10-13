@@ -330,3 +330,15 @@ export const hangZ = z.object({
   candidates: z.array(z.object({ kind: z.enum(['title', 'concept', 'line']), text: z.string(), saidBy: z.string(), at: z.string(), context: z.string(), why: z.string(), score: z.number() })),
   note: z.string(),
 });
+
+// ---- 13 Oct 2026: titles for the next section of a song he is writing ----
+export const titlesSchema = {
+  type: 'object',
+  properties: {
+    titles: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, lines: { type: 'array', items: { type: 'string' } }, why: { type: 'string' } }, required: ['title', 'lines', 'why'], additionalProperties: false } },
+    note: { type: 'string' },
+  },
+  required: ['titles', 'note'],
+  additionalProperties: false,
+} as const;
+export const titlesZ = z.object({ titles: z.array(z.object({ title: z.string().min(1), lines: z.array(z.string()), why: z.string() })).min(1), note: z.string() });

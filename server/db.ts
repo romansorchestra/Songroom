@@ -177,6 +177,12 @@ export const MIGRATIONS: string[] = [
   // today's writing session ('session', about the artist or song he's writing for, expires).
   `ALTER TABLE lessons ADD COLUMN scope TEXT NOT NULL DEFAULT 'standing';
    ALTER TABLE lessons ADD COLUMN expires_at TEXT`,
+  // 8 (13 Oct 2026): titles for the next section of a song he is already writing. One row per
+  // ask; items = [{title, lines, why}]; the song page shows the newest first.
+  `CREATE TABLE title_sets (
+     id TEXT PRIMARY KEY, song_id TEXT NOT NULL, run_id TEXT, ask TEXT NOT NULL DEFAULT '', items TEXT, status TEXT NOT NULL,
+     error TEXT, client_key TEXT UNIQUE, created_at ${TS});
+   CREATE INDEX title_sets_song ON title_sets(song_id, created_at)`,
 ];
 
 export async function migrate(db: Db): Promise<void> {

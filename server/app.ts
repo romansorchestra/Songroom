@@ -204,6 +204,9 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
     const b = z.object({ setId: z.string().max(40), index: z.number().int().min(0).max(20), clientKey: key }).parse(req.body);
     return studio.keep(String(req.params.id), { ...b, clientKey: b.clientKey ?? null });
   }));
+  // Titles for the next section (13 Oct 2026)
+  api.post('/songs/:id/titles', h(async (req) => { const b = z.object({ ask: z.string().max(1000).default(''), clientKey: key }).parse(req.body); return studio.findTitles(String(req.params.id), { ask: b.ask, clientKey: b.clientKey ?? null }); }));
+  api.post('/songs/:id/titles/use', h(async (req) => { const b = z.object({ setId: z.string().max(40), index: z.number().int().min(0).max(20) }).parse(req.body); return studio.useTitle(String(req.params.id), b); }));
   api.post('/songs/:id/lines', h(async (req) => {
     const b = z.object({ ask: z.string().max(1000).default(''), clientKey: key }).parse(req.body);
     return studio.moreLines(String(req.params.id), { ask: b.ask, clientKey: b.clientKey ?? null });

@@ -10,9 +10,9 @@ import {
   buildReplacements, parseLiteral, literalReplacements, insertLines, EditError,
 } from './engine/lyrics.js';
 import { extractConstraints, mergeConstraints, containsWord, endsWithPhrase, startsWithPhrase, syllables, endWord, type Check } from './engine/validate.js';
-import { sparkSchema, sparkZ, relineSchema, relineZ, reworkSchema, reworkZ, moreLinesSchema, moreLinesZ, suggestReplaceSchema, suggestReplaceZ, suggestAddSchema, suggestAddZ, referenceZ } from './engine/schemas.js';
+import { sparkSchema, sparkZ, relineSchema, relineZ, reworkSchema, reworkZ, moreLinesSchema, moreLinesZ, suggestReplaceSchema, suggestReplaceZ, suggestAddSchema, suggestAddZ, referenceZ, titlesSchema, titlesZ } from './engine/schemas.js';
 import {
-  systemCore, PROMPT_VERSION, WORKSPACE_TEMPLATE, IDEA_TEMPLATE, sparkPromptV2, relinePrompt, reworkPrompt, moreLinesPrompt, suggestPrompt, contextBlock, referenceBlock,
+  systemCore, PROMPT_VERSION, WORKSPACE_TEMPLATE, IDEA_TEMPLATE, sparkPromptV2, relinePrompt, reworkPrompt, moreLinesPrompt, titlesPrompt, suggestPrompt, contextBlock, referenceBlock,
   REFERENCE_SYSTEM, referencePrompt, type RefForPrompt, type WorkspaceContext,
 } from './engine/prompts.js';
 import { WriterError, type Usage } from './engine/writer.js';
@@ -862,13 +862,92 @@ export class Studio {
     const scraps = await this.db.query<FragmentRow>(
       `SELECT id, idea_id, song_id, text, saved, source, ask, created_at, saved_at FROM fragments WHERE song_id=$1 OR (idea_id IS NOT NULL AND idea_id=$2) ORDER BY created_at, rowid`, [songId, song.idea_id ?? '']);
     const sets = await this.suggestionSets(songId, 15);
+    const titles = await this.titleSets(songId);
     const [seedRev] = await this.db.query<{ rev: number }>(`SELECT rev FROM song_revisions WHERE song_id=$1 AND source='insert:seed' LIMIT 1`, [songId]);
     return {
       seedAdded: !!seedRev,
       ...song, palette: (song.palette ?? idea?.palette ?? PALETTES[song.motif % 3]) as Palette, context,
       idea: idea ? { ...idea, title_parts: idea.title_parts } : null,
-      scraps: scraps.map((f) => ({ ...f, saved: !!f.saved })), sets,
+      scraps: scraps.map((f) => ({ ...f, saved: !!f.saved })), sets, titles,
     };
+  }
+
+  // ------------------------------------------------------------------ titles
+  /**
+   * Titles for the next section (13 Oct 2026). Sam, mid-song: "looking for the title for the
+   * next section" with the lyric so far. The writer reads the song as it stands and offers
+   * eight titles the next section could land on, each with the two lines it lands in.
+   */
+  async titleSets(songId: string) {
+    const rows = await this.db.query<{ id: string; run_id: string | null; ask: string; items: Array<{ title: string; lines: string[]; why: string }> | null; status: string; error: { code: string; message: string } | null; created_at: string }>(
+      `SELECT id, run_id, ask, items, status, error, created_at FROM title_sets WHERE song_id=$1 ORDER BY created_at DESC, rowid DESC LIMIT 6`, [songId]);
+    for (const r of rows) {
+      if (r.status === 'running' && r.run_id) {
+        const run = await this.svc.getRun(r.run_id);
+        if (run.status !== 'running' && run.status !== 'succeeded') {
+          const err = (run.error as { code?: string; message?: string } | null) ?? { code: 'failed', message: 'That request failed.' };
+          await this.db.query(`UPDATE title_sets SET status='failed', error=$2 WHERE id=$1`, [r.id, JSON.stringify(err)]);
+          r.status = 'failed'; r.error = { code: err.code ?? 'failed', message: err.message ?? 'That request failed.' };
+        }
+      }
+    }
+    return rows;
+  }
+
+  async findTitles(songId: string, input: { ask: string; clientKey: string | null }) {
+    if (input.clientKey) {
+      const [r] = await this.db.query<{ run_id: string }>(`SELECT run_id FROM title_sets WHERE client_key=$1`, [input.clientKey]);
+      if (r?.run_id) return { runId: r.run_id };
+    }
+    if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected.');
+    const ws = await this.workspace(songId);
+    const s = await this.svc.settings();
+    const lyrics = renderLyrics(ws.sections);
+    const onPage = [...(ws.idea?.lines.map((l) => l.text) ?? []), ...ws.scraps.map((f) => f.text)].filter((t) => !lyrics.includes(t)).slice(-30);
+    const avoid = ws.titles.flatMap((t) => (t.items ?? []).map((i) => i.title)).slice(0, 40);
+    const refs = await this.refsForPrompt(ws.context.refs.map((r) => r.id));
+    // the direction's reference counts too when the page has none of its own (he set it for this song)
+    const direction = await this.direction();
+    if (!refs.length && direction.refId) refs.push(...(await this.refsForPrompt([direction.refId])));
+    const view = ws.context;
+    const taste = await this.svc.tasteFor(`${input.ask} ${String((ws as Record<string, unknown>).title ?? '')}`);
+    const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
+    const user = titlesPrompt({
+      title: String((ws as Record<string, unknown>).title ?? ''), brief: String((ws as Record<string, unknown>).brief ?? ''), lyrics, onPage, ask: input.ask, references: referenceBlock(refs),
+      context: contextBlock({ meaning: view.meaning, narrator: view.narrator, rhyme: null, rhythm: null }), avoid, hitConcepts: hitConceptsNote('all'),
+    });
+    const setId = newId('t_');
+    await this.db.query(`INSERT INTO title_sets(id, song_id, ask, status, client_key) VALUES ($1,$2,$3,'running',$4)`, [setId, songId, input.ask.trim().slice(0, 300), input.clientKey]);
+    const run = await this.svc.startRun({
+      task: 'titles', threadId: null, songId, clientKey: null, effort: s.effortCreative,
+      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { ask: input.ask, setId, avoid: avoid.length }, inputChars: system.length + user.length,
+      exec: async (signal, model) => {
+        const r = await this.svc.call('titles', system, user, titlesSchema, s.effortCreative, signal, model);
+        const parsed = titlesZ.safeParse(r.json);
+        if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
+        return { result: parsed.data as unknown as Record<string, unknown>, usage: r.usage, requestId: r.requestId, model: r.model, live: r.live };
+      },
+      onSuccess: async (runId, result) => {
+        const out = result as unknown as { titles: Array<{ title: string; lines: string[]; why: string }>; note: string };
+        const items = out.titles.map((t) => ({ title: t.title.trim().slice(0, 120), lines: t.lines.map((l) => l.trim()).filter(Boolean).slice(0, 3), why: t.why.trim().slice(0, 160) })).filter((t) => t.title).slice(0, 10);
+        await this.db.query(`UPDATE title_sets SET items=$2, status='done', run_id=$3, error=$4 WHERE id=$1`, [setId, JSON.stringify(items), runId, out.note.trim() ? JSON.stringify({ code: 'note', message: out.note.trim().slice(0, 300) }) : null]);
+      },
+    });
+    await this.db.query(`UPDATE title_sets SET run_id=$2 WHERE id=$1`, [setId, run.id]);
+    return { runId: run.id, setId };
+  }
+
+  /** He picked one: it becomes the song's title, and its lines go on the page to tap into the draft. */
+  async useTitle(songId: string, input: { setId: string; index: number }) {
+    const [set] = await this.db.query<{ items: Array<{ title: string; lines: string[] }> | null }>(`SELECT items FROM title_sets WHERE id=$1 AND song_id=$2`, [input.setId, songId]);
+    const item = set?.items?.[input.index];
+    if (!item) throw new AppError(404, 'not_found', 'That title is no longer here.');
+    await this.svc.updateSong(songId, { title: item.title });
+    for (const [i, t] of item.lines.entries()) {
+      await this.db.query(`INSERT INTO fragments(id, song_id, text, saved, source, ask, client_key) VALUES ($1,$2,$3,0,'writer',$4,$5) ON CONFLICT (client_key) DO NOTHING`,
+        [newId('f_'), songId, t.slice(0, 600), `Title: ${item.title}`, `title:${input.setId}:${input.index}:${i}`]);
+    }
+    return this.workspace(songId);
   }
 
   async suggestionSets(songId: string, limit = 15) {

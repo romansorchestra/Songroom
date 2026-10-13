@@ -469,3 +469,29 @@ Rules
 export function hangPrompt(input: { title: string; transcript: string }): string {
   return `Session: ${input.title || 'untitled'}\n\nTranscript:\n${input.transcript}\n\nFind the titles, concepts and lines in it. Verbatim only.`;
 }
+
+// ---------------------------------------------------------------------------
+// Titles for the next section (13 Oct 2026). Sam, mid-song with a verse written: "looking
+// for the title for the next section" — he had typed the whole lyric into the direction box
+// because there was no other way in. This is that way in: the song so far, and back come
+// titles the next section (usually the chorus) could land on, each with the lines it lands in.
+// ---------------------------------------------------------------------------
+export function titlesPrompt(input: { title: string; brief: string; lyrics: string; onPage: string[]; ask: string; references: string; context: string; avoid: string[]; hitConcepts: string }): string {
+  const blocks: string[] = [];
+  blocks.push(`Sam is mid-song and needs the title: the hook the next section (usually the chorus) lands on.${input.title ? ` Working title so far: "${input.title}".` : ''}`);
+  if (input.brief.trim()) blocks.push(`His notes on the song (true facts about it):\n${input.brief.trim()}`);
+  blocks.push(`The lyric so far:\n${input.lyrics.trim() || '(nothing written yet)'}`);
+  if (input.onPage.length) blocks.push(`Lines and scraps on his page:\n${input.onPage.map((l) => `- ${l}`).join('\n')}`);
+  if (input.context) blocks.push(input.context);
+  if (input.references) blocks.push(input.references);
+  if (input.hitConcepts) blocks.push(input.hitConcepts);
+  if (input.avoid.length) blocks.push(`Titles you have already offered for this song (don't repeat them or near-copies):\n${input.avoid.map((a) => `- ${a}`).join('\n')}`);
+  blocks.push(`What he says he wants:\n${input.ask.trim() || 'The title for the next section.'}`);
+  blocks.push(`How to answer
+- First read the lyric for its stance: who is singing to whom, and what they are saying that the whole song is about. The title names that, or pays off a line the verse has already set up. Quote nothing from any released song.
+- Give eight titles, different from each other in kind: some a plain phrase people say, one that lifts or turns a phrase already in his lyric, one an image from the lyric, one the stance said from the far end. Each is something he'd sing; plain and sayable beats clever.
+- "lines": two lines of the section built around that title, with the title in them word for word (opening the pair, ending it, or inside a line), in the narrator's voice and the lyric's register, rhymed by sound, every rhyme word one the scene would contain. They should sit after his lyric as its next section would.
+- "why": at most twelve words: what in his lyric this title pays off. No praise.
+- Order them best first. "note": one short line only if something needs saying.`);
+  return blocks.join('\n\n');
+}

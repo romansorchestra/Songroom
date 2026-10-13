@@ -16,6 +16,7 @@ type SetRow = {
   id: string; run_id: string | null; base_rev: number; mode: 'replace' | 'add'; targets: { targets: Target[]; afterLineId: string | null };
   instruction: string; items: Item[] | null; status: string; error: { code: string; message: string } | null; parent_id: string | null; created_at: string;
 };
+type TitleSet = { id: string; run_id: string | null; ask: string; items: Array<{ title: string; lines: string[]; why: string }> | null; status: string; error: { code: string; message: string } | null; created_at: string };
 type Ctx = {
   meaning: string; meaningSource: string | null; narrator: string;
   rhyme: { word: string; mode: 'fixed' | 'linked'; lineId?: string; line?: string | null; notice?: { from: string; to: string } | null } | null;
@@ -24,7 +25,7 @@ type Ctx = {
 type WS = {
   id: string; title: string; brief: string; notes: string; current_rev: number; locks: string[]; sections: Section[]; palette: string;
   context: Ctx; idea: { id: string; title: string; concept: string; lines: Array<{ id: string; text: string }>; title_parts: string[] | null } | null;
-  scraps: Fragment[]; sets: SetRow[]; seedAdded?: boolean; suno: { style: string; exclude: string; lyrics: string; rev: number; warnings: string[]; createdAt: string; hint: string } | null;
+  scraps: Fragment[]; sets: SetRow[]; titles: TitleSet[]; seedAdded?: boolean; suno: { style: string; exclude: string; lyrics: string; rev: number; warnings: string[]; createdAt: string; hint: string } | null;
 };
 
 export const render = (sections: Section[]) => sections.map((s) => (s.label ? `[${s.label}]\n` : '') + s.lines.map((l) => l.text).join('\n')).join('\n\n');
@@ -291,6 +292,36 @@ export function Workspace({ id }: { id: string }) {
     } catch (e) { setMoreErr((e as Error).message); }
     setMoreRun(null);
   }
+  // ---------------- titles for the next section (13 Oct) ----------------
+  const [titleAsk, setTitleAsk] = useState(() => draftStore.get(`titles:${id}`));
+  const [titleRun, setTitleRun] = useState<string | null>(null);
+  const [titleErr, setTitleErr] = useState('');
+  const [titlesOpen, setTitlesOpen] = useState(false);
+  useEffect(() => {
+    // a set still being written when the page opens (he came here from Write): follow it
+    const running = ws?.titles?.find((t) => t.status === 'running');
+    if (running?.run_id && !titleRun) setTitleRun(running.run_id);
+  }, [ws?.titles]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!titleRun) return;
+    let stop = false;
+    (async () => {
+      try { const run = await waitForRun(titleRun); if (stop) return; if (run.status !== 'succeeded') setTitleErr(run.error?.message ?? 'That didn’t work.'); else { setTitleErr(''); setTitleAsk(''); draftStore.set(`titles:${id}`, ''); } }
+      catch (e) { if (!stop) setTitleErr((e as Error).message); }
+      if (!stop) { setTitleRun(null); await refresh(false); }
+    })();
+    return () => { stop = true; };
+  }, [titleRun]); // eslint-disable-line react-hooks/exhaustive-deps
+  async function findTitles() {
+    if (titleRun) return;
+    setTitleErr('');
+    try { const r = await api<{ runId: string }>('POST', `/songs/${id}/titles`, { ask: titleAsk, clientKey: clientKey() }); setTitleRun(r.runId); setTitlesOpen(false); }
+    catch (e) { setTitleErr((e as Error).message); }
+  }
+  async function useTitle(setId: string, index: number) {
+    try { const w = await api<WS>('POST', `/songs/${id}/titles/use`, { setId, index }); setWs(w); setStatus({ text: `Title: ${w.title}. Its lines are on the page; tap them into your draft.` }); window.scrollTo(0, 0); }
+    catch (e) { setStatus({ text: (e as Error).message, err: true }); }
+  }
   async function saveScrap(f: Fragment) {
     if (f.saved) return;
     await api('PATCH', `/fragments/${f.id}`, { saved: true }).catch((e) => setStatus({ text: e.message, err: true }));
@@ -362,6 +393,39 @@ export function Workspace({ id }: { id: string }) {
             {g.items.map((f) => <PageLine key={f.id} text={f.text} done={inDraft(f.text)} onTap={() => tap(f.text, `scrap:${f.id}`)} onRemove={() => removeScrap(f)} />)}
           </div>
         ))}
+        {/* titles for the next section */}
+        <div className="titles-block">
+          {(ws.titles ?? []).map((t, ti) => (
+            <div className="page-group" key={t.id}>
+              <div className="eyebrow">{ti === 0 ? 'Titles for the next section' : 'Earlier titles'}{t.ask ? ` · you asked: ${t.ask}` : ''}</div>
+              {t.status === 'running' && <Pending text="Reading your lyric for its title… about half a minute." />}
+              {t.status === 'failed' && <div className="status err" role="alert">{t.error?.message ?? 'That didn’t work.'}</div>}
+              {t.status === 'done' && t.error?.code === 'note' && <p className="small muted">{t.error.message}</p>}
+              {t.status === 'done' && (t.items ?? []).map((it, i) => (
+                <div className={`title-card ${ws.title === it.title ? 'is-current' : ''}`} key={i}>
+                  <div className="title-card-title">{it.title}</div>
+                  {it.why && <div className="small muted">{it.why}</div>}
+                  <div className="title-card-lines">{it.lines.join('\n')}</div>
+                  <div className="hang-actions">
+                    <button className="tb accent" onClick={() => useTitle(t.id, i)}>{ws.title === it.title ? 'This is the title ✓' : 'Use this title'}</button>
+                    {it.lines.map((l, k) => <button key={k} className="tb" disabled={inDraft(l)} onClick={() => tap(l, `title:${t.id}:${i}:${k}`)}>{inDraft(l) ? `Line ${k + 1} in draft` : `Line ${k + 1} → draft`}</button>)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+          {titlesOpen ? (
+            <div className="more-lines">
+              <Composer value={titleAsk} onChange={(v) => { setTitleAsk(v); draftStore.set(`titles:${id}`, v); }} onSubmit={findTitles} busy={!!titleRun}
+                placeholder="What you need… e.g. the chorus title, big and simple" label="What the next section needs" submitLabel={titleRun ? 'Reading…' : 'Find the title'} submitAria="Find titles for the next section" />
+              {!titleAsk.trim() && !titleRun && <button className="tb under" style={{ paddingLeft: 0 }} onClick={findTitles}>Just find me the title</button>}
+            </div>
+          ) : (
+            <button className="tb under" style={{ paddingLeft: 0 }} disabled={!!titleRun} onClick={() => setTitlesOpen(true)}>{(ws.titles ?? []).length ? 'Eight more titles' : 'Find the title for the next section'}</button>
+          )}
+          {titleRun && !(ws.titles ?? []).some((t) => t.status === 'running') && <div style={{ marginTop: 6 }}><Pending text="Reading your lyric for its title…" /></div>}
+          {titleErr && <div className="status err" role="alert">{titleErr}</div>}
+        </div>
         <div className="more-lines">
           <Composer value={moreAsk} onChange={(v) => { setMoreAsk(v); draftStore.set(`more:${id}`, v); }} onSubmit={moreLines} busy={!!moreRun}
             placeholder="More lines… e.g. a sexier chorus line, more about the car" label="Ask for more lines for this page" submitLabel={moreRun ? 'Writing…' : 'More lines'} submitAria="Get more lines" />

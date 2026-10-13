@@ -229,6 +229,7 @@ export function Springboard({ ideaId }: { ideaId?: string }) {
         <div className="browse-link"><a className="tb under" href="#/browse">Or browse ten titles at once →</a></div>
         <div className="status" role="status" aria-live="polite">{genRun ? <Pending text="Writing an idea…" /> : genErr || board.lastError || ''}</div>
         <OwnLine onDone={load} />
+        <BringSong />
       </div>
     );
   }
@@ -324,6 +325,7 @@ export function Springboard({ ideaId }: { ideaId?: string }) {
           {board.nextId ? <button className="tb" disabled={busy} onClick={() => move(board.nextId!)}>Next →</button> : <span className="tb" aria-hidden="true" />}
         </nav>
       )}
+      {!journalMode && <BringSong />}
       {recentOpen && <Recent onClose={() => setRecentOpen(false)} onPick={(id) => { setRecentOpen(false); void move(id); }} onNew={() => { setRecentOpen(false); void freshIdea(); }} />}
     </div>
   );
@@ -364,6 +366,50 @@ function OwnLine({ onDone }: { onDone: () => void }) {
           catch (e) { setErr((e as Error).message); }
         }} />
       {err && <div className="status err" role="alert">{err}</div>}
+    </div>
+  );
+}
+
+// 13 Oct 2026: he was mid-song, verse written, needing the chorus title, and the only box on
+// the screen was the direction. This is the way in: paste the lyric, say what you need, and
+// the song page opens with titles for the next section already on their way.
+function BringSong() {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(() => draftStore.get('bring:title'));
+  const [text, setText] = useState(() => draftStore.get('bring:text'));
+  const [ask, setAsk] = useState(() => draftStore.get('bring:ask'));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  async function start(withTitles: boolean) {
+    if (text.trim().length < 10) return;
+    setBusy(true); setErr('');
+    try {
+      const song = await api<{ id: string }>('POST', '/songs', { title, text });
+      if (withTitles) await api('POST', `/songs/${song.id}/titles`, { ask, clientKey: clientKey() });
+      draftStore.set('bring:title', ''); draftStore.set('bring:text', ''); draftStore.set('bring:ask', '');
+      setTitle(''); setText(''); setAsk('');
+      go(`/song/${song.id}`);
+    } catch (e) { setErr((e as Error).message); }
+    setBusy(false);
+  }
+  return (
+    <div style={{ marginTop: 26 }}>
+      <div className="hand">Or bring a song you're already writing</div>
+      <p className="small muted" style={{ margin: '0 0 8px', maxWidth: 360 }}>Paste what you have and ask for the title of the next section; it opens as a page with eight titles on their way.</p>
+      <button className="secondary" onClick={() => setOpen(true)}>Paste the lyric so far</button>
+      {open && (
+        <Overlay title="A song you're writing" onClose={() => setOpen(false)}>
+          <label className="fld">Working title (optional)<input className="line" value={title} onChange={(e) => { setTitle(e.target.value); draftStore.set('bring:title', e.target.value); }} placeholder="Leave empty if that's what you're looking for" /></label>
+          <label className="fld">The lyric so far<textarea className="box" rows={8} value={text} onChange={(e) => { setText(e.target.value); draftStore.set('bring:text', e.target.value); }} placeholder={"It's a chance I'm willing to take\nA mistake I'm willing to make\n…"} /></label>
+          <label className="fld">What you need (optional)<input className="line" value={ask} onChange={(e) => { setAsk(e.target.value); draftStore.set('bring:ask', e.target.value); }} placeholder="e.g. the chorus title; big and simple; like Stick Season" /></label>
+          {err && <div className="status err" role="alert">{err}</div>}
+          <div className="actions" style={{ margin: '10px 0 8px' }}>
+            <button className="secondary" disabled={busy || text.trim().length < 10} onClick={() => start(false)}>Just make the page</button>
+            <button className="primary" disabled={busy || text.trim().length < 10} onClick={() => start(true)}>{busy ? 'Opening…' : 'Find the title'}</button>
+          </div>
+          <p className="small muted">Your genre and reference above steer it too.</p>
+        </Overlay>
+      )}
     </div>
   );
 }

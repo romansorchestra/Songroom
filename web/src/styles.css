@@ -93,6 +93,12 @@ h1.idea-title { font-family: var(--serif); font-weight: 400; font-size: 43px; li
 .browse .genres + .genres { margin-top: -6px; }
 .browse-link { margin: -8px 0 10px; } .browse-link a { padding-left: 0; }
 .learned ul { margin: 4px 0 12px; padding-left: 18px; font-size: 14px; line-height: 1.5; } .learned li { margin: 4px 0; }
+/* titles for the next section (13 Oct) */
+.titles-block { margin: 10px 0 6px; }
+.title-card { background: var(--sheet); box-shadow: 2px 3px 0 var(--shadow); padding: 12px 14px 10px; margin: 10px 0; }
+.title-card.is-current { outline: 2px solid var(--accent); }
+.title-card-title { font-family: var(--serif); font-size: 24px; line-height: 1.15; letter-spacing: -.3px; margin: 0 0 2px; overflow-wrap: anywhere; }
+.title-card-lines { font-family: var(--serif); font-size: 17px; line-height: 1.4; white-space: pre-line; margin: 8px 0 2px; overflow-wrap: anywhere; }
 .hand { font-family: var(--hand); font-size: 24px; line-height: 1.2; color: var(--accent); margin: 0 0 9px; transform: rotate(-2deg); transform-origin: left; }
 .muted { color: var(--sub); }
 .small { font-size: 12px; }
