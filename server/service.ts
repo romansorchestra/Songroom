@@ -13,6 +13,7 @@ import { systemCore, PROMPT_VERSION, type PromptVariant, tasteBlock, writePrompt
 import { type Writer, type Effort, type Usage, WriterError, costOf, worstCaseCost, RATES } from './engine/writer.js';
 import { type Pack, type PackTask, selectPack, renderPack, inferTask } from './engine/pack.js';
 import { Lessons } from './engine/lessons.js';
+import { hitConceptsNote } from './engine/barometer.js';
 import { Learning, learnedBlock } from './learning.js';
 
 /** How one request should be prompted. Experiments set this explicitly; normal use follows Settings. */
@@ -333,7 +334,8 @@ export class Service {
     const plan: PromptPlan = input.plan ?? { variant: PROMPT_VERSION, pack: s.craftPack === 'all' };
     const craft = this.craftFor(plan, { text, brief: song?.brief, reference, task: inferTask(text, !!song) });
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
-    const user = writePrompt({ request: text, reference, turns, song, focus, craft: craft.block, variant: plan.variant });
+    // 14 Oct: Create uses this engine; an idea request gets the same hit-scale examples the Ideas screen gets
+    const user = writePrompt({ request: text, reference, turns, song, focus, craft: craft.block, variant: plan.variant, hitConcepts: /\b(idea|ideas|title|titles|concept|concepts|hook)\b/i.test(text) ? hitConceptsNote('all') : '' });
     const det = extractConstraints(text);
     try {
       const run = await this.startRun({

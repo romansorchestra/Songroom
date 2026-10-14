@@ -165,6 +165,19 @@ describe('the writer learns from his notes', () => {
     expect((await api('GET', '/lessons')).body).toEqual([]);
   });
 
+  it('from Create (stay), a rework leaves the Ideas screen where it was and names the new idea on its run', async () => {
+    await boot(new StandInWriter((req: WriterRequest) => (isRework(req) ? { title: 'Reworked', titleParts: ['Reworked'], concept: 'c', lines: ['a'], lesson: '', scope: 'none', replaces: [], note: '' } : sparkJson())));
+    const sb = await firstIdea();
+    const r = await api('POST', `/ideas/${sb.current.id}/rework`, { feedback: 'more grown-up', stay: true, clientKey: 'st1' }); await svc.idle();
+    const run = (await api('GET', `/runs/${r.body.runId}`)).body;
+    expect(run.status).toBe('succeeded');
+    expect(run.result.ideaId).toMatch(/^i_/);
+    expect((await api('GET', '/springboard')).body.current.id).toBe(sb.current.id); // untouched
+    const made = (await api('GET', `/ideas/${run.result.ideaId}`)).body;
+    expect(made.parent_id).toBe(sb.current.id);
+    expect(made.title).toBe('Reworked');
+  });
+
   it('newest first in the brief, capped; near-duplicates are one', () => {
     expect(sameLesson('Never use "hall" as a rhyme word.', 'never use hall as a rhyme word')).toBe(true);
     expect(sameLesson('Never use "hall".', 'A rhyme word must belong in the scene: never use "hall".')).toBe(true);

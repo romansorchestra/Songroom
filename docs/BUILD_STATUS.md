@@ -1,4 +1,7 @@
-# Build status (10 Oct 2026)
+# Build status (14 Oct 2026)
+
+## The simplification (14 Oct)
+Sam's plan: separate browsing, directed creation and writing into four destinations. Built as bottom tabs: **Ideas** (one idea, Another, Save, Start writing, Add a thought, For you, Previous/History), **Create** (one brief, Reference, Fine-tune, Generate; one result at a time; Open in Journal for pasted lyrics; develops an idea from Ideas or the hang; works for a song), **Journal** (New song; the song page is title → draft → one Help field with Rewrite / Find a rhyme / Continue / Find the title / Lock → one suggestion → a Scraps drawer), **Hang** (as before, with Save / Develop in Create / Start writing). Old links keep working. Checked with the stand-in in a real browser: 34 journeys from the plan's acceptance list at 393 wide, plus 320/430, desktop and dark (`tests/journeys/simplification_journeys.py`); two things it caught and I fixed before shipping: the tab bar's return on blur shifted the page under a tap, and Create lost its first result on a new brief. LIVE CHECK: see below.
 
 ## Sam's notes after using it (11 Oct)
 He found it "actually pretty cool" and the suggestions "quite good", but the ideas were too high-concept ("Tamagotchi" read as a teen novelty). He asked for subjects grounded in what charts, a bigger New idea button, a way to react to an idea and have it reworked, and for a committed idea to become a page whose lines tap into a draft. Built:

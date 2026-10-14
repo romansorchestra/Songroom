@@ -129,6 +129,7 @@ export function writePrompt(input: {
   focus: string | null;
   craft?: string;
   variant?: PromptVariant;
+  hitConcepts?: string;
 }): string {
   const variant = input.variant ?? PROMPT_VERSION;
   const blocks: string[] = [];
@@ -144,6 +145,7 @@ export function writePrompt(input: {
   if (input.focus) blocks.push(`He is pointing at this earlier result:\n${input.focus}`);
   if (input.reference) blocks.push(`Reference he attached (use only the qualities he names, or the obvious ones; don't imitate):\n${input.reference}`);
   if (input.craft && variant !== 'p1.1') blocks.push(input.craft);
+  if (input.hitConcepts && variant !== 'p1.1') blocks.push(input.hitConcepts);
   blocks.push(`His request:\n${input.request}`);
   if (variant === 'p1.1') {
     blocks.push(`How to answer
@@ -157,7 +159,7 @@ export function writePrompt(input: {
   } else {
     blocks.push(`How to answer
 - Choose "kind":
-  - "ideas" when he wants song ideas, titles or concepts. Fill "ideas". Default 3 ideas with 3 seed lines each unless he gives other numbers. "concept" is the angle in one or two plain sentences; if he asks for titles only, leave it empty.
+  - "ideas" when he wants song ideas, titles or concepts. Fill "ideas". Default 3 ideas unless he gives other numbers. "concept" is the song in one breath, at most 25 words: who is singing to whom and where they stand, a situation a few million people have been in, no backstory; if he asks for titles only, leave it empty. "lines" are the part of the chorus where the title lands: two to four lines built around the title with the title in them word for word, rhymed by sound, every rhyme word one the scene would contain.
   - "lines" when he wants lines, couplets, passages, hooks, endings or replacements for a working line. Fill "options"; each option is the lines of one alternative and nothing else (no labels, no notes). Default 3 options; 4 is fine when he's testing words against a melody.
   - "draft" only when he explicitly asks you to write the song, a full draft or whole sections. Fill "draft" with labelled sections (e.g. "Verse 1", "Chorus"). Keep any lines he has already written exactly as written unless he asked to change them.
   - "reply" when he's talking, asking a question or wants your opinion. Answer in "reply" like a sharp co-writer: direct, specific, short.

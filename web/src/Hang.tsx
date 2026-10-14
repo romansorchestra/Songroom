@@ -124,9 +124,16 @@ function HangDetail({ id }: { id: string }) {
     return () => { stop = true; };
   }, [id]);
 
-  async function makeIdea(i: number) {
+  // the shared actions (14 Oct): the candidate becomes an idea row once (idempotent), and from there
+  // it is saved, developed in Create, or started as a song, with the session it came from kept on it
+  async function toIdea(i: number): Promise<string | null> {
+    try { const r = await api<{ ideaId: string }>('POST', `/hangs/${id}/idea`, { index: i }); return r.ideaId; } catch (e) { toast((e as Error).message); return null; }
+  }
+  async function develop(i: number) { setBusy(i); const ideaId = await toIdea(i); if (ideaId) go(`/create?idea=${ideaId}`); setBusy(null); }
+  async function startWriting(i: number) {
     setBusy(i);
-    try { await api('POST', `/hangs/${id}/idea`, { index: i }); go('/write'); } catch (e) { toast((e as Error).message); }
+    const ideaId = await toIdea(i);
+    if (ideaId) { try { const s = await api<{ songId: string }>('POST', `/ideas/${ideaId}/start`); go(`/song/${s.songId}`); } catch (e) { toast((e as Error).message); } }
     setBusy(null);
   }
   async function save(i: number) {
@@ -166,8 +173,9 @@ function HangDetail({ id }: { id: string }) {
                   {dismissed.has(i)
                     ? <button className="tb under" onClick={() => dismiss(i, true)}>Bring back</button>
                     : <>
-                      <button className="tb accent" disabled={busy === i} onClick={() => makeIdea(i)}>Make it an idea ↗</button>
                       <button className="tb" disabled={busy === i} onClick={() => save(i)}>Save</button>
+                      <button className="tb" disabled={busy === i} onClick={() => develop(i)}>Develop in Create</button>
+                      <button className="tb accent" disabled={busy === i} onClick={() => startWriting(i)}>Start writing</button>
                       <button className="tb" onClick={() => dismiss(i)} aria-label="Dismiss">×</button>
                     </>}
                 </div>

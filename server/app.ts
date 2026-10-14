@@ -92,6 +92,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
       keepLineIds: z.array(z.string().max(40)).max(12).default([]), changeLineIds: z.array(z.string().max(40)).max(12).default([]),
       applyToNew: z.boolean().default(false), clientKey: key,
       preview: z.boolean().default(false), // the same call for checking the writer; saves nothing
+      stay: z.boolean().default(false), // from Create: the Ideas screen keeps its idea
     }).parse(req.body);
     return studio.rework(String(req.params.id), { ...b, clientKey: b.clientKey ?? null });
   }));

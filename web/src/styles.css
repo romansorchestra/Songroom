@@ -54,14 +54,29 @@ button { cursor: pointer; }
 .nav a, .nav button { font-size: 13px; color: var(--sub); text-decoration: none; background: none; border: 0; min-height: 44px; padding: 8px 10px; display: inline-flex; align-items: center; }
 .nav a[aria-current="page"] { color: var(--ink); text-decoration: underline; text-underline-offset: 7px; }
 .nav .gear svg { width: 18px; height: 18px; }
-/* 320 wide (iPhone SE): four links plus the wordmark overflowed once Hang joined the nav */
-@media (max-width: 359px) { .nav a, .nav button { padding: 8px 6px; font-size: 12px; } .brand { font-size: 22px; } }
 main.page {
-  flex: 1; width: 100%; max-width: var(--col); margin: 0 auto; padding: 24px 26px 18px;
+  flex: 1; width: 100%; max-width: var(--col); margin: 0 auto; padding: 18px 26px 18px;
   background-image: radial-gradient(var(--edge) .6px, transparent .6px); background-size: 12px 12px;
   overflow-x: clip;
 }
-@media (max-width: 360px) { main.page { padding: 22px 19px 16px; } .top-inner { padding: 14px 17px; } }
+@media (max-width: 360px) { main.page { padding: 16px 19px 16px; } .top-inner { padding: 12px 17px; } }
+/* 14 Oct: four destinations. Bottom tabs on a phone (the header keeps only the brand and the gear);
+   the same four in the top nav from 700px up. While he types, the tabs step out of the keyboard's way. */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: flex; justify-content: space-around; background: var(--paper); border-top: 1px solid var(--edge); padding: 4px 6px calc(4px + env(safe-area-inset-bottom)); }
+.tabs a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 48px; padding: 6px 4px; color: var(--sub); text-decoration: none; font-size: 11px; letter-spacing: .3px; border-radius: 8px; }
+.tabs a svg { width: 22px; height: 22px; }
+.tabs a[aria-current="page"] { color: var(--ink); }
+.tabs a[aria-current="page"] svg { stroke-width: 2.1; }
+@media (max-width: 699px) {
+  main.page { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .nav .nav-tab { display: none; }
+  /* hide the bar only; the page keeps its padding so nothing shifts under a tap when focus moves */
+  body.typing .tabs { display: none; }
+  .top-inner { padding-top: 10px; padding-bottom: 10px; }
+}
+@media (min-width: 700px) { .tabs { display: none; } }
+.banner.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 72px); z-index: 60; background: var(--solid); color: var(--on); border: 0; margin: 0; max-width: 90vw; }
+@media (min-width: 700px) { .banner.toast { bottom: calc(env(safe-area-inset-bottom) + 16px); } }
 .banner { border: 1px solid var(--edge); background: var(--sheet); padding: 10px 12px; margin: 0 0 18px; font-size: 13px; color: var(--sub); border-radius: 5px; }
 .banner.standin { border-color: var(--warn); color: var(--warn); }
 
@@ -69,11 +84,11 @@ main.page {
 .eyebrow { font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--sub); }
 .topline { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 28px; }
 .serial { font-family: var(--hand); font-size: 22px; color: var(--accent); line-height: 1; }
-h1.idea-title { font-family: var(--serif); font-weight: 400; font-size: 43px; line-height: 1.08; letter-spacing: -1.3px; margin: 25px 0 22px; overflow-wrap: anywhere; }
+h1.idea-title { font-family: var(--serif); font-weight: 400; font-size: 43px; line-height: 1.08; letter-spacing: -1.3px; margin: 14px 0 16px; overflow-wrap: anywhere; }
 @media (max-width: 360px) { h1.idea-title { font-size: 38px; } }
 .title-strip { display: table; background: var(--sheet); box-shadow: 2px 4px 0 var(--shadow); padding: 4px 12px; transform: rotate(-2deg); max-width: 100%; }
 .title-strip.hl { transform: rotate(1deg); background: var(--tint); margin-top: 3px; font-style: italic; }
-.concept { max-width: 340px; margin: 0 0 25px; line-height: 1.6; font-size: 14px; }
+.concept { max-width: 360px; margin: 0 0 16px; line-height: 1.6; font-size: 14px; }
 .writer-note { font-size: 12px; color: var(--sub); margin: -14px 0 22px; max-width: 360px; }
 .writer-note + .writer-note { margin-top: -12px; }
 .lesson-note { color: var(--accent); }
@@ -106,7 +121,7 @@ h2.page-title { font-family: var(--serif); font-weight: 400; font-size: 43px; li
 @media (max-width: 360px) { h2.page-title { font-size: 38px; } }
 
 /* ---------------- paper pieces ---------------- */
-.seed { padding: 16px 18px; background: var(--sheet); box-shadow: 2px 4px 0 var(--shadow); transform: rotate(-1deg); position: relative; margin: 8px 3px 28px; }
+.seed { padding: 14px 18px; background: var(--sheet); box-shadow: 2px 4px 0 var(--shadow); transform: rotate(-1deg); position: relative; margin: 10px 3px 20px; }
 .seed::before { content: ''; position: absolute; width: 66px; height: 17px; background: var(--tint); top: -9px; left: 40%; transform: rotate(4deg); opacity: .95; }
 .seed-lines { font-family: var(--serif); font-size: 22px; line-height: 1.4; white-space: pre-line; margin: 8px 0; overflow-wrap: anywhere; }
 .seed .seed-actions { display: flex; gap: 6px; flex-wrap: wrap; transform: rotate(1deg); margin: 6px -6px -6px; }
@@ -319,3 +334,34 @@ textarea.lyric-editor:focus { outline: 2px solid var(--ink); outline-offset: 0; 
 .hang-context { font-size: 13px; color: var(--sub); margin: 8px 0 0; line-height: 1.5; }
 .hang-actions { display: flex; gap: 2px; flex-wrap: wrap; margin: 6px -8px -8px; }
 .hang-actions .tb { font-size: 13px; }
+/* ---- 14 Oct: Ideas · Create · Journal · Hang ---- */
+.for-you { background: none; border: 1px solid var(--edge); border-radius: 999px; min-height: 36px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-size: 13px; max-width: 100%; }
+.for-you .eyebrow { font-size: 10px; }
+.for-you .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ideas .big-new { margin: 2px 0 10px; }
+.ideas .actions .menu { flex: 0 0 auto; }
+.ideas .actions .menu .btn { min-height: 44px; min-width: 44px; }
+.thought { margin: 6px 0 4px; }
+.thought .composer { margin: 8px 0 10px; }
+.create .create-brief { margin: 8px 0 6px; }
+.create .brief-label { font-family: var(--hand); font-size: 24px; color: var(--accent); line-height: 1.2; }
+.create .create-brief textarea.box { font-size: 17px; line-height: 1.55; min-height: 88px; }
+.create-opts { margin: 0 0 10px; }
+.create-opts .panel { margin: 6px 0 8px; }
+details.fine { margin: 2px 0 8px; }
+details.fine summary { cursor: pointer; color: var(--sub); min-height: 36px; display: flex; align-items: center; font-size: 13px; }
+details.fine[open] summary { color: var(--ink); }
+.create .result { margin-top: 16px; border-top: 1px solid var(--edge); padding-top: 10px; }
+.create .result .idea-title { margin-top: 8px; }
+.develop-base { margin: 4px 0 6px; }
+.song .title-mark .idea-title { margin: 8px 0 4px; }
+.song .title-hint { display: block; margin: 0 0 8px; }
+.song .title-edit { margin: 8px 0 10px; }
+.song .title-edit input { font-family: var(--serif); font-size: 26px; }
+.song .ask { margin: 8px 0 10px; }
+.quick { display: flex; flex-wrap: wrap; gap: 2px; margin: 0 0 2px -8px; }
+.quick .tb { font-size: 13px; color: var(--accent); min-height: 40px; }
+details.scraps { margin: 18px 0 10px; border-top: 1px solid var(--edge); padding-top: 4px; }
+details.scraps summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-family: var(--hand); font-size: 24px; color: var(--accent); }
+details.scraps summary .small { font-family: var(--sans); margin-left: 8px; font-size: 12px; }
+details.scraps .page-group { margin-top: 8px; }

@@ -432,7 +432,7 @@ export class Studio {
    * word (the engine puts it back if the writer drifts); the result becomes the idea on
    * screen, and Previous still reaches the one it came from.
    */
-  async rework(ideaId: string, input: { feedback: string; keepTitle: boolean; keepConcept: boolean; keepLineIds: string[]; changeLineIds: string[]; applyToNew: boolean; clientKey: string | null; preview?: boolean }) {
+  async rework(ideaId: string, input: { feedback: string; keepTitle: boolean; keepConcept: boolean; keepLineIds: string[]; changeLineIds: string[]; applyToNew: boolean; clientKey: string | null; preview?: boolean; stay?: boolean }) {
     if (input.clientKey) {
       const [r] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE client_key=$1`, [input.clientKey]);
       if (r) return { runId: r.id };
@@ -506,8 +506,10 @@ export class Studio {
           for (const n of out.replaces ?? []) { const old = lessons[n - 1]; if (old) await this.svc.lessons.remove(old.id); }
           await this.svc.lessons.add(out.lesson, 'rework', { ideaId: id, note: input.feedback, scope: out.scope === 'session' ? 'session' : 'standing' });
         }
+        // from Create (14 Oct) the Ideas screen stays where it was; the result is read back by its run
         const nowCurrent = await this.kv<string | null>('sb.current', null);
-        if (nowCurrent === prevCurrent) await this.setKv('sb.current', id);
+        if (!input.stay && nowCurrent === prevCurrent) await this.setKv('sb.current', id);
+        await this.db.query(`UPDATE runs SET result=json_set(result, '$.ideaId', $2) WHERE id=$1`, [runId, id]);
       },
     });
     return { runId: run.id };
