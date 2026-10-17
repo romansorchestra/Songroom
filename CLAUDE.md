@@ -1,6 +1,6 @@
 # Songroom
 
-Private songwriting app for Sam (single user). Spec: `docs/PRODUCT_SPEC.md` (amendments at the top win). Status: `docs/BUILD_STATUS.md`. Decisions: `docs/DECISIONS.md`. Running it: `docs/OPERATIONS.md`.
+Private songwriting app for Sam (single user). Spec: `docs/PRODUCT_SPEC.md` (amendments at the top win). Status: `docs/BUILD_STATUS.md`. Decisions: `docs/DECISIONS.md`. Running it: `docs/OPERATIONS.md`. **New session: read `docs/HANDOFF.md` first** (state, constraints, the open question, how to work with Sam) and keep it current.
 
 ## Rules that matter most
 - Never change lyric text outside what was selected. Span edits are rebuilt server-side as prefix + proposal + suffix (`server/engine/lyrics.ts`). Locked lines can't change by any route.
