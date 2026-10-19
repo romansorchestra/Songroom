@@ -48,9 +48,9 @@ const DEFAULTS: Settings = {
   craftPack: 'edits',
 };
 
-const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 24000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000, list: 24000, reflect: 4000, titles: 10000 };
+const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 24000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000, list: 24000, reflect: 4000, titles: 10000, taste: 6000 };
 
-export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines' | 'hang' | 'list' | 'reflect' | 'titles';
+export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines' | 'hang' | 'list' | 'reflect' | 'titles' | 'taste';
 
 export class Service {
   private aborts = new Map<string, AbortController>();
@@ -673,7 +673,7 @@ export class Service {
   // ---------------- export ----------------
   async exportAll() {
     const tables = ['settings', 'threads', 'messages', 'runs', 'ideas', 'fragments', 'songs', 'song_revisions', 'suggestion_sets', 'refs',
-      'voice_examples', 'eval_results', 'experiments', 'hangs', 'lessons'];
+      'voice_examples', 'eval_results', 'experiments', 'hangs', 'lessons', 'taste_answers'];
     const out: Record<string, unknown> = { format: 'songroom-backup', version: 2, exportedAt: new Date().toISOString() };
     for (const t of tables) out[t] = await this.db.query(`SELECT * FROM ${t}`);
     return out;

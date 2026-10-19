@@ -183,6 +183,12 @@ export const MIGRATIONS: string[] = [
      id TEXT PRIMARY KEY, song_id TEXT NOT NULL, run_id TEXT, ask TEXT NOT NULL DEFAULT '', items TEXT, status TEXT NOT NULL,
      error TEXT, client_key TEXT UNIQUE, created_at ${TS});
    CREATE INDEX title_sets_song ON title_sets(song_id, created_at)`,
+  // 9 (18 Oct 2026): the taste test. One row per card he answered (previews are never kept);
+  // payload = his answer (pick, or the word he tapped and why). Cards live in engine/tasteBank.ts.
+  `CREATE TABLE taste_answers (
+     id TEXT PRIMARY KEY, session TEXT NOT NULL, card TEXT NOT NULL, again INTEGER NOT NULL DEFAULT 0, payload TEXT NOT NULL,
+     created_at ${TS});
+   CREATE INDEX taste_answers_card ON taste_answers(card)`,
 ];
 
 export async function migrate(db: Db): Promise<void> {

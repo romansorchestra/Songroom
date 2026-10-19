@@ -12,6 +12,7 @@ import { Journal } from './Journal';
 import { HangPage } from './Hang';
 import { Settings } from './Settings';
 import { ThreadView } from './Thread';
+import { Taste } from './Taste';
 
 export type Status = {
   writer: { connected: boolean; live: boolean; label: string };
@@ -87,7 +88,7 @@ export function App() {
   const [place, id] = parts;
   // which tab a route belongs to
   const tab: (typeof TABS)[number]['id'] | null =
-    place === 'ideas' || place === 'write' && !id || place === undefined ? 'ideas'
+    place === 'ideas' || place === 'taste' || place === 'write' && !id || place === undefined ? 'ideas'
     : place === 'create' || place === 'browse' ? 'create'
     : place === 'journal' || place === 'song' || place === 'idea' ? 'journal'
     : place === 'hang' ? 'hang' : null;
@@ -98,6 +99,7 @@ export function App() {
   else if (place === 'song' && id) page = <Workspace key={id} id={id} />;
   else if (place === 'idea' && id) page = <Ideas key={id} ideaId={id} />;
   else if (place === 'settings') page = <Settings section={id} />;
+  else if (place === 'taste') page = <Taste key={query.toString()} preview={query.get('preview') === '1'} />;
   else if ((place === 'session' || (place === 'write' && id)) && id) page = <OldSession id={id} />;
   else page = <Ideas key="board" />;
 

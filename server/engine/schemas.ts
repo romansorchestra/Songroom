@@ -342,3 +342,24 @@ export const titlesSchema = {
   additionalProperties: false,
 } as const;
 export const titlesZ = z.object({ titles: z.array(z.object({ title: z.string().min(1), lines: z.array(z.string()), why: z.string() })).min(1), note: z.string() });
+
+// The taste test's reading (18 Oct 2026): what his answers show, each as a line to him and an
+// instruction to the writer, with the evidence counted.
+export const tasteSchema = {
+  type: 'object',
+  properties: {
+    heard: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { you: { type: 'string' }, rule: { type: 'string' }, basis: { type: 'string' } },
+        required: ['you', 'rule', 'basis'],
+        additionalProperties: false,
+      },
+    },
+    note: { type: 'string' },
+  },
+  required: ['heard', 'note'],
+  additionalProperties: false,
+} as const;
+export const tasteZ = z.object({ heard: z.array(z.object({ you: z.string(), rule: z.string(), basis: z.string() })), note: z.string() });

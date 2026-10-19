@@ -141,7 +141,7 @@ function LessonsList() {
             <li key={l.id}>
               <div>
                 {l.text}
-                <small>{l.scope === 'session' ? `Today's session only${l.expires_at ? `, until ${new Date(l.expires_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''} · ` : ''}{l.source === 'rework' && l.note ? `From your note: “${l.note}”` : 'Added here'} · {timeAgo(l.created_at)}</small>
+                <small>{l.scope === 'session' ? `Today's session only${l.expires_at ? `, until ${new Date(l.expires_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''} · ` : ''}{l.source === 'rework' && l.note ? `From your note: “${l.note}”` : l.source === 'taste' ? 'From your taste test' : 'Added here'} · {timeAgo(l.created_at)}</small>
               </div>
               <button className="btn quiet sm" aria-label={`Forget: ${l.text}`} onClick={async () => { try { await api('DELETE', `/lessons/${l.id}`); await load(); } catch (e) { toast((e as Error).message); } }}>Forget</button>
             </li>
@@ -201,7 +201,8 @@ function Voice({ taste, onSaveTaste }: { taste: string; onSaveTaste: (t: string)
   return (
     <>
       <h2>Your writing</h2>
-      <p className="small muted">What the writer reads every time. Notes on your taste in your own words, and a few lyrics you're proud of so it hears your voice. It won't copy them.</p>
+      <div className="voice-test"><p>Rather not type? The taste test asks by showing you things: three minutes of tapping.</p><a className="btn" href="#/taste">Take it</a></div>
+      <p className="small muted">Or in your own words: what the writer reads every time. Notes on your taste, and a few lyrics you're proud of so it hears your voice. It won't copy them.</p>
       <label className="field">Taste notes
         <textarea rows={5} placeholder={'e.g. Titles should be things people actually say.\nCountry: plain, specific, the turn comes late.\nNever “fire”, “shattered”, “wings”.'} value={t} onChange={(e) => setT(e.target.value)} />
       </label>

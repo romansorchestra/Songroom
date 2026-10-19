@@ -10,7 +10,7 @@ import type { Db } from '../db.js';
 import { newId } from './lyrics.js';
 
 export type LessonScope = 'standing' | 'session';
-export type Lesson = { id: string; text: string; source: 'rework' | 'settings'; idea_id: string | null; note: string; created_at: string; scope: LessonScope; expires_at: string | null };
+export type Lesson = { id: string; text: string; source: 'rework' | 'settings' | 'taste'; idea_id: string | null; note: string; created_at: string; scope: LessonScope; expires_at: string | null };
 /** How long "this session" lasts: a note about the artist he's writing for today holds until tomorrow. */
 export const SESSION_HOURS = 12;
 
@@ -59,7 +59,11 @@ export class Lessons {
   /** The block the writer reads with every request; empty when he has said nothing yet. */
   async block(): Promise<string> {
     const rows = (await this.list()).slice(0, LESSONS_IN_BRIEF);
-    return lessonsBlock(rows.filter((l) => l.scope !== 'session').map((l) => l.text), rows.filter((l) => l.scope === 'session').map((l) => l.text));
+    const told = rows.filter((l) => l.source !== 'taste');
+    return [
+      lessonsBlock(told.filter((l) => l.scope !== 'session').map((l) => l.text), told.filter((l) => l.scope === 'session').map((l) => l.text)),
+      tasteTestBlock(rows.filter((l) => l.source === 'taste').map((l) => l.text)),
+    ].filter(Boolean).join('\n\n');
   }
 }
 
@@ -68,4 +72,10 @@ export function lessonsBlock(standing: string[], session: string[] = []): string
   if (standing.length) parts.push(`What Sam has told the writer, from his notes on earlier ideas. Standing instructions, newest first; they hold for every idea, line and edit unless today's request says otherwise. Apply each by avoiding the mistake it names; never build an idea around a lesson or echo its example:\n${standing.map((t) => `- ${t}`).join('\n')}`);
   if (session.length) parts.push(`What Sam has said about what he is writing today (the artist, the song, this session). It holds for today's ideas, not for ever:\n${session.map((t) => `- ${t}`).join('\n')}`);
   return parts.join('\n\n');
+}
+
+/** What his own picks in the taste test showed (18 Oct 2026), each one he confirmed with Keep. */
+export function tasteTestBlock(rules: string[]): string {
+  if (!rules.length) return '';
+  return `What Sam's own picks showed in his taste test; he confirmed each one. Lean this way in every idea, title and line unless today's request says otherwise; never build an idea around one or echo its wording:\n${rules.map((t) => `- ${t}`).join('\n')}`;
 }

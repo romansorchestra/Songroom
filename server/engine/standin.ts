@@ -29,6 +29,11 @@ export class StandInWriter implements Writer {
       // titles for the next section: the stand-in reads the last word of his lyric and makes eight placeholders
       return { note: '', titles: Array.from({ length: 8 }, (_, i) => ({ title: `[stand-in] Title ${i + 1}`, lines: [`[stand-in] Title ${i + 1}, end of day`, '[stand-in] we play'], why: '[stand-in] placeholder reason' })) };
     }
+    if ('heard' in props) {
+      // the taste test's reading: one placeholder line per axis he picked on, counted
+      const axes = [...req.user.matchAll(/^- Axis: (.+)$/gm)].map((m) => m[1]).slice(0, 3);
+      return { note: '[stand-in] placeholder reading', heard: (axes.length ? axes : ['titles']).map((a, i) => ({ you: `[stand-in] You lean one way on ${a}.`, rule: `[stand-in] Lean his way on ${a} (${i + 1}).`, basis: '[stand-in] 1 of 1' })) };
+    }
     if ('goesFor' in props) {
       // taking stock of what he keeps: the stand-in names the first title it was shown
       const first = (req.user.match(/^1\. "([^"]+)"/m) ?? [])[1] ?? 'the first idea';

@@ -8,6 +8,7 @@ import { startBatch, latestResults, vote } from './evals.js';
 import { startExperiment, listExperiments, judge, tally } from './experiments.js';
 import { Studio } from './studio.js';
 import { Hang, MAX_AUDIO_BYTES, MAX_TRANSCRIPT_CHARS } from './hang.js';
+import { Taste, WHY_CHOICES } from './taste.js';
 import type { Transcriber } from './engine/transcribe.js';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -24,6 +25,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   const app = express();
   const studio = new Studio(svc);
   const hang = new Hang(svc, studio, opts.transcriber ?? null);
+  const taste = new Taste(svc);
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
   app.use(express.json({ limit: '1mb' }));
@@ -249,6 +251,20 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
     return l;
   }));
   api.delete('/lessons/:id', h(async (req) => { await svc.lessons.remove(String(req.params.id)); return { ok: true }; }));
+  // The taste test (taste.ts): cards one at a time, then what the writer heard; Keep files lessons.
+  const answerZ = z.discriminatedUnion('kind', [
+    z.object({ card: z.string().max(10), kind: z.literal('pair'), repeat: z.boolean().optional(), pick: z.enum(['a', 'b', 'neither']), ms: z.number().int().min(0).max(3_600_000) }),
+    z.object({ card: z.string().max(10), kind: z.literal('flaw'), tap: z.object({ line: z.union([z.literal(0), z.literal(1)]), word: z.number().int().min(0).max(40) }).nullable(),
+      why: z.string().max(40).optional(), mind: z.enum(['fair', 'fine']).optional(), ms: z.number().int().min(0).max(3_600_000) }),
+  ]);
+  api.get('/taste/status', h(async () => taste.status()));
+  api.get('/taste', h(async () => ({ cards: await taste.draw(), songs: await taste.songs(), why: WHY_CHOICES })));
+  api.post('/taste/read', h(async (req) => {
+    const b = z.object({ session: z.string().min(4).max(60), preview: z.boolean().default(false), answers: z.array(answerZ).max(40),
+      songs: z.array(z.object({ id: z.string().max(40), mine: z.boolean() })).max(20).default([]), clientKey: key }).parse(req.body);
+    return taste.read(b, b.clientKey ?? null);
+  }));
+  api.post('/taste/keep', h(async (req) => { const b = z.object({ runId: z.string().max(40), keep: z.array(z.number().int().min(0).max(10)).max(10) }).parse(req.body); return taste.keep(b.runId, b.keep); }));
   // What the writer has noticed about what he keeps (learning.ts)
   api.get('/learning', h(async () => ({ learned: await svc.learning.current(), outcomes: (await svc.learning.outcomes()).length, running: (await svc.db.query<{ id: string }>(`SELECT id FROM runs WHERE task='reflect' AND status='running' LIMIT 1`))[0]?.id ?? null })));
   api.post('/learning/reflect', h(async (req) => { const b = z.object({ clientKey: key }).parse(req.body ?? {}); const runId = await svc.learning.reflect(b.clientKey ?? null); if (!runId) throw new AppError(400, 'too_little', 'Not enough to learn from yet: see a few more ideas first.'); return { runId }; }));

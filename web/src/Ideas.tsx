@@ -36,6 +36,15 @@ export function Ideas({ ideaId }: { ideaId?: string }) {
   const [recentOpen, setRecentOpen] = useState(false);
   const [dirOpen, setDirOpen] = useState(false);
   const [thoughtOpen, setThoughtOpen] = useState(false);
+  // the taste test, offered until the writer knows something he has said about his own taste
+  const [invite, setInvite] = useState(false);
+  useEffect(() => {
+    if (journalMode) return;
+    let snoozed = false;
+    try { snoozed = Number(localStorage.getItem('taste.snooze') ?? 0) > Date.now(); } catch { /* storage unavailable */ }
+    if (!snoozed) api<{ thin: boolean }>('GET', '/taste/status').then((t) => setInvite(t.thin)).catch(() => {});
+  }, [journalMode]);
+  const snooze = () => { setInvite(false); try { localStorage.setItem('taste.snooze', String(Date.now() + 7 * 86400_000)); } catch { /* storage unavailable */ } };
 
   const load = useCallback(async () => {
     try {
@@ -156,6 +165,7 @@ export function Ideas({ ideaId }: { ideaId?: string }) {
     return (
       <div className="pal-ochre ideas">
         <ForYou board={board} onOpen={() => setDirOpen(true)} />
+        {invite && <TasteInvite onSnooze={snooze} />}
         <h2 className="page-title" style={{ marginTop: 10 }}>Let’s find a song.</h2>
         <p className="concept">One idea at a time: a title, the feeling behind it, and a first few lines.</p>
         <button className="primary big-new" disabled={!writerOk || busy} onClick={another}>{genRun ? 'Writing…' : 'Give me an idea'}</button>
@@ -175,6 +185,7 @@ export function Ideas({ ideaId }: { ideaId?: string }) {
             {board?.number ? <span className="serial" aria-label={`Idea number ${board.number}`}>no. {String(board.number).padStart(2, '0')}</span> : null}
           </div>}
 
+      {invite && <TasteInvite onSnooze={snooze} />}
       <TitleStrips title={idea.title} parts={idea.title_parts} />
       {idea.concept && <p className="concept">{idea.concept}</p>}
       {!!idea.lines.length && (
@@ -198,6 +209,7 @@ export function Ideas({ ideaId }: { ideaId?: string }) {
           { label: 'Develop in Create', onClick: () => go(`/create?idea=${idea.id}${pending.trim() ? `&note=${encodeURIComponent(pending.trim())}` : ''}`) },
           ...(!journalMode && board?.prevId ? [{ label: 'Previous idea', onClick: () => move(board.prevId!) }] : []),
           ...(!journalMode ? [{ label: 'History', onClick: () => setRecentOpen(true) }] : []),
+          ...(!journalMode ? [{ label: 'Taste test', onClick: () => go('/taste') }] : []),
           ...(journalMode ? [{ label: 'Open on Ideas', onClick: async () => { try { await api('POST', '/springboard/current', { ideaId: idea.id }); go('/ideas'); } catch (e) { toast((e as Error).message); } } }] : []),
         ]} />
       </div>
@@ -223,6 +235,16 @@ export function Ideas({ ideaId }: { ideaId?: string }) {
       )}
       {recentOpen && <Recent onClose={() => setRecentOpen(false)} onPick={(id) => { setRecentOpen(false); void move(id); }} />}
       {dirOpen && board && <DirectionSheet board={board} onClose={() => setDirOpen(false)} onSave={setDirection} />}
+    </div>
+  );
+}
+
+function TasteInvite({ onSnooze }: { onSnooze: () => void }) {
+  return (
+    <div className="taste-invite">
+      <p><b>Teach it your taste</b>A three-minute game. Nothing to type.</p>
+      <button className="tb under accent" onClick={() => go('/taste')}>Start</button>
+      <button className="tb" aria-label="Not now" onClick={onSnooze}>✕</button>
     </div>
   );
 }
