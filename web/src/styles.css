@@ -387,7 +387,7 @@ details.scraps .page-group { margin-top: 8px; }
 .taste-under { display: flex; justify-content: center; margin: 14px 0 4px; }
 .taste-under .secondary { min-width: 160px; }
 .taste-chorus { background: var(--sheet); box-shadow: 2px 4px 0 var(--shadow); padding: 14px 12px; transform: rotate(-.6deg); margin: 0 2px 6px; }
-.taste-chorus p { font-family: var(--serif); font-size: 22px; line-height: 1.25; margin: 0; overflow-wrap: anywhere; }
+.taste-chorus p { font-family: var(--serif); font-size: 22px; line-height: 1.25; margin: 0; overflow-wrap: anywhere; padding-left: .9em; text-indent: -.9em; }
 .taste-chorus p + p { margin-top: 6px; }
 .taste-chorus .w { font: inherit; background: none; border: 0; padding: 4px 1px; margin: 0 -1px; color: var(--ink); border-radius: 3px; min-height: 36px; }
 .taste-chorus .w:disabled { cursor: default; color: var(--ink); }
