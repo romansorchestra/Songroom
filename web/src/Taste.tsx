@@ -192,7 +192,7 @@ function FlawView({ card, why, onAnswer }: { card: Extract<Card, { kind: 'flaw' 
         {card.lines.map((line, li) => (
           <p key={li}>
             {wordsOf(line).map((w, wi) => (
-              <button key={wi} className={`w ${tap && tap.line === li && tap.word === wi ? 'tapped' : ''} ${hit(li, wi) ? 'planted' : ''}`} disabled={step !== 'read'} onClick={() => onWord(li as 0 | 1, wi)}>{w.text}</button>
+              <span key={wi}>{wi > 0 && ' '}<button className={`w ${tap && tap.line === li && tap.word === wi ? 'tapped' : ''} ${hit(li, wi) ? 'planted' : ''}`} disabled={step !== 'read'} onClick={() => onWord(li as 0 | 1, wi)}>{w.text}</button></span>
             ))}
           </p>
         ))}

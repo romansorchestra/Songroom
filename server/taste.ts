@@ -18,7 +18,7 @@ import { WriterError } from './engine/writer.js';
 import { newId, type Section } from './engine/lyrics.js';
 import { learnedBlock } from './learning.js';
 
-export const TASTE_TEMPLATE = 'taste1';
+export const TASTE_TEMPLATE = 'taste2'; // taste1 (18 Oct) ran once, as a preview: its rules came back as bans ("no weather imagery") from three taps
 /** One session: ten pairs, four choruses to read closely, two pairs shown again with the sides swapped. */
 export const QUOTA = { title: 4, chorus: 3, idea: 3, planted: 3, clean: 1 } as const;
 export const REPEATS = 2;
@@ -118,19 +118,19 @@ export function tastePrompt(answers: Answer[], s: Score, known: string): string 
     known ? `What you already know about his taste. Don't repeat it; if his answers contradict it, say so in the note:\n${known}` : 'You knew nothing about his taste before this test.',
     `How to answer
 - "heard": three to six findings, strongest first. Each has:
-  - "you": what his answers show, said to him plainly in the second person, at most 18 words. No praise.
-  - "rule": the same finding as an instruction to yourself for every idea, title and line you write for him from now on. At most 30 words, concrete enough to use on a song that isn't in this test; don't quote the test's cards.
-  - "basis": the evidence, counted ("4 of 4 title picks", "both pairs shown twice", "found it himself").
+  - "you": what his answers show about his taste, said to him plainly in the second person, at most 18 words: the taste, not what happened in the test. No praise.
+  - "rule": the same finding as an instruction to yourself for every idea, title and line you write for him from now on. At most 30 words, concrete enough to use on a song that isn't in this test; don't quote the test's cards. Word it as a leaning ("prefer… over…", "lean towards…"), not a ban: a few taps in a game are not a law. Only something he flagged himself can be a "never".
+  - "basis": the evidence, counted, in at most 10 words ("4 of 4 title picks", "both pairs shown twice", "flagged it himself on a clean chorus").
 - A finding needs at least two picks on different cards pointing the same way, or one word he found that wasn't planted, with his reason: always write a finding for each of those, they are the strongest signal. One pick alone is not a finding. Where his picks split, leave it out.
 - A planted weakness he let through and then said he doesn't mind is his permission, not a miss; write it only if it would change what you write.
 - "Neither" means both options were below his bar; if he said it more than once, say what those options had in common.
 - A pick under three seconds is surer than a slow one.
 - Write about the writing, never about Sam as a person.
-- "note": one short line on what the test couldn't tell, or where his answers disagree with what you knew; or empty.`,
+- "note": one sentence of at most 30 words on what the test couldn't tell, or where his answers disagree with what you knew; or empty.`,
   ].filter(Boolean).join('\n\n');
 }
 
-type SongRow = { id: string; title: string; current_rev: number };
+type SongRow = { id: string; title: string; current_rev: number; idea_id: string | null };
 
 export class Taste {
   constructor(private svc: Service) {}
@@ -178,10 +178,15 @@ export class Taste {
   async songs(): Promise<Array<{ id: string; title: string; text: string }>> {
     const asked = new Set(await this.asked());
     const voices = new Set((await this.svc.voiceExamples()).map((v) => v.text.trim()));
-    const rows = await this.db.query<SongRow>(`SELECT id, title, current_rev FROM songs WHERE NOT archived ORDER BY updated_at DESC LIMIT 20`);
+    const rows = await this.db.query<SongRow>(`SELECT id, title, current_rev, idea_id FROM songs WHERE NOT archived ORDER BY updated_at DESC LIMIT 30`);
     const out: Array<{ id: string; title: string; text: string }> = [];
     for (const r of rows) {
       if (asked.has(r.id)) continue;
+      // a page started from one of the writer's ideas is the writer's words until he types into it
+      if (r.idea_id) {
+        const [typed] = await this.db.query(`SELECT 1 FROM song_revisions WHERE song_id=$1 AND source IN ('typed', 'edit:direct') LIMIT 1`, [r.id]);
+        if (!typed) continue;
+      }
       const [rev] = await this.db.query<{ sections: Section[] }>(`SELECT sections FROM song_revisions WHERE song_id=$1 AND rev=$2`, [r.id, r.current_rev]);
       const text = (rev?.sections ?? []).map((s) => s.lines.map((l) => l.text).join('\n')).join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
       if (text.split('\n').filter((l) => l.trim()).length < 4 || text.length > 6000 || voices.has(text)) continue;
@@ -249,9 +254,10 @@ export class Taste {
         const r = await this.svc.call('taste', TASTE_SYSTEM, user, tasteSchema, st.effortEdit, signal, model);
         const parsed = tasteZ.safeParse(r.json);
         if (!parsed.success) throw new WriterError('bad_output', 'The writer returned an unexpected shape.', r.usage);
-        const tidy = (x: string, n: number) => x.replace(/\s+/g, ' ').trim().slice(0, n);
-        const heard = parsed.data.heard.map((h) => ({ you: tidy(h.you, 160), rule: tidy(h.rule, 200), basis: tidy(h.basis, 60) })).filter((h) => h.you.length > 3 && h.rule.length > 3).slice(0, 6);
-        return { result: { heard, note: tidy(parsed.data.note, 200), score: s, preview: input.preview, kept: [] }, usage: r.usage, requestId: r.requestId, model: r.model, live: r.live };
+        // cut at a word, never mid-word; the lengths are generous, the brief asks for less
+        const tidy = (x: string, n: number) => { const t = x.replace(/\s+/g, ' ').trim(); return t.length <= n ? t : `${t.slice(0, n).replace(/\s+\S*$/, '')}…`; };
+        const heard = parsed.data.heard.map((h) => ({ you: tidy(h.you, 200), rule: tidy(h.rule, 200), basis: tidy(h.basis, 120) })).filter((h) => h.you.length > 3 && h.rule.length > 3).slice(0, 6);
+        return { result: { heard, note: tidy(parsed.data.note, 320), score: s, preview: input.preview, kept: [] }, usage: r.usage, requestId: r.requestId, model: r.model, live: r.live };
       },
       onSuccess: async () => {},
     });

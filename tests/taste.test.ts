@@ -161,6 +161,19 @@ describe('reading and keeping', () => {
     expect((await api('GET', '/taste')).body.songs).toEqual([]);
   });
 
+  it('a page started from one of the writer\'s ideas is not asked about until he types into it', async () => {
+    await boot();
+    const idea = (await api('POST', '/ideas', { sourceKey: 'k1', kind: 'seed', title: 'Writer Title', concept: 'c', lines: ['one line', 'two line', 'three line', 'four line'] })).body;
+    const { songId } = (await api('POST', `/ideas/${idea.id}/start`)).body;
+    let ws = (await api('GET', `/songs/${songId}`)).body;
+    await api('POST', `/songs/${songId}/add`, { baseRev: ws.current_rev, afterLineId: null, text: 'one line\ntwo line\nthree line\nfour line', source: 'seed', clientKey: 'seed1' });
+    expect((await api('GET', '/taste')).body.songs).toEqual([]);
+    ws = (await api('GET', `/songs/${songId}`)).body;
+    const put = await api('PUT', `/songs/${songId}/text`, { baseRev: ws.current_rev, text: 'my own words here\ntwo line\nthree line\nfour line' });
+    expect(put.status).toBe(200);
+    expect((await api('GET', '/taste')).body.songs.map((x: { id: string }) => x.id)).toEqual([songId]);
+  });
+
   it('a preview runs the real reading and saves nothing: no answers, no songs, nothing to keep', async () => {
     await boot();
     const song = (await api('POST', '/songs', { text: 'Line one here\nLine two here\nLine three here\nLine four here' })).body;

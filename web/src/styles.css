@@ -335,9 +335,10 @@ textarea.lyric-editor:focus { outline: 2px solid var(--ink); outline-offset: 0; 
 .hang-actions { display: flex; gap: 2px; flex-wrap: wrap; margin: 6px -8px -8px; }
 .hang-actions .tb { font-size: 13px; }
 /* ---- 14 Oct: Ideas · Create · Journal · Hang ---- */
-.for-you { background: none; border: 1px solid var(--edge); border-radius: 999px; min-height: 36px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-size: 13px; max-width: 100%; }
+.for-you { background: none; border: 1px solid var(--edge); border-radius: 999px; min-height: 36px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-size: 13px; max-width: 100%; min-width: 0; flex: 0 1 auto; }
+.topline .serial { flex-shrink: 0; }
 .for-you .eyebrow { font-size: 10px; }
-.for-you .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.for-you .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .ideas .big-new { margin: 2px 0 10px; }
 .ideas .actions .menu { flex: 0 0 auto; }
 .ideas .actions .menu .btn { min-height: 44px; min-width: 44px; }
@@ -388,7 +389,7 @@ details.scraps .page-group { margin-top: 8px; }
 .taste-chorus { background: var(--sheet); box-shadow: 2px 4px 0 var(--shadow); padding: 14px 12px; transform: rotate(-.6deg); margin: 0 2px 6px; }
 .taste-chorus p { font-family: var(--serif); font-size: 22px; line-height: 1.25; margin: 0; overflow-wrap: anywhere; }
 .taste-chorus p + p { margin-top: 6px; }
-.taste-chorus .w { font: inherit; background: none; border: 0; padding: 4px 3px; margin: 0; color: var(--ink); border-radius: 3px; min-height: 36px; }
+.taste-chorus .w { font: inherit; background: none; border: 0; padding: 4px 1px; margin: 0 -1px; color: var(--ink); border-radius: 3px; min-height: 36px; }
 .taste-chorus .w:disabled { cursor: default; color: var(--ink); }
 .taste-chorus .w.tapped { background: var(--tint); }
 .taste-chorus .w.planted { text-decoration: underline wavy var(--warn); text-underline-offset: 5px; }
