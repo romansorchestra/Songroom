@@ -11,6 +11,7 @@ import {
 } from './engine/lyrics.js';
 import { extractConstraints, mergeConstraints, containsWord, endsWithPhrase, startsWithPhrase, syllables, endWord, type Check } from './engine/validate.js';
 import { normRef, splitReference } from './engine/refsplit.js';
+import { keptEdits, editsBlock } from './edits.js';
 import type { Profile } from './engine/pack.js';
 import { sparkSchema, sparkZ, relineSchema, relineZ, reworkSchema, reworkZ, moreLinesSchema, moreLinesZ, suggestReplaceSchema, suggestReplaceZ, suggestAddSchema, suggestAddZ, referenceZ, titlesSchema, titlesZ } from './engine/schemas.js';
 import {
@@ -391,7 +392,8 @@ export class Studio {
    * Check every idea's block of lines for rhyme and for its title; send the ones that fall
    * short back once in one call, and keep the better version of each.
    */
-  private async checkOrRetry<T extends { title: string; concept: string; lines: string[]; rhymes?: string }>(ideas: T[], hooks: Hook[], system: string, effort: string, signal: AbortSignal, model: string, usage: Usage) {
+  /** Public for the research test (trials.ts), which must post-process exactly as production does. */
+  async checkOrRetry<T extends { title: string; concept: string; lines: string[]; rhymes?: string }>(ideas: T[], hooks: Hook[], system: string, effort: string, signal: AbortSignal, model: string, usage: Usage) {
     const clean = (ls: string[]) => ls.map((t) => t.trim()).filter(Boolean).slice(0, 4);
     // one score per block: rhyme pairs by sound, and 2 for the title being there at all
     const score = (i: { title: string; lines: string[] }) => rhymeReport(clean(i.lines)).score + (hookPlacement(i.title, clean(i.lines)) === 'none' ? 0 : 2);
@@ -949,11 +951,12 @@ export class Studio {
     const view = ws.context;
     const taste = await this.svc.tasteFor(`${input.ask} ${String((ws as Record<string, unknown>).title ?? '')}`);
     const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
+    const history = s.songHistory === 'on' ? editsBlock(await keptEdits(this.db, songId)) : '';
     // research for a title: what he asked and the song's notes; never on by default
     const craft = await this.svc.research('title', { text: input.ask || 'a title for the next section', brief: String((ws as Record<string, unknown>).brief ?? ''), reference: refs.map((r) => r.name).join(', ') || null });
     const user = titlesPrompt({
       title: String((ws as Record<string, unknown>).title ?? ''), brief: String((ws as Record<string, unknown>).brief ?? ''), lyrics, onPage, ask: input.ask, references: referenceBlock(refs),
-      context: contextBlock({ meaning: view.meaning, narrator: view.narrator, rhyme: null, rhythm: null }), avoid, hitConcepts: hitConceptsNote('all'), craft: craft.block,
+      context: [contextBlock({ meaning: view.meaning, narrator: view.narrator, rhyme: null, rhythm: null }), history].filter(Boolean).join('\n\n'), avoid, hitConcepts: hitConceptsNote('all'), craft: craft.block,
     });
     const setId = newId('t_');
     await this.db.query(`INSERT INTO title_sets(id, song_id, ask, status, client_key) VALUES ($1,$2,$3,'running',$4)`, [setId, songId, input.ask.trim().slice(0, 300), input.clientKey]);
@@ -1099,16 +1102,17 @@ export class Studio {
     });
     const taste = await this.svc.tasteFor(instruction);
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
+    const history = s.songHistory === 'on' ? editsBlock(await keptEdits(this.db, songId)) : '';
     const user = suggestPrompt({
       mode, song: ctx, annotated: annotate(ctx.sections, targets, locks), targets: targetDescs,
       insertAfter: afterLineId ? findLine(ctx.sections, afterLineId)!.text : null, instruction,
-      context: contextBlock(wctx), references: referenceBlock(refs), avoid: avoid.slice(-16), count: SUGGEST_COUNT, craft: craft.block,
+      context: [contextBlock(wctx), history].filter(Boolean).join('\n\n'), references: referenceBlock(refs), avoid: avoid.slice(-16), count: SUGGEST_COUNT, craft: craft.block,
     });
     const det = extractConstraints(instruction);
     const run = await this.svc.startRun({
       task: 'suggest', threadId: null, songId, clientKey: input.clientKey, effort: s.effortEdit,
       promptVersion: `${plan.variant}${craft.tag}/${WORKSPACE_TEMPLATE}`,
-      request: { setId, instruction, baseRev: ctx.rev, mode, targets, afterLineId, context: wctx, refs: nextCtx.refIds ?? [], pack: craft.record },
+      request: { setId, instruction, baseRev: ctx.rev, mode, targets, afterLineId, context: wctx, refs: nextCtx.refIds ?? [], pack: craft.record, history: history ? history.split('\n').length - 1 : 0 },
       inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('suggest', system, user, mode === 'replace' ? suggestReplaceSchema : suggestAddSchema, s.effortEdit, signal, model);

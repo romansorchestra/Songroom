@@ -54,6 +54,8 @@ export type Settings = {
   /** Per-route override of craftPack for the research experiment; a missing route means 'default'. */
   researchRoutes: Partial<Record<Route, 'off' | 'cards'>>;
   researchMaxCards: number;
+  /** 19 Oct: his own earlier changes to a song shown when working on that song. Off until tested on its own. */
+  songHistory: 'off' | 'on';
 };
 
 export type CraftScope = Settings['craftPack'];
@@ -71,11 +73,12 @@ const DEFAULTS: Settings = {
   craftPack: 'edits',
   researchRoutes: {},
   researchMaxCards: 2,
+  songHistory: 'off',
 };
 
-const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 24000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000, list: 24000, reflect: 4000, titles: 10000, taste: 6000 };
+export const MAX_TOKENS = { trial: 24000, write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 24000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000, list: 24000, reflect: 4000, titles: 10000, taste: 6000 };
 
-export type Task = 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines' | 'hang' | 'list' | 'reflect' | 'titles' | 'taste';
+export type Task = 'trial' | 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines' | 'hang' | 'list' | 'reflect' | 'titles' | 'taste';
 
 export class Service {
   private aborts = new Map<string, AbortController>();
@@ -146,6 +149,7 @@ export class Service {
       if ((k === 'dailyCapUsd' || k === 'monthlyCapUsd') && !(typeof v === 'number' && v >= 0 && v <= 5000)) throw new AppError(400, 'bad_cap', 'Cap must be between $0 and $5000.');
       if (k === 'taste' && !(typeof v === 'string' && v.length <= 8000)) throw new AppError(400, 'bad_taste', 'Taste notes are too long.');
       if (k === 'craftPack' && !CRAFT_SCOPES.includes(v as CraftScope)) throw new AppError(400, 'bad_flag', 'craftPack must be off, edits or all.');
+      if (k === 'songHistory' && !['off', 'on'].includes(v as string)) throw new AppError(400, 'bad_flag', 'songHistory must be off or on.');
       if (k === 'researchMaxCards' && !(Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 2)) throw new AppError(400, 'bad_flag', 'researchMaxCards must be 0, 1 or 2.');
       if (k === 'researchRoutes') {
         if (!v || typeof v !== 'object' || Array.isArray(v)) throw new AppError(400, 'bad_flag', 'researchRoutes must be an object.');
@@ -735,7 +739,7 @@ export class Service {
   // ---------------- export ----------------
   async exportAll() {
     const tables = ['settings', 'threads', 'messages', 'runs', 'ideas', 'fragments', 'songs', 'song_revisions', 'suggestion_sets', 'refs',
-      'voice_examples', 'eval_results', 'experiments', 'hangs', 'lessons', 'taste_answers'];
+      'voice_examples', 'eval_results', 'experiments', 'hangs', 'lessons', 'taste_answers', 'title_sets', 'trials'];
     const out: Record<string, unknown> = { format: 'songroom-backup', version: 2, exportedAt: new Date().toISOString() };
     for (const t of tables) out[t] = await this.db.query(`SELECT * FROM ${t}`);
     return out;
@@ -795,7 +799,7 @@ function compactMessage(text: string, payload: Record<string, unknown> | null): 
   return parts.join('\n').slice(0, 2500);
 }
 
-function shapeWrite(out: ReturnType<typeof writeZ.parse>, det: Partial<Constraints>) {
+export function shapeWrite(out: ReturnType<typeof writeZ.parse>, det: Partial<Constraints>) {
   const c = mergeConstraints(out.constraints, det);
   const ideas = out.ideas.map((i) => ({ ...i, lines: i.lines.filter((l) => l.trim()), checks: checkCandidate(i.lines, { ...c, mustEndWith: null, mustStartWith: null }, { checkLineCount: true }) }));
   const options = out.options.map((o) => ({ lines: o.lines, checks: checkCandidate(o.lines, c, { checkLineCount: true }) }));

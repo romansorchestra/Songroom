@@ -2,6 +2,14 @@
 
 Newest first. Every record keeps its history: the files hold each version of a card, profile or pair on its own line, and the app uses the highest version of each id (`latest()` in `server/engine/pack.ts`), leaving out any whose newest version says `"active": false`. Build order: `build_cards.py`, `build_profiles.py`, `build_pairs.py` write the v1 lines; `build_pack_v2.py` re-reads them and adds the v2 lines (run it after any of the others).
 
+## pilot-1.3-candidate (19 Oct 2026) — staged, not loaded
+
+The song-analysis round (Phase C): eight songs examined as whole works, in `research/raw/songs-{pop,ballad,country,songwriter}/`, staged by `python3 -I research/build_pack_v3.py` into `research/pack/candidates/`. The app does not load it. It is compared with pilot-1.2 only after the route-level test, with every other input fixed.
+- 8 song records (`candidates/songs.jsonl`), 87 sources (5 duplicates marked), 55 findings.
+- 7 new cards (C62–C68) for distinctions no card made; C43 gains a limit from two documented counterexamples (v3); 5 proposals declined as cards and kept as findings (reasons in `candidates/manifest.json`).
+- Profiles: P01, P03, P13, P16 extended with their coverage rewritten; new P17 Sam Fender, P18 Lewis Capaldi, P19 Adele, P20 Sam Smith, each saying it rests on one song.
+- No lyric stored beyond phrases of six words or fewer; no audio; lyric texts seen only through the fetch tool are labelled so, including press pages whose licence is not shown.
+
 ## pilot-1.2 (19 Oct 2026) — evidence hygiene
 
 Asked for by the 19 Oct commission, Phase A. Built by `python3 -I research/build_pack_v2.py`.
@@ -27,9 +35,9 @@ Asked for by the 19 Oct commission, Phase A. Built by `python3 -I research/build
 - `generator` (41).
 - `routes` says which writing actions a card is meant for (ideas, create, develop, rewrite, continue, title).
 
-**Teaching pairs.** Six pairs were lopsided: one side failed the brief or was a strawman, so the comparison was on-brief vs off-brief, not a real choice. Each now has a competent, on-brief A side meeting the same constraints: E02, E05, E06, E07 (the A side now admits the checking, as the brief requires), E08, E16. Every pair's `analyst_view` begins "Analyst's view, not a correct answer". Pairs are not part of the 19 Oct research on/off test.
+**Teaching pairs.** Six pairs were lopsided: one side failed the brief or was a strawman, so the comparison was on-brief vs off-brief, not a real choice. Each now has a competent, on-brief A side meeting the same constraints: E02, E05, E06, E07 (the A side now admits the checking, as the brief requires), E08, E16. Every pair's `analyst_view` begins "Analyst's view, not a correct answer". E05, E06 and E08 also have their explanation rewritten so it describes the new A side, not the strawman it replaced. Pairs are not part of the 19 Oct research on/off test.
 
-**Profiles.** Every profile has a `coverage` line: which songs and eras it rests on and what it does not cover. The writer now sees it ("These notes rest on: …") so a whole artist isn't reduced to the two songs that were studied.
+**Profiles.** Every profile has a `coverage` line: which songs and eras it rests on and what it does not cover. The writer now sees it ("Coverage: Rests on …") so a whole artist isn't reduced to the two songs that were studied.
 
 **Nothing removed from history.** No v1 line was edited or deleted. Old runs that recorded pilot-1.1 ids can still be read against the v1 records.
 

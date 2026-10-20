@@ -12,7 +12,8 @@ import { Journal } from './Journal';
 import { HangPage } from './Hang';
 import { Settings } from './Settings';
 import { ThreadView } from './Thread';
-import { Taste } from './Taste';
+import { Taste, Contrasts } from './Taste';
+import { Trials } from './Trials';
 
 export type Status = {
   writer: { connected: boolean; live: boolean; label: string };
@@ -99,7 +100,9 @@ export function App() {
   else if (place === 'song' && id) page = <Workspace key={id} id={id} />;
   else if (place === 'idea' && id) page = <Ideas key={id} ideaId={id} />;
   else if (place === 'settings') page = <Settings section={id} />;
+  else if (place === 'taste' && id === 'contrasts') page = <Contrasts />;
   else if (place === 'taste') page = <Taste key={query.toString()} preview={query.get('preview') === '1'} />;
+  else if (place === 'trials') page = <Trials key={id ?? 'latest'} id={id} />;
   else if ((place === 'session' || (place === 'write' && id)) && id) page = <OldSession id={id} />;
   else page = <Ideas key="board" />;
 

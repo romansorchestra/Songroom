@@ -213,10 +213,17 @@ PAIR_FIX = {
  'E08': (["He talks like he's a millionaire", "but he can't even pay his share"], "The original A was a deliberately clumsy sentence; replaced with a competent full-sentence hook so the contrast is sentence vs fragment."),
  'E16': (['Jealous of the ex he still follows online, and how she makes you feel second best.'], "The original A was a topic with adjectives attached (a strawman); replaced with a plausible topic-level concept."),
 }
+# the explanation has to describe the new A side, not the strawman it replaced
+TRADEOFF_FIX = {
+ 'E05': "A is competent and true but built from phrases every friend has said (never gonna change, running back); nothing in it is this friend or this man. B uses a phrase people actually say ('this time's different') and turns it: it is different, each time, which is the joke and the despair. A suits a big singalong where familiarity is the point.",
+ 'E06': "A is the prettier sentence on the page: the image carries the meaning, but it takes a second to parse, the 'you' is buried in 'your name', and the held word is the image, not the person. B says it the way she would say it, and the held last word is 'you'. Text-only: which sings better on a rising held note is a guess until it is sung.",
+ 'E08': "A is a full rhymed sentence: clear and sayable, but it explains the joke and its stresses spread evenly across two long lines. B is four two-syllable units with a pattern (big/small, same/new) the listener can predict and enjoy, which suits a rhythm-led hook. A suits a verse where the story needs telling. Text-only: the stress notes are not checked against a melody.",
+}
 pairs_v2 = []
 for p in pairs_v1:
     if p['id'] not in PAIR_FIX: continue
     v = dict(p); v['version'] = 2; v['a'] = PAIR_FIX[p['id']][0]
+    if p['id'] in TRADEOFF_FIX: v['tradeoff'] = TRADEOFF_FIX[p['id']]
     v['analyst_view'] = "Analyst's view, not a correct answer: " + p['analyst_view']
     v['changes'] = {'date': DATE, 'pack': 'pilot-1.2', 'notes': [PAIR_FIX[p['id']][1], 'A is original and synthetic, written 19 Oct.']}
     pairs_v2.append(v)

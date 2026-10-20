@@ -36,7 +36,7 @@ function RefBody({ r, onChoose }: { r: Ref; onChoose: (i: number) => void }) {
       <div className="name">{r.name}</div>
       <div>{r.identity}</div>
       {!!r.details.characteristics?.length && <ul>{r.details.characteristics.slice(0, 4).map((c, i) => <li key={i}>{c}</li>)}</ul>}
-      {r.details.coverage && <div className="small muted">These notes rest on: {r.details.coverage}</div>}
+      {r.details.coverage && <div className="small muted">{r.details.coverage}</div>}
       <div className="small muted">From {r.source}.{r.details.sources?.length ? ' Sources: ' : ''}
         {r.details.sources?.slice(0, 3).map((s, i) => <span key={s.url}>{i ? ', ' : ''}<a href={s.url} target="_blank" rel="noreferrer">{s.title.slice(0, 40)}</a></span>)}
       </div>

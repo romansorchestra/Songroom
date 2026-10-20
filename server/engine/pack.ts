@@ -238,7 +238,7 @@ export function renderPack(sel: PackSelection): string {
   }
   for (const p of sel.profiles) {
     const chars = p.characteristics.slice(0, 5).map((x) => `  - ${x.text}`).join('\n');
-    parts.push(`About the reference "${p.name}" (observations to translate into qualities, never to imitate):\n  ${p.resolved}\n${chars}${p.variation ? `\n  Variation: ${p.variation}` : ''}${p.uncertain ? `\n  Uncertain: ${p.uncertain}` : ''}${p.coverage ? `\n  Rests on: ${p.coverage}` : ''}`);
+    parts.push(`About the reference "${p.name}" (observations to translate into qualities, never to imitate):\n  ${p.resolved}\n${chars}${p.variation ? `\n  Variation: ${p.variation}` : ''}${p.uncertain ? `\n  Uncertain: ${p.uncertain}` : ''}${p.coverage ? `\n  Coverage: ${p.coverage}` : ''}`);
   }
   return parts.join('\n\n');
 }

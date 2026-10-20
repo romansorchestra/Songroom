@@ -235,7 +235,7 @@ describe('several references through the app', () => {
     const u = w.calls.find((c) => c.user.includes('His request'))!.user;
     expect(u).toContain('Noah Kahan (Stick Season)');
     expect(u).toContain('Sam Fender: not verified');
-    expect(u).toContain('These notes rest on:');
+    expect(u).toContain('Coverage: Rests on');
     expect(u).toContain(pack.profiles.find((p) => p.id === 'P16')!.characteristics[0].text.slice(0, 40));
     // dropping one leaves the other
     await api('POST', `/references/${g.members[1].id}/reject`);

@@ -18,6 +18,8 @@ import { WriterError } from './engine/writer.js';
 import { newId, type Section } from './engine/lyrics.js';
 import { learnedBlock } from './learning.js';
 
+/** The 19 Oct contrast review: repaired pairs whose sides meet the same brief and constraints. */
+export const CONTRASTS = ['E13', 'E12', 'E04', 'E14', 'E06'];
 export const TASTE_TEMPLATE = 'taste2'; // taste1 (18 Oct) ran once, as a preview: its rules came back as bans ("no weather imagery") from three taps
 /** One session: ten pairs, four choruses to read closely, two pairs shown again with the sides swapped. */
 export const QUOTA = { title: 4, chorus: 3, idea: 3, planted: 3, clean: 1 } as const;
@@ -264,22 +266,71 @@ export class Taste {
     return { runId: run.id, score: s };
   }
 
-  /** The findings he marked Keep become standing lessons the writer reads every time. */
-  async keep(runId: string, keep: number[]) {
-    const [run] = await this.db.query<{ task: string; status: string; request: { preview?: boolean }; result: { heard?: Heard[]; kept?: number[] } | null }>(`SELECT task, status, request, result FROM runs WHERE id=$1`, [runId]);
+  /** The findings he marked Keep become standing lessons the writer reads every time. "Not me" is
+   *  recorded as his rejection; anything he did neither to stays undecided (19 Oct: not keeping is
+   *  not rejecting). Decisions carry timestamps; a later decision replaces an earlier one. */
+  async keep(runId: string, keep: number[], reject: number[] = []) {
+    const [run] = await this.db.query<{ task: string; status: string; request: { preview?: boolean }; result: { heard?: Heard[]; kept?: number[]; decisions?: Record<string, { d: 'kept' | 'rejected'; at: string }> } | null }>(`SELECT task, status, request, result FROM runs WHERE id=$1`, [runId]);
     if (!run || run.task !== 'taste') throw new AppError(404, 'not_found', 'Not found.');
     if (run.status !== 'succeeded' || !run.result?.heard) throw new AppError(409, 'not_ready', 'The reading isn’t finished yet.');
     if (run.request?.preview) throw new AppError(400, 'preview', 'This was a preview: nothing is kept.');
     const heard = run.result.heard;
-    const want = [...new Set(keep)].filter((i) => Number.isInteger(i) && i >= 0 && i < heard.length);
+    const ok = (i: number) => Number.isInteger(i) && i >= 0 && i < heard.length;
+    const want = [...new Set(keep)].filter(ok);
+    const no = [...new Set(reject)].filter((i) => ok(i) && !want.includes(i));
+    const decisions = { ...(run.result.decisions ?? {}) };
+    const at = new Date().toISOString();
     let added = 0;
     for (const i of want) {
+      if (decisions[i]?.d === 'kept') continue;
       const h = heard[i];
       const l = await this.svc.lessons.add(h.rule, 'taste', { note: `${h.you} (${h.basis})`, scope: 'standing' });
       if (l) added++;
+      decisions[i] = { d: 'kept', at };
     }
+    for (const i of no) decisions[i] = { d: 'rejected', at };
     const kept = [...new Set([...(run.result.kept ?? []), ...want])].sort((a, b) => a - b);
-    await this.db.query(`UPDATE runs SET result=json_set(result, '$.kept', json($2)) WHERE id=$1`, [runId, JSON.stringify(kept)]);
-    return { kept, added };
+    await this.db.query(`UPDATE runs SET result=json_set(json_set(result, '$.kept', json($2)), '$.decisions', json($3)) WHERE id=$1`, [runId, JSON.stringify(kept), JSON.stringify(decisions)]);
+    return { kept, added, decisions };
+  }
+
+  /** Findings from real (non-preview) readings that he has neither kept nor turned down. */
+  async pending() {
+    const runs = await this.db.query<{ id: string; created_at: string; request: { preview?: boolean }; result: { heard?: Heard[]; decisions?: Record<string, { d: string }> } | null }>(
+      `SELECT id, created_at, request, result FROM runs WHERE task='taste' AND status='succeeded' ORDER BY created_at DESC LIMIT 10`);
+    const out: Array<{ runId: string; index: number; you: string; basis: string; at: string }> = [];
+    for (const r of runs) {
+      if (r.request?.preview || !r.result?.heard) continue;
+      r.result.heard.forEach((h, i) => { if (!r.result!.decisions?.[i]) out.push({ runId: r.id, index: i, you: h.you, basis: h.basis, at: r.created_at }); });
+    }
+    return out;
+  }
+
+  // ------------------------------------------------------------------ contrasts (19 Oct 2026)
+  // A short optional review of teaching pairs whose two sides meet the same brief. Not a test:
+  // the analyst's preferred side is not the right answer. Answers are recorded per pair and
+  // never switch a card off; they say where a card applies.
+  contrasts() {
+    const pack = this.svc.pack;
+    const ids = CONTRASTS.filter((id) => pack?.pairs.some((p) => p.id === id));
+    return ids.map((id) => {
+      const p = pack!.pairs.find((x) => x.id === id)!;
+      const flip = [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % 2 === 1; // fixed per pair, so it never moves
+      const sides = flip ? [{ key: 'b', lines: p.b }, { key: 'a', lines: p.a }] : [{ key: 'a', lines: p.a }, { key: 'b', lines: p.b }];
+      const brief = p.brief.replace(/^[^.]*\.\s*/, ''); // the first sentence names the analyst's contrast; leave it out
+      return { id, version: p.version ?? 1, brief, context: p.context, constraints: p.constraints, sides };
+    });
+  }
+
+  async contrastAnswers() {
+    return this.db.query<{ card: string; payload: Record<string, unknown>; created_at: string }>(`SELECT card, payload, created_at FROM taste_answers WHERE session='contrasts' ORDER BY created_at`);
+  }
+
+  async answerContrast(a: { id: string; pick: 'a' | 'b' | 'both' | 'neither'; wrongForSong?: 'a' | 'b' | null; reason?: string; shown: Array<'a' | 'b'> }) {
+    const p = this.contrasts().find((c) => c.id === a.id);
+    if (!p) throw new AppError(404, 'not_found', 'That pair isn’t in the review.');
+    await this.db.query(`INSERT INTO taste_answers(id, session, card, again, payload) VALUES ($1,'contrasts',$2,0,$3)`,
+      [newId('ta_'), a.id, JSON.stringify({ kind: 'contrast', version: p.version, pick: a.pick, wrongForSong: a.wrongForSong ?? null, reason: (a.reason ?? '').trim().slice(0, 400), shown: a.shown })]);
+    return { ok: true };
   }
 }

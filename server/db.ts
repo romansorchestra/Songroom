@@ -14,7 +14,9 @@ export interface Db {
 
 /** Columns holding JSON text. They are parsed when read. */
 const JSON_COLS = new Set(['dismissed', 'value', 'request', 'result', 'error', 'usage', 'payload', 'lines', 'original', 'locks', 'suno', 'sections', 'trial',
-  'steer', 'title_parts', 'context', 'targets', 'items', 'details', 'candidates']);
+  'steer', 'title_parts', 'context', 'targets', 'items', 'details', 'candidates',
+  // trials (19 Oct 2026)
+  'shown', 'frozen', 'outputs', 'run_ids', 'verdict', 'verdicts']);
 
 function toParam(v: unknown): null | number | bigint | string | Uint8Array {
   if (v === undefined || v === null) return null;
@@ -189,6 +191,15 @@ export const MIGRATIONS: string[] = [
      id TEXT PRIMARY KEY, session TEXT NOT NULL, card TEXT NOT NULL, again INTEGER NOT NULL DEFAULT 0, payload TEXT NOT NULL,
      created_at ${TS});
    CREATE INDEX taste_answers_card ON taste_answers(card)`,
+  // 10 (19 Oct 2026): the research test (trials.ts). One row per comparison: the frozen prompts
+  // for both conditions, which condition is shown as A (fixed at creation), both outputs, and his
+  // verdicts with timestamps (the latest in verdict, every one in verdicts).
+  `CREATE TABLE trials (
+     id TEXT PRIMARY KEY, batch TEXT NOT NULL, batch_name TEXT NOT NULL DEFAULT '', seed INTEGER, repeat_of TEXT,
+     ord INTEGER NOT NULL, case_id TEXT NOT NULL, route TEXT NOT NULL, shown TEXT NOT NULL, frozen TEXT NOT NULL,
+     a_cond TEXT NOT NULL, outputs TEXT, run_ids TEXT, verdict TEXT, verdicts TEXT NOT NULL DEFAULT '[]', seen_at TEXT,
+     created_at ${TS});
+   CREATE INDEX trials_batch ON trials(batch, ord)`,
 ];
 
 export async function migrate(db: Db): Promise<void> {

@@ -151,6 +151,35 @@ function Spending() {
 
 // What he has told the writer (11 Oct 2026): boiled down from his notes on reworked ideas,
 // or typed here; read with every request; cross one out and it stops at once.
+/** 19 Oct: taste-test findings he hasn't kept or turned down yet. Not keeping is not rejecting. */
+function TasteWaiting({ onKept }: { onKept: () => void }) {
+  const [list, setList] = useState<Array<{ runId: string; index: number; you: string; basis: string }> | null>(null);
+  const load = () => api<Array<{ runId: string; index: number; you: string; basis: string }>>('GET', '/taste/pending').then(setList).catch(() => setList([]));
+  useEffect(() => { void load(); }, []);
+  if (!list?.length) return null;
+  async function decide(x: { runId: string; index: number }, keep: boolean) {
+    await api('POST', '/taste/keep', { runId: x.runId, keep: keep ? [x.index] : [], reject: keep ? [] : [x.index] }).catch(() => {});
+    await load(); if (keep) onKept();
+  }
+  return (
+    <div className="panel">
+      <b>From your taste test, waiting for your call</b>
+      <p className="small muted">Nothing here reaches the writer until you keep it.</p>
+      <ul className="lesson-list">
+        {list.map((x) => (
+          <li key={`${x.runId}:${x.index}`}>
+            <div>{x.you}<small>{x.basis}</small></div>
+            <span style={{ display: 'flex', gap: 6 }}>
+              <button className="btn quiet sm" onClick={() => decide(x, true)}>Keep</button>
+              <button className="btn quiet sm" onClick={() => decide(x, false)}>Not me</button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function LessonsList() {
   const { toast } = useApp();
   const [list, setList] = useState<Array<{ id: string; text: string; source: string; note: string; created_at: string; scope?: string; expires_at?: string | null }> | null>(null);
@@ -164,6 +193,7 @@ function LessonsList() {
   return (
     <>
       <h2>What you've told the writer</h2>
+      <TasteWaiting onKept={load} />
       <p className="small muted">Every note you send with “What do you think?” is boiled down to one instruction and kept here: for every idea from now on, or, when it's about the artist or song you're writing today, for today only. The writer reads the list with every idea, line and edit. Cross out anything it got wrong, or add one in your own words.</p>
       {list === null && <p className="small muted">Loading…</p>}
       {list?.length === 0 && <p className="small muted" style={{ marginTop: 10 }}>Nothing yet. The first note you send that has a rule in it (“‘hall’ sounds like a wedding, not a night out”) will show up here.</p>}
@@ -320,6 +350,20 @@ function EvalResult({ r, onVote }: { r: any; onVote: (v: string | null) => void 
   );
 }
 
+/** 19 Oct: the research test (trials.ts) — real briefs from his sessions, research off vs on. */
+function ResearchTestLink() {
+  const [b, setB] = useState<Array<{ id: string; name: string; n: number; judged: number }> | null>(null);
+  useEffect(() => { void api<Array<{ id: string; name: string; n: number; judged: number }>>('GET', '/trials').then(setB).catch(() => setB([])); }, []);
+  if (!b?.length) return null;
+  const latest = b[0];
+  return (
+    <div className="panel">
+      <b>Research test</b>: {latest.name}. {latest.judged} of {latest.n} judged.
+      <div><a className="btn sm" href={`#/trials/${latest.id}`} style={{ margin: '8px 0' }}>{latest.judged < latest.n ? 'Judge the comparisons' : 'See the results'}</a></div>
+    </div>
+  );
+}
+
 function Experiments() {
   const [data, setData] = useState<any | null>(null);
   const [tally, setTally] = useState<any | null>(null);
@@ -336,6 +380,7 @@ function Experiments() {
   return (
     <>
       <h2>Experiments</h2>
+      <ResearchTestLink />
       <p className="small muted">The same brief answered three ways: the old prompt, the corrected prompt, and the corrected prompt with research craft notes. The three answers are shuffled; which is which is shown only after you pick. Eleven fresh briefs × 2 repeats ≈ $2. Pick the one you'd use or develop; star anything exceptional.</p>
       <div className="row">
         <button className="btn quiet sm" disabled={data?.running} onClick={async () => { try { await api('POST', '/experiments/run', { ids: [], repeats }); await load(); } catch (e) { setErr((e as Error).message); } }}>{data?.running ? `Running… ${p?.done ?? 0}/${p?.total ?? 0}` : 'Run the comparison'}</button>

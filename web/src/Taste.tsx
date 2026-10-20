@@ -198,17 +198,17 @@ function FlawView({ card, why, onAnswer }: { card: Extract<Card, { kind: 'flaw' 
         ))}
       </div>
       {step === 'read' && <div className="taste-under"><button className="secondary" onClick={fine}>It’s fine</button></div>}
-      {step === 'caught' && p && <p className="taste-verdict ok">✓ That’s the one I planted: {p.flaw}. <span className="muted">{p.note}</span> <button className="tb under" onClick={() => done()}>Next</button></p>}
-      {step === 'clean-fine' && <p className="taste-verdict ok">✓ Nothing planted in that one. <button className="tb under" onClick={() => done()}>Next</button></p>}
+      {step === 'caught' && p && <p className="taste-verdict ok">✓ That’s the one I’d guessed at: {p.flaw}. <span className="muted">{p.note}</span> <button className="tb under" onClick={() => done()}>Next</button></p>}
+      {step === 'clean-fine' && <p className="taste-verdict ok">✓ I hadn’t guessed at anything in that one either. <button className="tb under" onClick={() => done()}>Next</button></p>}
       {step === 'why' && (
         <div className="chips">
           {why.map((w) => <button key={w} className="chip" onClick={() => { setReason(w); setStep(p ? 'reveal' : 'yours'); }}>{w}</button>)}
         </div>
       )}
-      {step === 'yours' && <p className="taste-verdict">Nothing was planted there, so that one’s yours. <button className="tb under" onClick={() => done()}>Next</button></p>}
+      {step === 'yours' && <p className="taste-verdict">I hadn’t guessed at anything there, so that one’s yours. <button className="tb under" onClick={() => done()}>Next</button></p>}
       {step === 'reveal' && p && (
         <>
-          <p className="taste-verdict">{tap ? 'I’d planted something else: ' : 'I’d planted one: '}“{p.text}”, {p.flaw}. <span className="muted">{p.note}</span></p>
+          <p className="taste-verdict">{tap ? 'My guess at the weak spot was something else: ' : 'My guess at the weak spot: '}“{p.text}”, {p.flaw}. <span className="muted">{p.note} It’s a guess about the example, not a right answer.</span></p>
           <div className="actions">
             <button className="secondary" onClick={() => done({ mind: 'fair' })}>Fair, I missed it</button>
             <button className="secondary" onClick={() => done({ mind: 'fine' })}>I don’t mind it</button>
@@ -244,7 +244,7 @@ function Songs({ songs, preview, onDone }: { songs: Song[]; preview: boolean; on
 function ScoreCard({ score }: { score: Score }) {
   return (
     <div className="taste-score">
-      {score.planted > 0 && <div><b>{score.caught} of {score.planted}</b><span>planted mistakes caught{score.otherWord ? `, and ${score.otherWord === 1 ? 'one' : score.otherWord} found of your own` : ''}</span></div>}
+      {score.planted > 0 && <div><b>{score.caught} of {score.planted}</b><span>weak spots I’d guessed at that you flagged too{score.otherWord ? `; ${score.otherWord === 1 ? 'one word' : `${score.otherWord} words`} you flagged that I hadn’t` : ''}. My guesses, not a test.</span></div>}
       {score.repeats > 0 && <div><b>{score.same} of {score.repeats}</b><span>same call when a pair came back</span></div>}
       {score.neither > 0 && <div><b>{score.neither}</b><span>{score.neither === 1 ? 'pair' : 'pairs'} where neither was good enough</span></div>}
     </div>
@@ -259,7 +259,8 @@ function HeardView({ heard, score, preview, done, onKept }: { heard: { runId: st
   const kept = Object.entries(choice).filter(([, v]) => v).map(([k]) => Number(k));
   async function keep() {
     setBusy(true); setErr('');
-    try { await api('POST', '/taste/keep', { runId: heard.runId, keep: kept }); setKeptN(kept.length); onKept(kept.length); }
+    const notMe = Object.entries(choice).filter(([, v]) => v === false).map(([k]) => Number(k));
+    try { await api('POST', '/taste/keep', { runId: heard.runId, keep: kept, reject: notMe }); setKeptN(kept.length); onKept(kept.length); }
     catch (e) { setErr((e as Error).message); }
     setBusy(false);
   }
@@ -286,17 +287,80 @@ function HeardView({ heard, score, preview, done, onKept }: { heard: { runId: st
         ? <>
             {preview
               ? <><p className="small muted">Preview: nothing is kept.</p><button className="secondary big-new" onClick={() => go('/ideas')}>Back to Ideas</button></>
-              : <button className="primary big-new" disabled={busy} onClick={keep}>{kept.length ? `Keep ${kept.length} for the writer` : heard.heard.length ? 'Keep none' : 'Done'}</button>}
+              : <button className="primary big-new" disabled={busy} onClick={keep}>{kept.length ? `Keep ${kept.length} for the writer` : heard.heard.length ? 'Done for now' : 'Done'}</button>}
             {err && <div className="status err" role="alert">{err}</div>}
           </>
         : <>
-          <p className="taste-verdict ok">{keptN ? `Kept ${keptN === 1 ? 'one' : keptN}. The writer reads ${keptN === 1 ? 'it' : 'them'} with every idea, title and line from now on.` : 'Nothing kept. Come back for another round any time.'}</p>
+          <p className="taste-verdict ok">{keptN ? `Kept ${keptN === 1 ? 'one' : keptN}. The writer reads ${keptN === 1 ? 'it' : 'them'} with every idea, title and line from now on.` : 'Nothing kept.'} Anything you didn’t answer waits in Settings for later.</p>
           <div className="actions" style={{ marginTop: 6 }}>
             <button className="secondary" onClick={() => go('/ideas')}>Back to Ideas</button>
             <button className="secondary" onClick={() => go('/settings/lessons')}>See them in Settings</button>
+            <button className="secondary" onClick={() => go('/taste/contrasts')}>Five quick pairs</button>
           </div>
         </>}
     </div>
   );
 }
 
+
+// ---------------------------------------------------------------- five quick pairs (19 Oct 2026)
+// Optional. Each pair meets the same brief and the same constraints; neither side is the right
+// answer. Both, neither, and "good but wrong for this song" are all answers; a reason is optional.
+type Contrast = { id: string; version: number; brief: string; context: string; constraints: Record<string, unknown>; sides: Array<{ key: 'a' | 'b'; lines: string[] }> };
+
+export function Contrasts() {
+  const [pairs, setPairs] = useState<Contrast[] | null>(null);
+  const [answered, setAnswered] = useState<Set<string>>(new Set());
+  const [i, setI] = useState(0);
+  const [wrong, setWrong] = useState<'a' | 'b' | null>(null);
+  const [reason, setReason] = useState('');
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    void api<{ pairs: Contrast[]; answers: Array<{ card: string }> }>('GET', '/taste/contrasts').then((r) => {
+      setPairs(r.pairs);
+      const done = new Set(r.answers.map((a) => a.card));
+      setAnswered(done);
+      setI(Math.max(0, r.pairs.findIndex((p) => !done.has(p.id))));
+    }).catch((e) => setErr((e as Error).message));
+  }, []);
+  const p = pairs?.[i];
+  async function answer(pick: 'a' | 'b' | 'both' | 'neither') {
+    if (!p) return;
+    try {
+      await api('POST', '/taste/contrasts', { id: p.id, pick, wrongForSong: wrong, reason, shown: p.sides.map((x) => x.key) });
+      setAnswered((s) => new Set([...s, p.id])); setWrong(null); setReason(''); setI((n) => n + 1);
+    } catch (e) { setErr((e as Error).message); }
+  }
+  const cons = (c: Record<string, unknown>) => Object.entries(c).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${String(v)}`).join(' · ');
+  if (err) return <div className="status err" role="alert">{err}</div>;
+  if (!pairs) return <Pending text="Loading…" />;
+  if (!p) return (
+    <div className="pal-sage taste">
+      <h2 className="page-title">Thanks.</h2>
+      <p className="concept">That’s all {pairs.length}. Your answers are kept against each pair; they don’t switch anything off.</p>
+      <button className="secondary big-new" onClick={() => go('/ideas')}>Back to Ideas</button>
+    </div>
+  );
+  return (
+    <div className="pal-sage taste">
+      <div className="taste-top"><span className="small muted">{i + 1} of {pairs.length}{answered.has(p.id) ? ' · answered before' : ''}</span><a className="tb under" href="#/ideas">Done for now</a></div>
+      <div className="taste-bar" aria-hidden="true"><span style={{ width: `${(i / pairs.length) * 100}%` }} /></div>
+      <p className="eyebrow taste-ask">Which would you rather have in the song?</p>
+      <p className="small">{p.brief}</p>
+      <p className="small muted">{p.context}{Object.keys(p.constraints).length ? ` · ${cons(p.constraints)}` : ''}</p>
+      <div className="taste-pair">
+        {p.sides.map((sd) => (
+          <div key={sd.key}>
+            <button className="taste-option chorus" onClick={() => answer(sd.key)}><span>{sd.lines.join('\n')}</span></button>
+            <label className="trial-spark small"><input type="checkbox" checked={wrong === sd.key} onChange={() => setWrong(wrong === sd.key ? null : sd.key)} /> Good, but wrong for this song</label>
+          </div>
+        ))}
+      </div>
+      <div className="actions" style={{ marginTop: 10 }}>
+        <button className="secondary" onClick={() => answer('both')}>Both work</button>
+        <button className="secondary" onClick={() => answer('neither')}>Neither</button>
+      </div>
+      <input className="line" style={{ marginTop: 10, width: '100%' }} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why (optional)" aria-label="Why (optional)" />
+    </div>
+  );
+}

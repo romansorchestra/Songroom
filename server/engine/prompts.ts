@@ -250,7 +250,7 @@ export function referenceLines(refs: RefForPrompt[]): string {
     const lines = [`- ${r.name}${r.identity ? `: ${r.identity}` : ''} (${r.source})`];
     if (r.characteristics.length) lines.push(...r.characteristics.slice(0, 6).map((c) => `  · ${c}`));
     // 19 Oct: what a profile actually rests on, so a whole artist isn't reduced to the few songs studied
-    if (r.coverage) lines.push(`  These notes rest on: ${r.coverage}`);
+    if (r.coverage) lines.push(`  Coverage: ${r.coverage}`);
     if (r.want) lines.push(`  What he wants from it: ${r.want}`);
     return lines.join('\n');
   }).join('\n');

@@ -10,6 +10,8 @@ import { Studio } from './studio.js';
 import { referenceLines } from './engine/prompts.js';
 import { Hang, MAX_AUDIO_BYTES, MAX_TRANSCRIPT_CHARS } from './hang.js';
 import { Taste, WHY_CHOICES } from './taste.js';
+import { Trials } from './trials.js';
+import { keptEdits } from './edits.js';
 import type { Transcriber } from './engine/transcribe.js';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -27,6 +29,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   const studio = new Studio(svc);
   const hang = new Hang(svc, studio, opts.transcriber ?? null);
   const taste = new Taste(svc);
+  const trials = new Trials(svc, studio);
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
   app.use(express.json({ limit: '1mb' }));
@@ -214,6 +217,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   // Titles for the next section (13 Oct 2026)
   api.post('/songs/:id/titles', h(async (req) => { const b = z.object({ ask: z.string().max(1000).default(''), clientKey: key }).parse(req.body); return studio.findTitles(String(req.params.id), { ask: b.ask, clientKey: b.clientKey ?? null }); }));
   api.post('/songs/:id/titles/use', h(async (req) => { const b = z.object({ setId: z.string().max(40), index: z.number().int().min(0).max(20) }).parse(req.body); return studio.useTitle(String(req.params.id), b); }));
+  api.get('/songs/:id/edits', h(async (req) => keptEdits(svc.db, String(req.params.id))));
   api.post('/songs/:id/lines', h(async (req) => {
     const b = z.object({ ask: z.string().max(1000).default(''), clientKey: key }).parse(req.body);
     return studio.moreLines(String(req.params.id), { ask: b.ask, clientKey: b.clientKey ?? null });
@@ -239,7 +243,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
       dailyCapUsd: z.number().optional(), monthlyCapUsd: z.number().optional(), taste: z.string().optional(), craftPack: z.enum(['off', 'edits', 'all']).optional(),
       // 19 Oct: per-route research for the experiment ('default' clears a route back to craftPack)
       researchRoutes: z.partialRecord(z.enum(['ideas', 'create', 'develop', 'rewrite', 'continue', 'title']), z.enum(['default', 'off', 'cards'])).optional(),
-      researchMaxCards: z.number().int().min(0).max(2).optional() }).parse(req.body);
+      researchMaxCards: z.number().int().min(0).max(2).optional(), songHistory: z.enum(['off', 'on']).optional() }).parse(req.body);
     return svc.updateSettings(b as Parameters<Service['updateSettings']>[0]);
   }));
   api.get('/receipts', h(async () => svc.receipts()));
@@ -258,6 +262,27 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
     return l;
   }));
   api.delete('/lessons/:id', h(async (req) => { await svc.lessons.remove(String(req.params.id)); return { ok: true }; }));
+  // The research test (trials.ts, 19 Oct 2026): real briefs, research off vs at most two cards; A/B fixed at creation.
+  const caseZ = z.discriminatedUnion('route', [
+    z.object({ id: z.string().max(40), route: z.literal('ideas'), direction: z.string().max(4000), genre: z.string().max(20), refId: z.string().max(40).nullable().optional() }),
+    z.object({ id: z.string().max(40), route: z.literal('develop'), ideaId: z.string().max(40), feedback: z.string().max(2000), keepTitle: z.boolean(), keepConcept: z.boolean(), keepLineIds: z.array(z.string().max(40)).max(12), changeLineIds: z.array(z.string().max(40)).max(12) }),
+    z.object({ id: z.string().max(40), route: z.literal('create'), text: z.string().max(8000), refId: z.string().max(40).nullable().optional() }),
+    z.object({ id: z.string().max(40), route: z.enum(['rewrite', 'continue']), setId: z.string().max(40) }),
+    z.object({ id: z.string().max(40), route: z.literal('title'), songId: z.string().max(40), ask: z.string().max(1000) }),
+  ]);
+  api.get('/trials', h(async () => trials.batches()));
+  api.post('/trials', h(async (req) => {
+    const b = z.object({ name: z.string().max(120), cases: z.array(caseZ).max(12), seed: z.number().int().optional(), repeatOf: z.string().max(40).optional() }).parse(req.body);
+    return trials.create(b as Parameters<Trials['create']>[0]);
+  }));
+  api.get('/trials/:batch', h(async (req) => trials.batch(String(req.params.batch))));
+  api.get('/trials/:batch/tally', h(async (req) => trials.tally(String(req.params.batch))));
+  api.post('/trial/:id/seen', h(async (req) => trials.seen(String(req.params.id))));
+  api.post('/trial/:id/vote', h(async (req) => {
+    const b = z.object({ pick: z.enum(['A', 'B', 'both', 'neither', 'skip']), spark: z.object({ A: z.boolean().optional(), B: z.boolean().optional() }).optional(), note: z.string().max(600).optional() }).parse(req.body);
+    return trials.vote(String(req.params.id), b);
+  }));
+
   // The taste test (taste.ts): cards one at a time, then what the writer heard; Keep files lessons.
   const answerZ = z.discriminatedUnion('kind', [
     z.object({ card: z.string().max(10), kind: z.literal('pair'), repeat: z.boolean().optional(), pick: z.enum(['a', 'b', 'neither']), ms: z.number().int().min(0).max(3_600_000) }),
@@ -271,7 +296,13 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
       songs: z.array(z.object({ id: z.string().max(40), mine: z.boolean() })).max(20).default([]), clientKey: key }).parse(req.body);
     return taste.read(b, b.clientKey ?? null);
   }));
-  api.post('/taste/keep', h(async (req) => { const b = z.object({ runId: z.string().max(40), keep: z.array(z.number().int().min(0).max(10)).max(10) }).parse(req.body); return taste.keep(b.runId, b.keep); }));
+  api.post('/taste/keep', h(async (req) => { const b = z.object({ runId: z.string().max(40), keep: z.array(z.number().int().min(0).max(10)).max(10), reject: z.array(z.number().int().min(0).max(10)).max(10).default([]) }).parse(req.body); return taste.keep(b.runId, b.keep, b.reject); }));
+  api.get('/taste/pending', h(async () => taste.pending()));
+  api.get('/taste/contrasts', h(async () => ({ pairs: taste.contrasts(), answers: await taste.contrastAnswers() })));
+  api.post('/taste/contrasts', h(async (req) => {
+    const b = z.object({ id: z.string().max(10), pick: z.enum(['a', 'b', 'both', 'neither']), wrongForSong: z.enum(['a', 'b']).nullable().optional(), reason: z.string().max(400).optional(), shown: z.array(z.enum(['a', 'b'])).length(2) }).parse(req.body);
+    return taste.answerContrast(b);
+  }));
   // What the writer has noticed about what he keeps (learning.ts)
   api.get('/learning', h(async () => ({ learned: await svc.learning.current(), outcomes: (await svc.learning.outcomes()).length, running: (await svc.db.query<{ id: string }>(`SELECT id FROM runs WHERE task='reflect' AND status='running' LIMIT 1`))[0]?.id ?? null })));
   api.post('/learning/reflect', h(async (req) => { const b = z.object({ clientKey: key }).parse(req.body ?? {}); const runId = await svc.learning.reflect(b.clientKey ?? null); if (!runId) throw new AppError(400, 'too_little', 'Not enough to learn from yet: see a few more ideas first.'); return { runId }; }));

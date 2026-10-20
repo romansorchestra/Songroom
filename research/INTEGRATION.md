@@ -50,7 +50,7 @@ plus, on the run row itself, `prompt_version` (e.g. `p2.2+cards/ws5`), `model`, 
 - a lookup can answer "several" and each becomes its own reference; one it can't identify is shown as unverified, not dropped;
 - the reference card shows each one separately, each with its own optional "What do you like about …?" field and its own "Not this one";
 - titles and names with a comma or "and" in them stay whole when the pack knows them (Tyler, the Creator; Good Luck, Babe!); anything the pack doesn't know is left to the lookup to split;
-- a profile's coverage travels with it ("These notes rest on: …").
+- a profile's coverage travels with it ("Coverage: Rests on …").
 
 ## Mechanics
 
