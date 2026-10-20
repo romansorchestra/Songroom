@@ -2,7 +2,7 @@
 
 Asked for by the 19 Oct commission, Phase D: for each of the 16 answers, the chain from answer to stored record to interpretation to his decision to any effect on the writing. Read from the live app (backup export and run `r_GaFSMf4O`), read-only.
 
-**Short version.** The 16 card answers are stored and change nothing by themselves. The writer's reading of them produced five findings; none was kept and none was turned down, so all five are **waiting** (Settings now shows them with Keep / Not me; before 19 Oct, "not kept" and "rejected" looked the same). The one thing from that session that does reach the writer is the two songs he marked **Mine**: they became voice examples, and every writing call since 19 Oct, 19:53 PT includes them ("Examples of lyrics Sam has written or kept").
+**Short version.** The 16 card answers are stored and change nothing by themselves. The writer's reading of them produced five findings. On 19 Oct none was kept or turned down; on 20 Oct, from Settings, he **kept four and turned one down** (finding 3, the "I'd rather X than Y" one). The four kept are standing lessons the writer reads with every request from 20 Oct, 16:22 PT. The one thing from that session that does reach the writer is the two songs he marked **Mine**: they became voice examples, and every writing call since 19 Oct, 19:53 PT includes them ("Examples of lyrics Sam has written or kept").
 
 ## The chain
 
@@ -10,20 +10,20 @@ Session of 19 Oct, 19:53 PT. Twelve pair answers (two of them repeats), four cho
 
 | # | Card | What it varied | His answer | Time | Reading that used it | Status | Effect on writing |
 |---|---|---|---|---|---|---|---|
-| 1 | i08 idea | relatable vs unusual setting | relatable | 20 s | 5 | waiting | none |
+| 1 | i08 idea | relatable vs unusual setting | relatable | 20 s | 5 | kept 20 Oct | yes, via finding 5 |
 | 2 | c04 chorus | plainspoken vs poetic | **poetic** | 12 s | — (not mentioned) | — | none |
-| 3 | f08 chorus | weakness guessed at line 2's ending | tapped "than" in line 2: "just not for me"; then "fair" to the guess | 22 s | 3 | waiting | none |
+| 3 | f08 chorus | weakness guessed at line 2's ending | tapped "than" in line 2: "just not for me"; then "fair" to the guess | 22 s | 3 | **turned down** 20 Oct | none |
 | 4 | t05 title | question vs statement | question | 5 s | — | — | none |
 | 5 | i01 idea | everyday vs high concept | everyday | 8 s | — | — | none |
-| 6 | t03 title | double meaning vs plain | double meaning | 8 s | 4 | waiting | none |
-| 7 | f03 chorus | weakness guessed at "destiny" | tapped "park": "wouldn't say it"; "fair" to the guess | 11 s | 2 | waiting | none |
+| 6 | t03 title | double meaning vs plain | double meaning | 8 s | 4 | kept 20 Oct | yes, via finding 4 |
+| 7 | f03 chorus | weakness guessed at "destiny" | tapped "park": "wouldn't say it"; "fair" to the guess | 11 s | 2 | kept 20 Oct | yes, via finding 2 |
 | 8 | c03 chorus | title first vs title last | title last | 20 s | — | — | none |
 | 9 | t06 title | "you"-led vs "I"-led | "I"-led | 9 s | — | — | none |
 | 10 | f10 chorus | weakness guessed at line 2 (telling what line 1 showed) | tapped "think" in that line (matches the guess) | 8 s | — (counted in the score as matching the guess) | — | none |
-| 11 | c05 chorus | specific odd detail vs general picture | general | 23 s | 5 | waiting | none |
+| 11 | c05 chorus | specific odd detail vs general picture | general | 23 s | 5 | kept 20 Oct | yes, via finding 5 |
 | 12 | i05 idea | familiar vs fresh angle | neither | 23 s | — | — | none |
-| 13 | k04 chorus | nothing planted | tapped "light": "forced rhyme" | 15 s | 1 | waiting | none |
-| 14 | t09 title | stock idiom vs fresh image | fresh image | 4 s | 4 | waiting | none |
+| 13 | k04 chorus | nothing planted | tapped "light": "forced rhyme" | 15 s | 1 | kept 20 Oct | yes, via finding 1 |
+| 14 | t09 title | stock idiom vs fresh image | fresh image | 4 s | 4 | kept 20 Oct | yes, via finding 4 |
 | 15 | i01 again | (repeat of 5) | **neither** (changed) | 8 s | — | — | none |
 | 16 | t05 again | (repeat of 4) | question (same) | 8 s | — | — | none |
 

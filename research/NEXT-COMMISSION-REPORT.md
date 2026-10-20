@@ -30,22 +30,22 @@ Tests: 114 automated (`npm test`), including production-parity checks for the te
 
 In his real use since 9 Oct (about 86 writer calls outside tests and previews), research reached the writer **3 times**: all Journal rewrites on "Tamagotchi" ("keep the rhythm, more bratty"), each with cards C15 and C17 under the default "precise edits only" setting. He kept one option from those sets. That is use, not evidence of help. Ideas, Create, Develop, Continue and Find the title have never had research in his use.
 
-The taste test's 16 answers changed nothing on their own; five findings are waiting for his call; the two songs he marked as his are in every prompt as voice examples since 19 Oct, 19:53 PT (`docs/TASTE-CHAIN.md`).
+The taste test's 16 answers changed nothing on their own. On 20 Oct he kept four of the five findings and turned one down ("I'd rather X than Y" isn't for you); the four are standing lessons the writer reads with every request from 20 Oct, 16:22 PT. The two songs he marked as his are in every prompt as voice examples since 19 Oct, 19:53 PT (`docs/TASTE-CHAIN.md`).
 
 ## 4. Demonstrated improvement
 
-**None yet.** The eight comparisons are written and waiting for his judgment. The only earlier evidence is the 10 Oct blind test: overall a wash (5 / 7 / 6, 4 none); the craft-notes version won 3 of the 4 precise-edit trials, a lean from a tiny sample with a possible position effect.
+**None.** Sam judged the eight on 20 Oct: research off **6**, research on **2**, no ties, no "neither", A and B picked equally often (4 / 4). Research lost all three Ideas briefs, the Journal rewrite, the continue and the title; it won Create and Develop, both cases where its cards were weak. Details: `research/eval/2026-10-19-research-test.md`. Earlier evidence: the 10 Oct blind test was a wash overall (5 / 7 / 6, 4 none), with the craft-notes version winning 3 of 4 precise-edit trials. The two tests now disagree on precise rewrites (3–0 for, then 0–1). A repeat of four cases with the sides swapped (`tb_q238hjgg`) is the next step before any default changes.
 
 ## Recommended default per task (today)
 
-| Task | Default | Status |
+| Task | Default | Status (20 Oct) |
 |---|---|---|
-| Ideas | off | unjudged |
-| Create | off | unjudged |
-| Develop an idea | off | unjudged |
-| Journal rewrite | on, as before (legacy "precise edits only": up to 2 cards, matching profiles, 1 teaching pair) | the 10 Oct lean; unjudged on the route-only pack |
-| Journal continue | off | unjudged |
-| Find the title | off | unjudged |
+| Ideas | off | research lost 3 of 3 |
+| Create | off | research won 1 of 1; repeat pending |
+| Develop an idea | off | research won 1 of 1; repeat pending |
+| Journal rewrite | on, as before (legacy "precise edits only") | mixed: won 3 of 4 on 10 Oct, lost 1 of 1 on 20 Oct; repeat pending, then decide |
+| Journal continue | off | research lost 1 of 1 |
+| Find the title | off | research lost 1 of 1 |
 | Hang | never | by design |
 | Song history (his earlier edits to the same song) | off | untested |
 | Expanded pack (pilot-1.3-candidate) | not loaded | untested |
@@ -55,7 +55,7 @@ Nothing changes until Sam's votes say so, and then only for the task they suppor
 ## Unresolved gaps
 
 - Retrieval misfires seen in the traces: matches on format words alone (E1 "good"; E4 and E8 the title tag), "falling in love… won't work out" read as a happy love song (E3), "in place of" read as a place (E5). Not tuned before the test, deliberately. If the votes on these don't favour research, fix retrieval before adding research.
-- The taste test's five findings are waiting; until he decides, the writer reads none of them.
+- His four kept taste lessons are live but untested: whether they make the writing better for him has not been compared.
 - Repaired pairs E05, E06 and E08 now explain their new sides; no pair has a judgment from Sam yet (five are offered in `#/taste/contrasts`).
 - Whole-song lyric access is paraphrase or partial everywhere; no audio anywhere.
 - The "Better For Her" outside session was not supplied; only the Songroom revisions are on record.
@@ -63,6 +63,6 @@ Nothing changes until Sam's votes say so, and then only for the task they suppor
 
 ## What the next commission should do first
 
-1. Read Sam's eight verdicts (`GET /api/trials/tb_XwF3_TE7/tally`), then repeat two or three of them (same frozen prompts, sides flipped: `POST /api/trials` with `repeatOf`) to see how much of any difference is just variation.
-2. Fix retrieval where the traces show misfires, and re-run only the affected cases.
-3. Only then compare pilot-1.2 with the pilot-1.3 candidate, everything else fixed; separately, test `songHistory` off/on.
+1. Read the repeat (`tb_q238hjgg`: E2, E4, E5, E6, sides swapped). If research loses the rewrite again, switch the rewrite default off (Settings → By task) and record it in `docs/DECISIONS.md`. If Create and Develop hold, test a few more of those; if they flip, call research neutral-to-negative for generation and stop there.
+2. Do not expand the research (pilot-1.3 stays parked) unless something above survives the repeat: the results so far say more research is not where the gains are.
+3. Spend the next effort on his own taste, which he is now giving (four kept findings, two voice examples): measure taste on vs off the same way, and add the cheap signals the handoff lists (a reason when he passes on an idea; ideas he loves kept as examples).

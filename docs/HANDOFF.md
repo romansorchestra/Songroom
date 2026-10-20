@@ -1,4 +1,4 @@
-# Handoff — 19 October 2026
+# Handoff — 20 October 2026
 
 Written so the next chat can carry on building without the old one. Read this, then
 `CLAUDE.md` (the rules), then whichever of `docs/PRODUCT_SPEC.md`, `docs/BUILD_STATUS.md`,
@@ -7,14 +7,12 @@ update it when the state changes.
 
 ## For Sam, in thirty seconds
 
-- Everything built so far is live. On 19 Oct the research commission was carried out: the
-  research is cleaner, every writing action can now be tested with or without it, and **eight of
-  your own briefs have been written both ways and are waiting for you to judge** (Settings →
-  Experiments → Research test, about ten minutes on the phone). Nothing about your normal writing
-  has changed, and nothing will until your votes say so.
-- You played the taste test on 19 Oct. Five things it heard are **waiting for your call** in
-  Settings → What you've told the writer (Keep / Not me). The two songs you marked as yours are
-  already in every prompt as examples of your voice.
+- You judged the research test on 20 Oct: **without research won 6 of 8**. Research won only
+  Create and Develop. Nothing has been switched on. A short repeat of four of them (same
+  briefs, sides swapped) is ready at Settings → Experiments → Research test; after that I set
+  the defaults.
+- You kept four of the five taste findings and turned one down; the four are now standing
+  instructions the writer reads every time.
 - To continue in a new chat, paste the block at the end of this file.
 
 ## What this is
@@ -54,10 +52,11 @@ has been shown to help (nothing yet). In short:
 4. **The research test** (`server/trials.ts`, `#/trials`): batch `tb_XwF3_TE7`, eight of his own
    briefs (`research/eval/2026-10-19-research-test.md`), research off vs at most two cards,
    everything else frozen; A/B balanced and fixed; conditions revealed when all are judged.
-   **Unjudged.** Read the result with `GET /api/trials/tb_XwF3_TE7/tally`; repeat a subset with
-   `POST /api/trials` and `repeatOf` (same prompts, sides flipped).
-5. **Taste** (`docs/TASTE-CHAIN.md`): what his 16 answers changed (nothing by themselves; five
-   findings waiting; two voice examples live). Findings are now kept / turned down / waiting.
+   **Judged 20 Oct: off 6, on 2** (on won Create and Develop; lost all Ideas, the rewrite,
+   continue, title). Repeat of E2/E4/E5/E6 with sides swapped: `tb_q238hjgg` (20 Oct), waiting
+   for him. Read with `GET /api/trials/<batch>/tally`.
+5. **Taste** (`docs/TASTE-CHAIN.md`): what his 16 answers changed (nothing by themselves; on 20
+   Oct he kept four findings as standing lessons and turned one down; two voice examples live). Findings are now kept / turned down / waiting.
    Five quick pairs at `#/taste/contrasts` (optional). His accepted edits per song:
    `GET /songs/:id/edits`; `songHistory` (off) would show them to the writer for that song.
 6. **Eight song records** (`research/SONGS-2026-10-19.md`) staged as `pilot-1.3-candidate` in
@@ -102,10 +101,11 @@ What I'd tell him, ranked. Bring him **one question at a time**, and say outrigh
 round, look at what he kept and what he marked "Not me" before choosing between B and C: if
 "Not me" lands on most findings, the cards need work before anything else.
 
-**Update 19 Oct:** he played one round and kept nothing (five findings now wait in Settings).
-The 19 Oct commission came first: its test is waiting for his votes. Next, in order: his eight
-verdicts → a small repeat → retrieval fixes where research lost → pilot-1.3 vs 1.2. B and C
-after that.
+**Update 20 Oct:** he kept four taste findings and turned one down. The research test went 6–2
+against research. Next: read the repeat (`tb_q238hjgg`); if research loses the rewrite again,
+switch it off there. Then stop investing in craft research for the writer and move to his own
+taste: B (a reason when he passes on an idea; ideas he loves kept as examples), measured the
+same way (taste on vs off on his own briefs).
 
 **A. Fill the empty levers (him, ten minutes, no build).** *(Superseded by the taste test.)* Settings → Voice: five to ten
 lyrics he's proud of, one line each on what the song was going for, and taste notes in his own
@@ -214,5 +214,5 @@ and update `docs/BUILD_STATUS.md` (and `DECISIONS.md` for a decision) in the sam
 ## Start the next chat with this
 
 ```
-Continue building Songroom (repo romansorchestra/Songroom). Read docs/HANDOFF.md and research/NEXT-COMMISSION-REPORT.md first and follow them. Check whether I've judged the research test (tb_XwF3_TE7); if I have, read the tally and tell me outright what it means and what to do next, one question at a time.
+Continue building Songroom (repo romansorchestra/Songroom). Read docs/HANDOFF.md and research/NEXT-COMMISSION-REPORT.md first and follow them. Check whether I've judged the repeat of the research test (tb_q238hjgg); if I have, read the tally, set the research defaults the evidence supports, then move on to the taste work — tell me outright what you did and what's next, one question at a time.
 ```

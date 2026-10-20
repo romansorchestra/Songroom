@@ -34,6 +34,25 @@ The card choices were computed before generation and are recorded per trial (`fr
 
 A, B, both good, neither, skip (separately), "I'd use something here" on either side, an optional reason. Every verdict is kept with its time; a changed answer is added, not overwritten.
 
-## Results
+## Results (Sam judged all eight on 20 Oct 2026)
 
-Unjudged as of 19 Oct. When he has judged: raw counts (on / off / both / neither / skip), sparks, A-vs-B position counts, failed checks, seconds and cost per output come from `GET /api/trials/tb_XwF3_TE7/tally`. Eight picks are a lean, not a finding; a repeat of a subset (same frozen prompts, sides flipped: `POST /api/trials` with `repeatOf`) follows the first judgments.
+| | Research off | Research on | Both | Neither | Skip |
+|---|---|---|---|---|---|
+| All eight | **6** | **2** | 0 | 0 | 0 |
+
+Position: A picked 4, B picked 4 (no sign of a side preference). "I'd use something here": one on each side. No reasons given. No failed engine checks on either side.
+
+| Case | Action | Research was | His pick | Spark |
+|---|---|---|---|---|
+| E1 | Ideas | B | off | — |
+| E2 | Ideas | A | off | — |
+| E3 | Ideas | A | off | — |
+| E4 | Develop an idea | B | **on** | — |
+| E5 | Create ("He and I") | A | **on** | on side |
+| E6 | Journal rewrite | B | off | — |
+| E7 | Journal continue | A | off | off side |
+| E8 | Find the title | B | off | — |
+
+Reading, plainly: research lost six of eight. It lost all three Ideas briefs, and it lost the Journal rewrite, which is the one place research is on by default today. It won the two cases where its cards were weak or misfired (E4, title tag only; E5, one card fired on "in place of"), and lost cases where the cards fitted the brief well (E6 rhythm, E7 pre-chorus). So how well the cards matched did not predict which side he picked, which points to ordinary variation between two writes as much as to the cards. Eight picks are a lean, not a finding.
+
+Next: a repeat of four (E2, E4, E5, E6) with the same frozen prompts and the sides swapped, batch `tb_q238hjgg` (20 Oct), before any default changes.
