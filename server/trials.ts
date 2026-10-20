@@ -231,7 +231,8 @@ export class Trials {
     let out: Output | null = null;
     const run = await this.svc.startRun({
       task: 'trial', threadId: null, songId: null, clientKey: `trial:${t.id}:${cond}`, effort: f.effort as never,
-      promptVersion: `${f.promptVersion}${cond === 'on' ? '+cards' : ''}`,
+      // same shape as production: p2.2+cards/ws5 (the first trial batch, 19 Oct, recorded p2.2/ws5+cards)
+      promptVersion: cond === 'on' ? f.promptVersion.replace(/^([^/]+)/, '$1+cards') : f.promptVersion,
       request: { trial: t.id, batch: t.batch, case: t.case_id, route: f.route, condition: cond, pack: cond === 'on' ? f.research : { ...f.research, mode: 'off', cards: [], reasons: [], block: '', hash: '' } },
       inputChars: f.system.length + user.length,
       exec: async (signal, model) => {

@@ -435,3 +435,4 @@ details.scraps .page-group { margin-top: 8px; }
 .trial-picks .primary { font-size: 18px; }
 .trial-under { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
 .trial-under .line { flex: 1 1 200px; }
+.lesson-list .btn { white-space: nowrap; }

@@ -10,17 +10,17 @@ Every writing action now asks for research through one function (`Service.resear
 
 | Action | API → writer task | Default today | "Notes only" sends | What the writer must still obey | Trace |
 |---|---|---|---|---|---|
-| Ideas (one at a time, Browse ten) | `/springboard/next`, `/browse/list` → spark, list | **off** (on only if craftPack = all) | ≤2 cards labelled `ideas` | his direction and genre; the engine-assigned subjects and title placements | fixture ✔; live: `TRACES.md` |
-| Ideas live check | `/springboard/preview` → preview | follows the Ideas setting; a check can ask for either | same | saves nothing | live: `TRACES.md` |
-| Create, a brief | `/messages` → write | **off** (only all) | ≤2 cards labelled `create`; the task is read from the brief | his brief; any song lyric; **the reference now arrives with its characteristics, coverage and what he likes**, not just a name line | fixture ✔ |
-| Develop an idea | `/ideas/:id/rework` → rework | **off** (never had research) | ≤2 cards labelled `develop`, chosen from his note with the idea as context | what he marked to keep comes back word for word (engine-enforced) | fixture ✔ |
-| Journal: Rewrite / Find a rhyme / Help with a selection | `/songs/:id/suggest` (replace) → suggest | **on** (legacy edits scope: ≤2 cards, matching pack profiles, 1 teaching pair) | ≤2 cards labelled `rewrite`, no pair, no profile | only the selected words change: the server rebuilds every line as prefix + proposal + suffix; locked lines cannot change | fixture ✔ |
-| Journal: Continue | `/songs/:id/suggest` (add) → suggest | **off** (only all) | ≤2 cards labelled `continue` | lines are added after the chosen line, never replacing one | fixture ✔ |
-| Journal: Find the title | `/songs/:id/titles` → titles | **off** (never had research) | ≤2 cards labelled `title` | the lyric he has written is the brief; no new concept is forced on it | fixture ✔ |
+| Ideas (one at a time, Browse ten) | `/springboard/next`, `/browse/list` → spark, list | **off** (on only if craftPack = all) | ≤2 cards labelled `ideas` | his direction and genre; the engine-assigned subjects and title placements | fixture ✔; live ✔ (`TRACES.md`) |
+| Ideas live check | `/springboard/preview` → preview | follows the Ideas setting; a check can ask for either | same | saves nothing | live ✔ `r_6Y0H6rUi` |
+| Create, a brief | `/messages` → write | **off** (only all) | ≤2 cards labelled `create`; the task is read from the brief | his brief; any song lyric; **the reference now arrives with its characteristics, coverage and what he likes**, not just a name line | fixture ✔; live ✔ (`TRACES.md`) |
+| Develop an idea | `/ideas/:id/rework` → rework | **off** (never had research) | ≤2 cards labelled `develop`, chosen from his note with the idea as context | what he marked to keep comes back word for word (engine-enforced) | fixture ✔; live ✔ (`TRACES.md`) |
+| Journal: Rewrite / Find a rhyme / Help with a selection | `/songs/:id/suggest` (replace) → suggest | **on** (legacy edits scope: ≤2 cards, matching pack profiles, 1 teaching pair) | ≤2 cards labelled `rewrite`, no pair, no profile | only the selected words change: the server rebuilds every line as prefix + proposal + suffix; locked lines cannot change | fixture ✔; live ✔ (`TRACES.md`) |
+| Journal: Continue | `/songs/:id/suggest` (add) → suggest | **off** (only all) | ≤2 cards labelled `continue` | lines are added after the chosen line, never replacing one | fixture ✔; live ✔ (`TRACES.md`) |
+| Journal: Find the title | `/songs/:id/titles` → titles | **off** (never had research) | ≤2 cards labelled `title` | the lyric he has written is the brief; no new concept is forced on it | fixture ✔; live ✔ (`TRACES.md`) |
 | Hang | `/hangs` → hang | **never**, whatever the switches say | nothing | every candidate is checked word for word against the transcript | fixture ✔ (no notes reach it) |
 | Earlier sessions' edit (no current screen) | `/songs/:id/edit` → edit | on (legacy edits scope) | not switchable | as before | — |
 
-"Fixture" traces are in `tests/research.test.ts`: with each action set to Notes only, the stand-in writer receives a prompt containing exactly the block the run recorded, with the chosen cards' text in it. That proves wiring, not better writing. Live traces are listed in `research/TRACES.md`.
+"Fixture" traces are in `tests/research.test.ts`: with each action set to Notes only, the stand-in writer receives a prompt containing exactly the block the run recorded, with the chosen cards' text in it. That proves wiring, not better writing. Real traces on the live build, one per route, are in `research/TRACES.md` (19 Oct).
 
 ## What "Notes only" leaves out, on purpose
 

@@ -1,4 +1,4 @@
-# Handoff — 18 October 2026
+# Handoff — 19 October 2026
 
 Written so the next chat can carry on building without the old one. Read this, then
 `CLAUDE.md` (the rules), then whichever of `docs/PRODUCT_SPEC.md`, `docs/BUILD_STATUS.md`,
@@ -7,12 +7,14 @@ update it when the state changes.
 
 ## For Sam, in thirty seconds
 
-- Everything built so far is live and checked on the real writer. Nothing is half-done.
-- On 16 Oct you asked how to make the app's **brain and taste** better. On 18 Oct you said
-  typing your taste into Settings was putting you off, and asked for a cleverer way. That is now
-  built: **the taste test** (three minutes of tapping, on Ideas as "Teach it your taste"). Until
-  you play a round, the writer still knows nothing you've said about your own taste. That one
-  round is the next step, and only you can take it.
+- Everything built so far is live. On 19 Oct the research commission was carried out: the
+  research is cleaner, every writing action can now be tested with or without it, and **eight of
+  your own briefs have been written both ways and are waiting for you to judge** (Settings →
+  Experiments → Research test, about ten minutes on the phone). Nothing about your normal writing
+  has changed, and nothing will until your votes say so.
+- You played the taste test on 19 Oct. Five things it heard are **waiting for your call** in
+  Settings → What you've told the writer (Keep / Not me). The two songs you marked as yours are
+  already in every prompt as examples of your voice.
 - To continue in a new chat, paste the block at the end of this file.
 
 ## What this is
@@ -31,55 +33,49 @@ and learns from what he keeps. The writer is Claude Opus 5.5 through his own API
 - Stack: Node 22 (`node:sqlite`), Express 5, Zod, React 19 + Vite, esbuild, Anthropic SDK with
   structured outputs. Deepgram for the hang's recordings.
 
-## State on 18 October
+## State on 19 October
 
-Shipped and seen working live, in order (details in `docs/BUILD_STATUS.md`):
+The 19 Oct commission ("next research and integration commission", after the research audit)
+is done as far as it can be without Sam's judgments. Read `research/NEXT-COMMISSION-REPORT.md`
+first: it separates what was built, what was learned, what the app has actually used and what
+has been shown to help (nothing yet). In short:
 
-1. **Lessons** (11–12 Oct): a note he sends with a rework becomes one standing instruction the
-   writer reads every time; scoped *standing* or *this session* (12 h), can supersede an
-   earlier one; listed and deletable in Settings. One lesson exists today, about the 'hall'
-   rhyme.
-2. **Ideas at hit scale** (12–13 Oct): subjects drawn from what actually charted (Spotify US
-   Top 50, Oct 2023–Oct 2026, `research/charts/`), concepts of one breath (≤25 words), the
-   title placed in the lines on purpose (opens / closes / in passing — `engine/hook.ts`),
-   checked and retried with the rhyme checker.
-3. **Learning** (13 Oct): every idea's fate is recorded (page / save / rework note / picked
-   from a list / left in a list / passed over); every ten ideas a `reflect` call writes what he
-   *goes for* and *passes on* into `taste.learned`, read with every request. Live today: three
-   "goes for" lines, **zero** "passes on", from 40 outcomes — the pass-over signal is silent
-   (see the open question).
-4. **Titles for the next section** (13 Oct): paste the lyric so far, get eight titles each with
-   the two lines they land in; Use this title. Checked on his real lyric.
-5. **The simplification** (14 Oct, his own plan): four destinations as bottom tabs — **Ideas**
-   (one idea at a time), **Create** (one brief → one result at a time, develops an idea, works
-   for a song), **Journal** (collection + New song; song page = title → draft → one Help field
-   → one suggestion → Scraps drawer), **Hang**. Old links still work. Live-checked at phone
-   size and desktop on 14 Oct.
-6. **The taste test** (18 Oct, `#/taste`, `server/taste.ts`): sixteen cards — pairs of titles,
-   choruses and song ideas that differ in one hidden way; choruses with a planted weakness to
-   tap (or none); two pairs back with the sides swapped — then "Is this you?" over his Journal
-   songs he wrote words into (Mine → a voice example). The engine scores caught / let through /
-   found his own / same call twice; one `taste` call (~25 s, ~5c) says what it heard as
-   leanings with counted evidence; Keep files each as a standing lesson (source `taste`, its own
-   block in the brief). Offered at the top of Ideas until the writer knows his taste; in Ideas' ⋯
-   menu and Settings → Your writing for good. `?preview=1` runs the real reading and saves
-   nothing: use it for every live check. Two preview rounds were played live on 18 Oct; **Sam
-   has not played a real round yet** (status: 0 sessions).
+1. **Pack pilot-1.2** (`research/pack/`, `research/CHANGELOG.md`): quotations checked against
+   raw pages, sources reconciled, claim / access / confidence / limits labelled separately,
+   room-only advice kept away from the writer, lopsided teaching pairs repaired, every profile
+   says what it rests on. Files keep every version; `latest()` loads the newest.
+2. **One research boundary** (`Service.research(route, …)`) for Ideas, Create, Develop,
+   Journal rewrite / continue and Find the title. Defaults are exactly as before (craft notes
+   only for precise rewrites). Settings → Writer → "By task (experiment)": Off / Notes only per
+   task, 0–2 cards. The Hang never gets notes. Each run records route, mode, ids, reasons, the
+   rendered block and its hash. Real traces: `research/TRACES.md`.
+3. **References**: "Noah Kahan, Sam Fender" keeps both (`engine/refsplit.ts`, lookup `ref2`);
+   Create sends the checked reference by id so its characteristics reach the writer.
+4. **The research test** (`server/trials.ts`, `#/trials`): batch `tb_XwF3_TE7`, eight of his own
+   briefs (`research/eval/2026-10-19-research-test.md`), research off vs at most two cards,
+   everything else frozen; A/B balanced and fixed; conditions revealed when all are judged.
+   **Unjudged.** Read the result with `GET /api/trials/tb_XwF3_TE7/tally`; repeat a subset with
+   `POST /api/trials` and `repeatOf` (same prompts, sides flipped).
+5. **Taste** (`docs/TASTE-CHAIN.md`): what his 16 answers changed (nothing by themselves; five
+   findings waiting; two voice examples live). Findings are now kept / turned down / waiting.
+   Five quick pairs at `#/taste/contrasts` (optional). His accepted edits per song:
+   `GET /songs/:id/edits`; `songHistory` (off) would show them to the writer for that song.
+6. **Eight song records** (`research/SONGS-2026-10-19.md`) staged as `pilot-1.3-candidate` in
+   `research/pack/candidates/` — **not loaded**; compare with pilot-1.2 only after the test.
+   The ballad slice examined "Someone You Loved", which Sam co-wrote.
 
-Last commits: the taste test (`0e6d3a6`, then the live-check fixes), `c763a4a` (live-check note
-for the four destinations), `ca4aece` (the four destinations).
+Earlier state (still true): lessons, ideas at hit scale, learning from outcomes, titles for the
+next section, the four destinations, the taste test — details in `docs/BUILD_STATUS.md`.
+
+Last commits: the commission (`e47676d` Phases A–B, `ce05e6d` Phases C–E, then the docs and
+traces), `def00f5` (taste test live check).
 
 Loose ends, none urgent:
-- The tab bar is meant to step aside while he types on his iPhone; only his phone can confirm
-  it does. Ask him.
-- Create's results go through the thread engine (`svc.sendMessage` / `writePrompt`), which has
-  no rhyme or title check; Ideas has both (`studio.checkOrRetry`).
-- One of his Journal songs has a pasted lyric as its title ("It's a chance I'm willing to take
-  take a a mistake…"); he can tap the title to fix it.
-- Settings → "What it's noticed" has not been looked at on a phone.
-- The taste test's bank is 38 hand-written cards, about two full rounds before cards repeat.
-  If he plays often, write more (same rules: original, one axis per pair, no charted titles —
-  the test checks) or have the writer draft cards for review. Never edit an answered card.
+- Retrieval misfires the traces show (format-word matches; "falling in love… won't work out"
+  read as happy love; "in place of" read as a place). Deliberately not tuned before the test;
+  fix after his votes if research loses on those cases.
+- The judging screen was checked on the stand-in only, so his first view is the recorded one.
+- Create's results have no rhyme or title check (Ideas has both, `studio.checkOrRetry`).
 - The Anthropic key in Render (named "New no10" in the Console) **expires 3 November 2026**.
   Rotate it per `docs/OPERATIONS.md` before then — he pastes the new key into Render himself.
 
@@ -89,14 +85,14 @@ Loose ends, none urgent:
 |---|---|---|---|
 | System core | `server/engine/prompts.ts` `PROMPT_VERSION=p2.2` | The writer's standing rules (rhyme words must belong in the scene, etc.) | Fixed text; bump the version to change it, keep old variants verbatim |
 | Idea template | `prompts.ts` `IDEA_TEMPLATE=ws5`, `sparkPromptV2` | One-breath concept, title placement, hit-scale examples | — |
-| Taste notes + voice | Settings → Your writing; `svc.tasteFor` → `tasteBlock` | His own words on his taste + up to four of his lyrics, read with every request | **Empty.** 0 characters of notes, 0 lyrics. The taste test's "Is this you?" fills the lyrics side by tapping |
-| Taste test | `server/taste.ts`, `engine/tasteBank.ts`, `#/taste` | Pairs on one hidden axis + planted weaknesses → findings he keeps → standing lessons (source `taste`) | Built 18 Oct; not yet played by him |
+| Taste notes + voice | Settings → Your writing; `svc.tasteFor` → `tasteBlock` | His own words on his taste + up to four of his lyrics, read with every request | 0 characters of notes; **2 lyrics** (marked his on the taste test, 19 Oct) |
+| Taste test | `server/taste.ts`, `engine/tasteBank.ts`, `#/taste`, `#/taste/contrasts` | Pairs on one hidden axis + guessed weak spots → findings he keeps (or turns down) → standing lessons (source `taste`) | 1 session (16 answers); 5 findings waiting, 0 kept |
 | Lessons | `server/engine/lessons.ts`, Settings → Lessons | One instruction per rework note; standing / session; supersedes | 1 lesson ('hall') |
 | Learned | `server/learning.ts`, Settings → What it's noticed | Reflects every 10 ideas on outcomes → goes for / passes on | 3 goes-for, 0 passes-on, basis 40 |
 | Subjects | `server/engine/barometer.ts` + `research/charts/` | Picks subjects by genre from what charted; `hitConcepts` = real charted situations given as examples | 1,225 songs classified |
-| Craft pack | `research/pack/`, `server/engine/pack.ts` | Retrievable cards/profiles/pairs on songwriting craft; a reference pulls the artist's verified profile | `sam_judgments.jsonl` holds his 22 blind votes |
+| Craft pack | `research/pack/`, `server/engine/pack.ts`, `Service.research` | Retrievable cards/profiles/pairs; per-task switch; a reference pulls the artist's verified profile | pilot-1.2 live (default: precise rewrites only); pilot-1.3-candidate staged; research test unjudged |
 | Checks | `engine/rhyme.ts`, `engine/hook.ts`, `shared/lyricShape.ts` | By-sound rhyme check, title placement, line shape; a failed check retries the lines once | Engine-side, no model cost |
-| Measuring | `server/evals.ts` (12 briefs), `server/experiments.ts` (blind A/B he votes on) | The only honest way to know a taste change helped | Rule: never tune prompts to unfinished blind votes |
+| Measuring | `server/evals.ts` (12 briefs), `server/experiments.ts` (blind 3-way), `server/trials.ts` (research test on his own briefs) | The only honest way to know a change helped | Rule: never tune prompts to unfinished blind votes |
 
 ## Sam's open question (16 Oct, by voice): "improve its brain and its taste"
 
@@ -105,6 +101,11 @@ What I'd tell him, ranked. Bring him **one question at a time**, and say outrigh
 **Update 18 Oct:** A is now the taste test (he didn't want to type it). Once he has played a
 round, look at what he kept and what he marked "Not me" before choosing between B and C: if
 "Not me" lands on most findings, the cards need work before anything else.
+
+**Update 19 Oct:** he played one round and kept nothing (five findings now wait in Settings).
+The 19 Oct commission came first: its test is waiting for his votes. Next, in order: his eight
+verdicts → a small repeat → retrieval fixes where research lost → pilot-1.3 vs 1.2. B and C
+after that.
 
 **A. Fill the empty levers (him, ten minutes, no build).** *(Superseded by the taste test.)* Settings → Voice: five to ten
 lyrics he's proud of, one line each on what the song was going for, and taste notes in his own
@@ -193,7 +194,7 @@ phone checks and reset to desktop after; the served bundle is
 
 **Commit style**: a plain-English subject that says what changed for him; end with
 ```
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Co-Authored-By: <the model named in this session's attribution reminder>
 Claude-Session: <the session link>
 ```
 and update `docs/BUILD_STATUS.md` (and `DECISIONS.md` for a decision) in the same commit.
@@ -213,5 +214,5 @@ and update `docs/BUILD_STATUS.md` (and `DECISIONS.md` for a decision) in the sam
 ## Start the next chat with this
 
 ```
-Continue building Songroom (repo romansorchestra/Songroom). Read docs/HANDOFF.md first and follow it. I've built the taste test; pick up at "Sam's open question" — check whether I've played a round yet, then tell me outright what to do next for the app's brain and taste, one question at a time.
+Continue building Songroom (repo romansorchestra/Songroom). Read docs/HANDOFF.md and research/NEXT-COMMISSION-REPORT.md first and follow them. Check whether I've judged the research test (tb_XwF3_TE7); if I have, read the tally and tell me outright what it means and what to do next, one question at a time.
 ```
