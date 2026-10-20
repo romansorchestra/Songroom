@@ -1,5 +1,7 @@
 # Songroom research — summary (pilot, 10 Oct 2026)
 
+> **Corrections, 19 Oct 2026.** The results table had labelled the ideas group "6 trials" (it has 8) and the text said the old prompt won "3 of 4 judged" on ideas (it is 3 of 6). Both are fixed below. The pack is now **pilot-1.2** (evidence hygiene: see `CHANGELOG.md`); the baseline before the 19 Oct commission is in `BASELINE-2026-10-19.md`, and how the app uses the research now is in `INTEGRATION.md`.
+
 Short version. The structured collection in `research/pack/` holds the detail; `INTEGRATION.md` says how the app uses it; `PLAN.md` has the audit.
 
 ## What was done
@@ -59,13 +61,13 @@ Every card and finding carries a label. 104 of 127 findings and 47 of 56 cards r
 | | A: old prompt p1.1 | B: corrected p2.0 | C: p2.0 + craft notes | none |
 |---|---|---|---|---|
 | Overall (22 trials) | 5 | 7 | 6 | 4 |
-| Ideas (6 trials) | 3 | 2 | 1 | 2 |
+| Ideas (8 trials) | 3 | 2 | 1 | 2 |
 | Lines (10 trials) | 2 | 4 | 2 | 2 |
 | Precise edits (4 trials) | 0 | 1 | 3 | 0 |
 
 Stars ("exceptional"): none on any output. Ties: none.
 
-Reading, stated plainly: **no version clearly wins overall.** 18 picks split 5/7/6 is a coin toss. Two things are more specific than that: (1) on the four precise-edit trials (rhythm-matched replacement, keep-the-rhyme) the craft-notes version was picked three times and the old prompt never, which matches where the cards are most concrete (stress, syllable templates, rhyme-as-a-dial); (2) on ideas the old prompt was picked most often (3 of 4 judged), which runs against the audit's expectation and is recorded as such. Both are leans from tiny samples. The "none" votes fall on the attitude-led second-line brief (both runs), the titles-only brief and the character-downfall brief: short attitude lines are where all three versions failed, which is the weakness Sam first reported.
+Reading, stated plainly: **no version clearly wins overall.** 18 picks split 5/7/6 is a coin toss. Two things are more specific than that: (1) on the four precise-edit trials (rhythm-matched replacement, keep-the-rhyme) the craft-notes version was picked three times and the old prompt never, which matches where the cards are most concrete (stress, syllable templates, rhyme-as-a-dial); (2) on ideas the old prompt was picked most often (3 of 6 judged), which runs against the audit's expectation and is recorded as such. Both are leans from tiny samples. The "none" votes fall on the attitude-led second-line brief (both runs), the titles-only brief and the character-downfall brief: short attitude lines are where all three versions failed, which is the weakness Sam first reported.
 
 Caveat that must travel with these numbers: 11 of the 18 picks were "option 1", although conditions were shuffled per trial. Either the first adequate option was taken or there is a position effect; a future run should randomise the display order per viewing, not only per trial, and a second judging pass on the same trials would show how stable the picks are.
 

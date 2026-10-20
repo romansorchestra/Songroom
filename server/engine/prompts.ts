@@ -241,17 +241,24 @@ export const WORKSPACE_TEMPLATE = 'ws1';
 /** ws5 (12 Oct): concepts at the scale of real hits (one-breath stances, shown examples), and what the writer has learned from what he keeps. */
 export const IDEA_TEMPLATE = 'ws5';
 
-export type RefForPrompt = { name: string; identity: string; source: string; characteristics: string[]; want: string; pastedText?: string };
+export type RefForPrompt = { name: string; identity: string; source: string; characteristics: string[]; want: string; pastedText?: string; coverage?: string };
 
-export function referenceBlock(refs: RefForPrompt[]): string {
-  if (!refs.length) return '';
-  return 'Reference he attached (use only the qualities he wants, or the obvious ones; write original lines; never imitate or quote):\n' + refs.map((r) => {
+/** The references themselves, one entry each (several when he named several). */
+export function referenceLines(refs: RefForPrompt[]): string {
+  return refs.map((r) => {
     if (r.pastedText) return `- Text he pasted as a reference (his to share; take qualities, never reuse lines):\n${r.pastedText}${r.want ? `\n  What he wants from it: ${r.want}` : ''}`;
     const lines = [`- ${r.name}${r.identity ? `: ${r.identity}` : ''} (${r.source})`];
     if (r.characteristics.length) lines.push(...r.characteristics.slice(0, 6).map((c) => `  · ${c}`));
+    // 19 Oct: what a profile actually rests on, so a whole artist isn't reduced to the few songs studied
+    if (r.coverage) lines.push(`  These notes rest on: ${r.coverage}`);
     if (r.want) lines.push(`  What he wants from it: ${r.want}`);
     return lines.join('\n');
   }).join('\n');
+}
+
+export function referenceBlock(refs: RefForPrompt[]): string {
+  if (!refs.length) return '';
+  return 'Reference he attached (use only the qualities he wants, or the obvious ones; write original lines; never imitate or quote):\n' + referenceLines(refs);
 }
 
 export function sparkPrompt(input: { direction: string; references: string; avoidTitles: string[]; count: number; craft?: string }): string {
@@ -346,6 +353,22 @@ Answer with one JSON object and nothing else:
 For "resolved" give exactly one candidate. For "ambiguous" give two to four. For "not_found" give none.`;
 }
 
+/** ref2 (19 Oct 2026): he may name more than one reference in one go ("Noah Kahan, Sam Fender").
+ *  Each is identified separately instead of the first silently standing in for all. ref1 above is kept verbatim. */
+export const REFERENCE_TEMPLATE = 'ref2';
+export function referencePromptV2(query: string): string {
+  return `He typed this as a reference for a song he's writing: "${query}"
+
+Identify exactly which artist, song or album he means. Names can be ambiguous (e.g. ADÉLA the Slovak singer vs Adele). If one clearly fits, resolve it. If several plausibly fit, list them. If you can't find it, say so.
+He may have named more than one reference (e.g. two artists separated by a comma or "and"). A band or a title that merely contains a comma or "and" is one reference.
+
+Answer with one JSON object and nothing else:
+{"status":"resolved"|"ambiguous"|"not_found"|"several",
+ "unfound":["only for several: names he typed that you could not identify"],
+ "candidates":[{"name":"...","kind":"artist"|"song"|"album","identity":"one line: who/what it is, year, key release","characteristics":["up to 5 short notes on how the writing works (stance, diction, humour, structure, title habits), only from what the sources say"]}]}
+For "resolved" give exactly one candidate. For "ambiguous" give two to four. For "not_found" give none. For "several" give one candidate for each distinct reference he named, in his order (two to four); leave out any you could not identify and list their names in "unfound".`;
+}
+
 // ---------------------------------------------------------------------------
 // ws2 — 11 Oct 2026. Sam, after using the springboard: the ideas were too high
 // concept ("would maybe work for deep country"), and one ("Tamagotchi") read as a
@@ -401,13 +424,14 @@ export function relinePrompt(input: { items: Array<{ index: number; title: strin
 export function reworkPrompt(input: {
   idea: { title: string; concept: string; lines: string[] };
   feedback: string; keepTitle: boolean; keepConcept: boolean; keepLines: string[]; changeLines: string[];
-  direction: string; shape: string; references: string; lessons?: string[];
+  direction: string; shape: string; references: string; lessons?: string[]; craft?: string;
 }): string {
   const blocks: string[] = [];
   blocks.push(`An idea he is reacting to:\nTitle: ${input.idea.title}\nConcept: ${input.idea.concept}\nLines:\n${input.idea.lines.map((l) => `- ${l}`).join('\n')}`);
   if (input.direction.trim()) blocks.push(`His general direction for ideas:\n${input.direction.trim()}`);
   if (input.references) blocks.push(input.references);
   if (input.shape) blocks.push(input.shape);
+  if (input.craft) blocks.push(input.craft); // research experiment only (19 Oct); absent by default
   const keep: string[] = [];
   if (input.keepTitle) keep.push('- the title, exactly');
   if (input.keepConcept) keep.push('- the concept, as it is');
@@ -478,7 +502,7 @@ export function hangPrompt(input: { title: string; transcript: string }): string
 // because there was no other way in. This is that way in: the song so far, and back come
 // titles the next section (usually the chorus) could land on, each with the lines it lands in.
 // ---------------------------------------------------------------------------
-export function titlesPrompt(input: { title: string; brief: string; lyrics: string; onPage: string[]; ask: string; references: string; context: string; avoid: string[]; hitConcepts: string }): string {
+export function titlesPrompt(input: { title: string; brief: string; lyrics: string; onPage: string[]; ask: string; references: string; context: string; avoid: string[]; hitConcepts: string; craft?: string }): string {
   const blocks: string[] = [];
   blocks.push(`Sam is mid-song and needs the title: the hook the next section (usually the chorus) lands on.${input.title ? ` Working title so far: "${input.title}".` : ''}`);
   if (input.brief.trim()) blocks.push(`His notes on the song (true facts about it):\n${input.brief.trim()}`);
@@ -487,6 +511,7 @@ export function titlesPrompt(input: { title: string; brief: string; lyrics: stri
   if (input.context) blocks.push(input.context);
   if (input.references) blocks.push(input.references);
   if (input.hitConcepts) blocks.push(input.hitConcepts);
+  if (input.craft) blocks.push(input.craft); // research experiment only (19 Oct); absent by default
   if (input.avoid.length) blocks.push(`Titles you have already offered for this song (don't repeat them or near-copies):\n${input.avoid.map((a) => `- ${a}`).join('\n')}`);
   blocks.push(`What he says he wants:\n${input.ask.trim() || 'The title for the next section.'}`);
   blocks.push(`How to answer

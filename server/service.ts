@@ -11,13 +11,33 @@ import { type Constraints, type Check, checkCandidate, extractConstraints, merge
 import { writeSchema, writeZ, editSchema, editZ, sunoSchema, sunoZ } from './engine/schemas.js';
 import { systemCore, PROMPT_VERSION, type PromptVariant, tasteBlock, writePrompt, editPrompt, sunoPrompt, type Turn, type VoiceExample, type SongContext } from './engine/prompts.js';
 import { type Writer, type Effort, type Usage, WriterError, costOf, worstCaseCost, RATES } from './engine/writer.js';
-import { type Pack, type PackTask, selectPack, renderPack, inferTask } from './engine/pack.js';
+import { type Pack, type PackTask, type Route, type Reason, ROUTES, selectPack, renderPack, inferTask, selectForRoute, renderCards } from './engine/pack.js';
+import { createHash } from 'node:crypto';
 import { Lessons } from './engine/lessons.js';
 import { hitConceptsNote } from './engine/barometer.js';
 import { Learning, learnedBlock } from './learning.js';
 
 /** How one request should be prompted. Experiments set this explicitly; normal use follows Settings. */
 export type PromptPlan = { variant: PromptVariant; pack: boolean };
+
+/** Research for one request, chosen per route (19 Oct 2026 commission, Phase B).
+ *  'default' keeps the behaviour from before 19 Oct (the craftPack scope); 'off' sends nothing;
+ *  'cards' sends at most researchMaxCards generator cards for that route, nothing else. */
+export type ResearchMode = 'default' | 'off' | 'cards';
+export type ResearchChoice = { mode: 'off' | 'cards'; maxCards?: number };
+export type CraftRecord = {
+  route: Route | null; mode: 'legacy' | 'off' | 'cards'; version: string;
+  cards: string[]; profiles: string[]; pair: string | null;
+  reasons?: Reason[]; considered?: number; task?: PackTask; maxCards?: number; block?: string; hash?: string;
+};
+export type Craft = { block: string; record: CraftRecord | null; tag: string };
+
+/** Which routes the pre-19-Oct craftPack scope switched on. Develop and titles never had research. */
+const LEGACY_ON: Record<Route, (scope: Settings['craftPack']) => boolean> = {
+  ideas: (c) => c === 'all', create: (c) => c === 'all', continue: (c) => c === 'all',
+  rewrite: (c) => c !== 'off', develop: () => false, title: () => false,
+};
+const hash12 = (t: string) => createHash('sha256').update(t).digest('hex').slice(0, 12);
 
 export class AppError extends Error {
   constructor(public status: number, public code: string, message: string, public extra?: Record<string, unknown>) { super(message); }
@@ -31,6 +51,9 @@ export type Settings = {
   monthlyCapUsd: number;
   taste: string;
   craftPack: 'off' | 'edits' | 'all';
+  /** Per-route override of craftPack for the research experiment; a missing route means 'default'. */
+  researchRoutes: Partial<Record<Route, 'off' | 'cards'>>;
+  researchMaxCards: number;
 };
 
 export type CraftScope = Settings['craftPack'];
@@ -46,6 +69,8 @@ const DEFAULTS: Settings = {
   // Research craft notes. 'edits' after the 10 Oct 2026 blind comparison: the notes won 3 of the
   // 4 judged edit trials and showed no lean on ideas or lines (see docs/DECISIONS.md).
   craftPack: 'edits',
+  researchRoutes: {},
+  researchMaxCards: 2,
 };
 
 const MAX_TOKENS = { write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 24000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000, list: 24000, reflect: 4000, titles: 10000, taste: 6000 };
@@ -59,11 +84,35 @@ export class Service {
 
   constructor(public db: Db, public writer: Writer | null, public pack: Pack | null = null) {}
 
-  /** Craft notes for one request: a few retrieved records rendered as one block, or nothing. */
-  craftFor(plan: PromptPlan, input: { text: string; brief?: string; reference?: string | null; task: PackTask }) {
-    if (!plan.pack || !this.pack) return { block: '', record: null as null | { version: string; cards: string[]; profiles: string[]; pair: string | null } };
+  /** Craft notes for one request: a few retrieved records rendered as one block, or nothing. (Legacy path.) */
+  craftFor(plan: PromptPlan, input: { text: string; brief?: string; reference?: string | null; task: PackTask }, route: Route | null = null): Craft {
+    if (!plan.pack || !this.pack) return { block: '', record: null, tag: '' };
     const sel = selectPack(this.pack, input);
-    return { block: renderPack(sel), record: { version: sel.version, cards: sel.cards.map((c) => c.id), profiles: sel.profiles.map((p) => p.id), pair: sel.pair?.id ?? null } };
+    const block = renderPack(sel);
+    return {
+      block, tag: '+pack',
+      record: { route, mode: 'legacy', version: sel.version, task: input.task, cards: sel.cards.map((c) => c.id), profiles: sel.profiles.map((p) => p.id), pair: sel.pair?.id ?? null, block, hash: hash12(block) },
+    };
+  }
+
+  /** The one research boundary every writing route goes through. An explicit plan (the 10 Oct
+   *  experiment) or choice (the 19 Oct experiment) wins; otherwise Settings decide per route. */
+  async research(route: Route, input: { text: string; brief?: string; reference?: string | null; task?: PackTask }, opts: { plan?: PromptPlan; choice?: ResearchChoice } = {}): Promise<Craft> {
+    const legacyTask: PackTask = input.task ?? (route === 'rewrite' ? 'edit' : route === 'continue' ? 'lines' : 'ideas');
+    if (opts.plan) return this.craftFor(opts.plan, { ...input, task: legacyTask }, route);
+    const s = await this.settings();
+    const set = s.researchRoutes?.[route];
+    const choice: ResearchChoice | null = opts.choice ?? (set ? { mode: set, maxCards: s.researchMaxCards } : null);
+    if (!choice) return this.craftFor({ variant: PROMPT_VERSION, pack: LEGACY_ON[route](s.craftPack) }, { ...input, task: legacyTask }, route);
+    const version = this.pack?.version ?? 'none';
+    if (choice.mode === 'off') return { block: '', tag: '', record: { route, mode: 'off', version, cards: [], profiles: [], pair: null } };
+    const max = choice.maxCards ?? s.researchMaxCards ?? 2;
+    const sel = selectForRoute(this.pack, route, input, max);
+    const block = renderCards(sel.cards);
+    return {
+      block, tag: '+cards',
+      record: { route, mode: 'cards', version: sel.version, task: sel.task, maxCards: max, cards: sel.cards.map((c) => c.id), profiles: [], pair: null, reasons: sel.reasons, considered: sel.considered, block, hash: hash12(block) },
+    };
   }
 
   /** Await all background runs (used by tests and graceful shutdown). */
@@ -97,6 +146,17 @@ export class Service {
       if ((k === 'dailyCapUsd' || k === 'monthlyCapUsd') && !(typeof v === 'number' && v >= 0 && v <= 5000)) throw new AppError(400, 'bad_cap', 'Cap must be between $0 and $5000.');
       if (k === 'taste' && !(typeof v === 'string' && v.length <= 8000)) throw new AppError(400, 'bad_taste', 'Taste notes are too long.');
       if (k === 'craftPack' && !CRAFT_SCOPES.includes(v as CraftScope)) throw new AppError(400, 'bad_flag', 'craftPack must be off, edits or all.');
+      if (k === 'researchMaxCards' && !(Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 2)) throw new AppError(400, 'bad_flag', 'researchMaxCards must be 0, 1 or 2.');
+      if (k === 'researchRoutes') {
+        if (!v || typeof v !== 'object' || Array.isArray(v)) throw new AppError(400, 'bad_flag', 'researchRoutes must be an object.');
+        const cur = { ...((await this.settings()).researchRoutes ?? {}) } as Record<string, string>;
+        for (const [r, m] of Object.entries(v as Record<string, unknown>)) {
+          if (!ROUTES.includes(r as Route) || !['default', 'off', 'cards'].includes(m as string)) throw new AppError(400, 'bad_flag', 'Each route is default, off or cards.');
+          if (m === 'default') delete cur[r]; else cur[r] = m as string;
+        }
+        await this.db.query(`INSERT INTO settings(key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`, [k, JSON.stringify(cur)]);
+        continue;
+      }
       await this.db.query(`INSERT INTO settings(key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`, [k, JSON.stringify(v)]);
     }
     return this.settings();
@@ -300,7 +360,9 @@ export class Service {
     return { title: song.title, brief: song.brief, lyrics: renderLyrics(rev.sections), sections: rev.sections, rev: song.current_rev, locks: song.locks ?? [] };
   }
 
-  async sendMessage(input: { threadId: string | null; songId?: string | null; text: string; reference?: string | null; focus?: string | null; clientKey: string | null; threadKind?: 'normal' | 'eval'; plan?: PromptPlan }) {
+  async sendMessage(input: { threadId: string | null; songId?: string | null; text: string; reference?: string | null; focus?: string | null; clientKey: string | null; threadKind?: 'normal' | 'eval'; plan?: PromptPlan;
+    /** 19 Oct: the checked reference's own entries (characteristics, coverage, what he wants), sent to the writer in place of the one-line summary. */
+    refId?: string | null; referenceDetail?: string | null; research?: ResearchChoice }) {
     const text = input.text.trim();
     if (!text) throw new AppError(400, 'empty', 'Type a request first.');
     if (text.length > 20000) throw new AppError(400, 'too_long', 'That message is too long.');
@@ -325,23 +387,23 @@ export class Service {
     const reference = input.reference?.trim() || null;
     const focus = input.focus?.trim() || null;
     await this.db.query(`INSERT INTO messages(id, thread_id, role, text, payload) VALUES ($1,$2,'user',$3,$4)`,
-      [userMsgId, threadId, text, JSON.stringify({ reference, focus })]);
+      [userMsgId, threadId, text, JSON.stringify(input.refId ? { reference, focus, refId: input.refId } : { reference, focus })]);
     await this.db.query(`UPDATE threads SET updated_at=now() WHERE id=$1`, [threadId]);
 
     const song = songId ? await this.songContext(songId) : null;
     const taste = await this.tasteFor(text + ' ' + (reference ?? ''));
     const s = await this.settings();
     const plan: PromptPlan = input.plan ?? { variant: PROMPT_VERSION, pack: s.craftPack === 'all' };
-    const craft = this.craftFor(plan, { text, brief: song?.brief, reference, task: inferTask(text, !!song) });
+    const craft = await this.research('create', { text, brief: song?.brief, reference, task: inferTask(text, !!song) }, { plan: input.plan, choice: input.research });
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
     // 14 Oct: Create uses this engine; an idea request gets the same hit-scale examples the Ideas screen gets
-    const user = writePrompt({ request: text, reference, turns, song, focus, craft: craft.block, variant: plan.variant, hitConcepts: /\b(idea|ideas|title|titles|concept|concepts|hook)\b/i.test(text) ? hitConceptsNote('all') : '' });
+    const user = writePrompt({ request: text, reference: input.referenceDetail?.trim() || reference, turns, song, focus, craft: craft.block, variant: plan.variant, hitConcepts: /\b(idea|ideas|title|titles|concept|concepts|hook)\b/i.test(text) ? hitConceptsNote('all') : '' });
     const det = extractConstraints(text);
     try {
       const run = await this.startRun({
         task: 'write', threadId, songId, clientKey: input.clientKey, effort: s.effortCreative,
-        promptVersion: plan.variant + (craft.record ? '+pack' : ''),
-        request: { text, reference, focus, songRev: song?.rev ?? null, pack: craft.record }, inputChars: system.length + user.length,
+        promptVersion: plan.variant + craft.tag,
+        request: { text, reference, refId: input.refId ?? null, focus, songRev: song?.rev ?? null, pack: craft.record }, inputChars: system.length + user.length,
         exec: async (signal, model) => {
           const r = await this.call('write', system, user, writeSchema, s.effortCreative, signal, model);
           const parsed = writeZ.safeParse(r.json);
@@ -614,7 +676,7 @@ export class Service {
     const taste = await this.tasteFor(instruction);
     const s = await this.settings();
     const plan: PromptPlan = input.plan ?? { variant: PROMPT_VERSION, pack: s.craftPack !== 'off' };
-    const craft = this.craftFor(plan, { text: instruction, brief: ctx.brief, task: 'edit' });
+    const craft = await this.research('rewrite', { text: instruction, brief: ctx.brief, task: 'edit' }, { plan: input.plan });
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
     const user = editPrompt({ request: instruction, song: ctx, annotated, targets: targetDescs, count, turns, craft: craft.block, variant: plan.variant });
     const userMsgId = newId('m_');
@@ -622,7 +684,7 @@ export class Service {
       [userMsgId, threadId, instruction, JSON.stringify({ selection: selectionText, edit: true })]);
     const run = await this.startRun({
       task: 'edit', threadId, songId, clientKey: input.clientKey, effort: s.effortEdit,
-      promptVersion: plan.variant + (craft.record ? '+pack' : ''),
+      promptVersion: plan.variant + craft.tag,
       request: { instruction, baseRev: ctx.rev, targets, pack: craft.record }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.call('edit', system, user, editSchema, s.effortEdit, signal, model);

@@ -240,7 +240,8 @@ export const suggestReplaceZ = z.object({ options: z.array(z.object({ targets: z
 export const suggestAddZ = z.object({ options: z.array(z.object({ lines: z.array(z.string()) })), update: updateZ, note: z.string() });
 
 export const referenceZ = z.object({
-  status: z.enum(['resolved', 'ambiguous', 'not_found']),
+  status: z.enum(['resolved', 'ambiguous', 'not_found', 'several']),
+  unfound: z.array(z.string()).default([]),
   candidates: z.array(z.object({
     name: z.string(), kind: z.string().default(''), identity: z.string().default(''),
     characteristics: z.array(z.string()).default([]),

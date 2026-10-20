@@ -1,13 +1,17 @@
 {
-  "pack_version": "pilot-1.1",
-  "built": "2026-10-10",
+  "pack_version": "pilot-1.2",
+  "built": "2026-10-19",
   "research_cutoff": "2026-10-10",
   "discovery_window": "2024-10-01..2026-10-10 plus enduring examples and Sam's references",
   "counts": {
     "sources": 552,
+    "sources_distinct_evidence_bearing": 104,
     "cards": 56,
+    "cards_for_generation": 48,
+    "cards_session_only": 8,
     "profiles": 16,
     "pairs": 16,
+    "pairs_repaired": 6,
     "sam_judgments": 22
   },
   "sources_by_access": {
@@ -25,5 +29,10 @@
   ],
   "audio": "none; all rhythmic/phonetic notes provisional",
   "lyrics_reproduced": "none beyond titles and identifying phrases",
-  "notes": "Pilot collection. cards/profiles/pairs are retrievable; sources is provenance only. See research/SUMMARY.md and INTEGRATION.md. pilot-1.1 (11 Oct): adds sam_judgments.jsonl (22 blind votes); no card changes."
+  "notes": "pilot-1.2 (19 Oct): evidence hygiene only, no new research. See research/CHANGELOG.md. pilot-1.1 (11 Oct) added sam_judgments.jsonl.",
+  "quotes": {
+    "verified_raw": 42,
+    "tool_extract_only": 53
+  },
+  "versioning": "cards/pairs/profiles hold every version; the app loads the highest version of each id. v1 lines are history."
 }

@@ -130,7 +130,8 @@ export function Create({ ideaId, songId }: { ideaId?: string | null; songId?: st
     const text = followUp ?? composed(brief);
     if (!text.trim()) return;
     try {
-      const r = await api<{ threadId: string; runId: string }>('POST', '/messages', { threadId, songId: threadId ? null : songId ?? null, text, reference: refText, clientKey: clientKey() });
+      // 19 Oct: the checked reference goes by id, so the writer gets its characteristics, not just this summary
+      const r = await api<{ threadId: string; runId: string }>('POST', '/messages', { threadId, songId: threadId ? null : songId ?? null, text, reference: refText, refId: ref && !ref.rejected ? ref.id : null, clientKey: clientKey() });
       if (!threadId) { setThreadId(r.threadId); if (!songId) localStorage.setItem('create.thread', r.threadId); }
       await follow(r.runId, r.threadId);
     } catch (e) { setErr((e as Error).message); }

@@ -7,6 +7,7 @@ import { MODELS, RATES } from './engine/writer.js';
 import { startBatch, latestResults, vote } from './evals.js';
 import { startExperiment, listExperiments, judge, tally } from './experiments.js';
 import { Studio } from './studio.js';
+import { referenceLines } from './engine/prompts.js';
 import { Hang, MAX_AUDIO_BYTES, MAX_TRANSCRIPT_CHARS } from './hang.js';
 import { Taste, WHY_CHOICES } from './taste.js';
 import type { Transcriber } from './engine/transcribe.js';
@@ -68,8 +69,10 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   api.delete('/threads/:id', h(async (req) => svc.deleteThread(String(req.params.id))));
   api.post('/messages', h(async (req) => {
     const b = z.object({ threadId: z.string().max(40).nullable().optional(), songId: z.string().max(40).nullable().optional(), text: z.string().max(20000),
-      reference: z.string().max(2000).nullable().optional(), focus: z.string().max(4000).nullable().optional(), clientKey: key }).parse(req.body);
-    return svc.sendMessage({ threadId: b.threadId ?? null, songId: b.songId ?? null, text: b.text, reference: b.reference, focus: b.focus, clientKey: b.clientKey ?? null });
+      reference: z.string().max(2000).nullable().optional(), refId: z.string().max(40).nullable().optional(), focus: z.string().max(4000).nullable().optional(), clientKey: key }).parse(req.body);
+    // 19 Oct: a checked reference reaches the writer with its characteristics, not just its name
+    const referenceDetail = b.refId ? referenceLines(await studio.refsForPrompt([b.refId])) || null : null;
+    return svc.sendMessage({ threadId: b.threadId ?? null, songId: b.songId ?? null, text: b.text, reference: b.reference, refId: b.refId ?? null, referenceDetail, focus: b.focus, clientKey: b.clientKey ?? null });
   }));
   api.get('/runs/:id', h(async (req) => svc.getRun(String(req.params.id))));
   api.post('/runs/:id/cancel', h(async (req) => svc.cancelRun(String(req.params.id))));
@@ -95,6 +98,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
       applyToNew: z.boolean().default(false), clientKey: key,
       preview: z.boolean().default(false), // the same call for checking the writer; saves nothing
       stay: z.boolean().default(false), // from Create: the Ideas screen keeps its idea
+      research: z.enum(['off', 'cards']).optional(), // 19 Oct: only with preview (a live check of the research experiment)
     }).parse(req.body);
     return studio.rework(String(req.params.id), { ...b, clientKey: b.clientKey ?? null });
   }));
@@ -148,7 +152,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   api.post('/springboard/next', h(async (req) => studio.sparkNext(z.object({ clientKey: key }).parse(req.body).clientKey ?? null)));
   api.post('/springboard/current', h(async (req) => studio.setCurrent(z.object({ ideaId: z.string().max(40) }).parse(req.body).ideaId)));
   api.post('/springboard/own', h(async (req) => { const b = z.object({ text: z.string().max(4000), clientKey: key }).parse(req.body); await studio.ownIdea(b.text, b.clientKey ?? null); return studio.springboard(); }));
-  api.post('/springboard/preview', h(async (req) => { const b = z.object({ genre: z.string().max(20).optional(), text: z.string().max(2000).optional(), clientKey: key, count: z.number().int().min(1).max(10).optional(), scope: z.enum(['all', 'relationship']).optional() }).parse(req.body); return studio.preview({ genre: b.genre, text: b.text, clientKey: b.clientKey ?? null, count: b.count, scope: b.scope }); }));
+  api.post('/springboard/preview', h(async (req) => { const b = z.object({ genre: z.string().max(20).optional(), text: z.string().max(2000).optional(), clientKey: key, count: z.number().int().min(1).max(10).optional(), scope: z.enum(['all', 'relationship']).optional(), research: z.enum(['off', 'cards']).optional() }).parse(req.body); return studio.preview({ genre: b.genre, text: b.text, clientKey: b.clientKey ?? null, count: b.count, scope: b.scope, research: b.research }); }));
   // Browse: ten titles at once (11 Oct, late)
   api.get('/browse', h(async () => studio.browse()));
   api.post('/browse/list', h(async (req) => { const b = z.object({ clientKey: key, scope: z.enum(['all', 'relationship']).optional() }).parse(req.body); return studio.startList({ clientKey: b.clientKey ?? null, scope: b.scope }); }));
@@ -232,8 +236,11 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   // Settings
   api.patch('/settings', h(async (req) => {
     const b = z.object({ model: z.string().optional(), effortCreative: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(), effortEdit: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(),
-      dailyCapUsd: z.number().optional(), monthlyCapUsd: z.number().optional(), taste: z.string().optional(), craftPack: z.enum(['off', 'edits', 'all']).optional() }).parse(req.body);
-    return svc.updateSettings(b);
+      dailyCapUsd: z.number().optional(), monthlyCapUsd: z.number().optional(), taste: z.string().optional(), craftPack: z.enum(['off', 'edits', 'all']).optional(),
+      // 19 Oct: per-route research for the experiment ('default' clears a route back to craftPack)
+      researchRoutes: z.partialRecord(z.enum(['ideas', 'create', 'develop', 'rewrite', 'continue', 'title']), z.enum(['default', 'off', 'cards'])).optional(),
+      researchMaxCards: z.number().int().min(0).max(2).optional() }).parse(req.body);
+    return svc.updateSettings(b as Parameters<Service['updateSettings']>[0]);
   }));
   api.get('/receipts', h(async () => svc.receipts()));
   api.get('/voice', h(async () => svc.voiceExamples()));

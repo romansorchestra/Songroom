@@ -6,19 +6,26 @@
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
+export type Route = 'ideas' | 'create' | 'develop' | 'rewrite' | 'continue' | 'title';
+export const ROUTES: Route[] = ['ideas', 'create', 'develop', 'rewrite', 'continue', 'title'];
+
 export type Card = {
   id: string; version: number; problem: string; technique: string; example: string;
   sources: string[]; findings?: string[]; evidence: string; effect: string;
   contexts: string[]; genres: string[]; tasks: string[]; when_not: string;
-  audio_caveat?: string; confidence: string; open_questions?: string; related?: string[];
+  audio_caveat?: string | null; confidence: string; open_questions?: string; related?: string[];
+  // pilot-1.2 labels (absent on v1 records).
+  claim_type?: string; applies_to?: 'generator' | 'session' | 'both'; routes?: Route[];
+  limits?: string; generator_technique?: string | null; active?: boolean;
 };
 export type Profile = {
-  id: string; name: string; aliases: string[]; resolved: string; sample: string[]; sources: string[];
+  id: string; version?: number; name: string; aliases: string[]; resolved: string; sample: string[]; sources: string[];
   characteristics: Array<{ text: string; evidence: string }>; variation: string; uncertain: string; related_cards?: string[];
+  coverage?: string; active?: boolean;
 };
 export type Pair = {
-  id: string; original?: boolean; kind?: string; brief: string; context: string; constraints: Record<string, unknown>;
-  a: string[]; b: string[]; tradeoff: string; analyst_view: string; links: string[]; use?: string;
+  id: string; version?: number; original?: boolean; kind?: string; brief: string; context: string; constraints: Record<string, unknown>;
+  a: string[]; b: string[]; tradeoff: string; analyst_view: string; links: string[]; use?: string; active?: boolean;
 };
 export type Pack = { version: string; built: string; cards: Card[]; profiles: Profile[]; pairs: Pair[] };
 
@@ -33,15 +40,31 @@ function readJsonl<T>(file: string): T[] {
   return readFileSync(file, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => JSON.parse(l) as T);
 }
 
+/** The files keep every version of a record (history is never deleted); the pack uses the
+ *  highest version of each id and leaves out records marked inactive. File order is kept. */
+export function latest<T extends { id: string; version?: number; active?: boolean }>(rows: T[]): T[] {
+  const best = new Map<string, T>();
+  for (const r of rows) { const b = best.get(r.id); if (!b || (r.version ?? 1) >= (b.version ?? 1)) best.set(r.id, r); }
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const r of rows) {
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+    const b = best.get(r.id)!;
+    if (b.active !== false) out.push(b);
+  }
+  return out;
+}
+
 export function loadPack(dir = path.resolve(process.cwd(), 'research', 'pack')): Pack | null {
   const manifest = path.join(dir, 'manifest.json');
   if (!existsSync(manifest)) return null;
   const m = JSON.parse(readFileSync(manifest, 'utf8')) as { pack_version?: string; built?: string };
   return {
     version: m.pack_version ?? 'unknown', built: m.built ?? '',
-    cards: readJsonl<Card>(path.join(dir, 'cards.jsonl')),
-    profiles: readJsonl<Profile>(path.join(dir, 'profiles.jsonl')),
-    pairs: readJsonl<Pair>(path.join(dir, 'pairs.jsonl')),
+    cards: latest(readJsonl<Card>(path.join(dir, 'cards.jsonl'))),
+    profiles: latest(readJsonl<Profile>(path.join(dir, 'profiles.jsonl'))),
+    pairs: latest(readJsonl<Pair>(path.join(dir, 'pairs.jsonl'))),
   };
 }
 
@@ -154,13 +177,17 @@ export function selectProfiles(pack: Pack, text: string, max = PACK_LIMITS.profi
   return hits.slice(0, max);
 }
 
-/** Pick a few records for one request. Returns an empty selection rather than guessing. */
+/** Cards that can be put in front of the generator: human co-writing process advice stays out. */
+function generatorCards(pack: Pack): Card[] { return pack.cards.filter((c) => c.applies_to !== 'session'); }
+
+/** Pick a few records for one request (the pre-19-Oct path, still used by the default settings).
+ *  Returns an empty selection rather than guessing. */
 export function selectPack(pack: Pack | null, input: { text: string; brief?: string; reference?: string | null; task: PackTask }, limits = PACK_LIMITS): PackSelection {
   if (!pack) return { version: 'none', cards: [], profiles: [], pair: null };
   const text = [input.text, input.brief ?? '', input.reference ?? ''].join('\n');
   const hintTags = hintTagsFor(text);
   const words = tokens(input.text);
-  const scored = pack.cards.map((c) => ({ c, s: scoreCard(c, hintTags, words, input.task) })).filter((x) => x.s >= limits.minScore).sort((a, b) => b.s - a.s);
+  const scored = generatorCards(pack).map((c) => ({ c, s: scoreCard(c, hintTags, words, input.task) })).filter((x) => x.s >= limits.minScore).sort((a, b) => b.s - a.s);
   const cards = scored.slice(0, limits.cards).map((x) => x.c);
   const profiles = selectProfiles(pack, [input.reference ?? '', input.text].join(' '), limits.profiles);
   let pair: Pair | null = null;
@@ -170,20 +197,53 @@ export function selectPack(pack: Pack | null, input: { text: string; brief?: str
   return { version: pack.version, cards, profiles, pair };
 }
 
+export type Reason = { id: string; score: number; tags: string[]; words: string[] };
+export type RouteSelection = { version: string; route: Route; task: PackTask; cards: Card[]; reasons: Reason[]; considered: number };
+
+/** What each screen's request counts as when cards are scored. */
+export const ROUTE_TASK: Record<Exclude<Route, 'create'>, PackTask> = { ideas: 'ideas', develop: 'ideas', rewrite: 'edit', continue: 'lines', title: 'ideas' };
+
+/** Route-aware selection for the experiment: only generator cards labelled for this route,
+ *  at most maxCards (0 allowed), no teaching pairs and no reference profiles (references
+ *  reach the writer by their own block, identically with research on or off). */
+export function selectForRoute(pack: Pack | null, route: Route, input: { text: string; brief?: string; reference?: string | null; task?: PackTask }, maxCards = PACK_LIMITS.cards): RouteSelection {
+  const task: PackTask = route === 'create' ? (input.task ?? 'unknown') : ROUTE_TASK[route];
+  if (!pack) return { version: 'none', route, task, cards: [], reasons: [], considered: 0 };
+  const pool = generatorCards(pack).filter((c) => !c.routes || c.routes.includes(route));
+  const n = Math.max(0, Math.min(PACK_LIMITS.cards, Math.floor(maxCards)));
+  const text = [input.text, input.brief ?? '', input.reference ?? ''].join('\n');
+  const hintTags = hintTagsFor(text);
+  const words = tokens(input.text);
+  const scored = pool.map((c) => ({ c, s: scoreCard(c, hintTags, words, task) })).filter((x) => x.s >= PACK_LIMITS.minScore).sort((a, b) => b.s - a.s).slice(0, n);
+  const reasons = scored.map(({ c, s }) => {
+    const own = tokens(`${c.problem} ${c.contexts.join(' ')}`);
+    return { id: c.id, score: Math.round(s * 10) / 10, tags: [...c.contexts, ...c.genres].filter((t) => hintTags.has(t)), words: [...words].filter((w) => own.has(w)).slice(0, 6) };
+  });
+  return { version: pack.version, route, task, cards: scored.map((x) => x.c), reasons, considered: pool.length };
+}
+
+const CARDS_HEAD = 'Craft notes from working writers (lenses, not rules; his instruction and his own lyric always win; never mention these notes; do not make the writing sound studied or demonstrate a technique):';
+const cardLine = (c: Card) => `- ${c.problem} → ${c.generator_technique || c.technique}${c.when_not ? ` Not when: ${c.when_not}` : ''}`;
+
 /** The block sent to the writer. Short, lens-shaped, never an instruction to copy. */
 export function renderPack(sel: PackSelection): string {
   if (!sel.cards.length && !sel.profiles.length) return '';
   const parts: string[] = [];
   if (sel.cards.length) {
-    parts.push('Craft notes from working writers (lenses, not rules; his instruction and his own lyric always win; never mention these notes; do not make the writing sound studied or demonstrate a technique):');
-    for (const c of sel.cards) parts.push(`- ${c.problem} → ${c.technique}${c.when_not ? ` Not when: ${c.when_not}` : ''}`);
+    parts.push(CARDS_HEAD);
+    for (const c of sel.cards) parts.push(cardLine(c));
   }
   if (sel.pair) {
     parts.push(`A teaching example (original, not from any song): ${sel.pair.brief}\nA: ${sel.pair.a.join(' / ')}\nB: ${sel.pair.b.join(' / ')}\nWhy: ${sel.pair.tradeoff}`);
   }
   for (const p of sel.profiles) {
     const chars = p.characteristics.slice(0, 5).map((x) => `  - ${x.text}`).join('\n');
-    parts.push(`About the reference "${p.name}" (observations to translate into qualities, never to imitate):\n  ${p.resolved}\n${chars}${p.variation ? `\n  Variation: ${p.variation}` : ''}${p.uncertain ? `\n  Uncertain: ${p.uncertain}` : ''}`);
+    parts.push(`About the reference "${p.name}" (observations to translate into qualities, never to imitate):\n  ${p.resolved}\n${chars}${p.variation ? `\n  Variation: ${p.variation}` : ''}${p.uncertain ? `\n  Uncertain: ${p.uncertain}` : ''}${p.coverage ? `\n  Rests on: ${p.coverage}` : ''}`);
   }
   return parts.join('\n\n');
+}
+
+/** Cards only (the experiment's research-on block). Empty when nothing was selected. */
+export function renderCards(cards: Card[]): string {
+  return cards.length ? [CARDS_HEAD, ...cards.map(cardLine)].join('\n\n') : '';
 }

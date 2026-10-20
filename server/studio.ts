@@ -10,10 +10,12 @@ import {
   buildReplacements, parseLiteral, literalReplacements, insertLines, EditError,
 } from './engine/lyrics.js';
 import { extractConstraints, mergeConstraints, containsWord, endsWithPhrase, startsWithPhrase, syllables, endWord, type Check } from './engine/validate.js';
+import { normRef, splitReference } from './engine/refsplit.js';
+import type { Profile } from './engine/pack.js';
 import { sparkSchema, sparkZ, relineSchema, relineZ, reworkSchema, reworkZ, moreLinesSchema, moreLinesZ, suggestReplaceSchema, suggestReplaceZ, suggestAddSchema, suggestAddZ, referenceZ, titlesSchema, titlesZ } from './engine/schemas.js';
 import {
   systemCore, PROMPT_VERSION, WORKSPACE_TEMPLATE, IDEA_TEMPLATE, sparkPromptV2, relinePrompt, reworkPrompt, moreLinesPrompt, titlesPrompt, suggestPrompt, contextBlock, referenceBlock,
-  REFERENCE_SYSTEM, referencePrompt, type RefForPrompt, type WorkspaceContext,
+  REFERENCE_SYSTEM, referencePromptV2, REFERENCE_TEMPLATE, type RefForPrompt, type WorkspaceContext,
 } from './engine/prompts.js';
 import { WriterError, type Usage } from './engine/writer.js';
 import { SUBJECTS, GENRES, genreFor, pickSubjects, shapeNote, hitConceptsNote, type SubjectScope } from './engine/barometer.js';
@@ -46,10 +48,11 @@ type StoredContext = {
 };
 type RefRow = {
   id: string; query: string; norm: string; status: string; name: string; kind: string; identity: string; want: string;
-  details: { characteristics?: string[]; sources?: Array<{ url: string; title: string }>; profileId?: string; text?: string; note?: string };
+  details: { characteristics?: string[]; sources?: Array<{ url: string; title: string }>; profileId?: string; text?: string; note?: string; coverage?: string; members?: string[]; unfound?: string[] };
   candidates: Array<{ name: string; kind: string; identity: string; characteristics: string[] }>; source: string; rejected: number; run_id: string | null;
   created_at: string; updated_at: string;
 };
+type RefView = Omit<RefRow, 'rejected'> & { rejected: boolean; members?: RefView[] };
 type SetItem = { replacements?: Replacement[]; diff?: Array<{ lineId: string; before: string; after: string }>; lines?: string[]; checks: Check[]; direct?: boolean };
 type SetRow = {
   id: string; song_id: string; run_id: string | null; base_rev: number; mode: 'replace' | 'add'; targets: { targets: Target[]; afterLineId: string | null };
@@ -57,9 +60,7 @@ type SetRow = {
   parent_id: string | null; created_at: string;
 };
 
-export function normRef(q: string): string {
-  return q.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
-}
+export { normRef };
 
 // genre joins the key only when set, so directions saved before it existed keep their key
 const stableDir = (d: Direction) => JSON.stringify(d.genre ? { text: d.text.trim(), refId: d.refId ?? null, genre: d.genre } : { text: d.text.trim(), refId: d.refId ?? null });
@@ -201,7 +202,7 @@ export class Studio {
     const genre = genreFor(direction.genre, direction.text);
     const subjects = pickSubjects(genre, SPARK_BATCH, recent.slice(0, 3).map((r) => r.subject ?? '').filter(Boolean));
     const hooks = assignHooks(SPARK_BATCH);
-    const craft = this.svc.craftFor(plan, { text: direction.text || 'song ideas', reference: refs.map((r) => r.name).join(', ') || null, task: 'ideas' });
+    const craft = await this.svc.research('ideas', { text: direction.text || 'song ideas', reference: refs.map((r) => r.name).join(', ') || null, task: 'ideas' });
     const taste = await this.svc.tasteFor(direction.text);
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
     const user = sparkPromptV2({
@@ -215,7 +216,7 @@ export class Studio {
     this.svc.track(this.svc.learning.maybeReflect().catch(() => null));
     const run = await this.svc.startRun({
       task: 'spark', threadId: null, songId: null, clientKey, effort: s.effortCreative,
-      promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${IDEA_TEMPLATE}`,
+      promptVersion: `${plan.variant}${craft.tag}/${IDEA_TEMPLATE}`,
       request: { direction, genre, subjects, hooks, prevCurrent, pack: craft.record, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('spark', system, user, sparkSchema, s.effortCreative, signal, model);
@@ -268,7 +269,7 @@ export class Studio {
    * board: nothing is saved as an idea, the run and its receipt are kept. (11 Oct: after live
    * tests left his app on a test idea with Diary pop switched on.)
    */
-  async preview(input: { genre?: string; text?: string; clientKey: string | null; count?: number; scope?: SubjectScope }) {
+  async preview(input: { genre?: string; text?: string; clientKey: string | null; count?: number; scope?: SubjectScope; research?: 'off' | 'cards' }) {
     if (!this.svc.writer) throw new AppError(503, 'no_writer', 'No writer is connected.');
     const s = await this.svc.settings();
     const genre = genreFor(input.genre, input.text ?? '');
@@ -278,10 +279,12 @@ export class Studio {
     const hooks = assignHooks(count);
     const taste = await this.svc.tasteFor(input.text ?? '');
     const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
-    const user = sparkPromptV2({ direction: input.text ?? '', genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: '', avoidTitles: [], subjects: subjects.map((k) => SUBJECTS[k]), hooks: hooks.map((h) => HOOK_NOTE[h]), shape: shapeNote(genre), relationshipOnly: scope === 'relationship', hitConcepts: hitConceptsNote(scope) });
+    // 19 Oct: the live check follows the Ideas screen's research setting, or the choice it is given
+    const craft = await this.svc.research('ideas', { text: input.text || 'song ideas', task: 'ideas' }, { choice: input.research ? { mode: input.research } : undefined });
+    const user = sparkPromptV2({ direction: input.text ?? '', genreLabel: GENRES.find((g) => g.id === genre)?.label ?? 'Pop', references: '', avoidTitles: [], subjects: subjects.map((k) => SUBJECTS[k]), hooks: hooks.map((h) => HOOK_NOTE[h]), shape: shapeNote(genre), relationshipOnly: scope === 'relationship', hitConcepts: hitConceptsNote(scope), craft: craft.block });
     const run = await this.svc.startRun({
       task: 'preview', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
-      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { preview: true, genre, text: input.text ?? '', subjects, hooks, scope, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
+      promptVersion: `${PROMPT_VERSION}${craft.tag}/${IDEA_TEMPLATE}`, request: { preview: true, genre, text: input.text ?? '', subjects, hooks, scope, pack: craft.record, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('preview', system, user, sparkSchema, s.effortCreative, signal, model);
         const parsed = sparkZ.safeParse(r.json);
@@ -319,7 +322,7 @@ export class Studio {
     const genre = genreFor(direction.genre, direction.text);
     const subjects = pickSubjects(genre, LIST_BATCH, [], Math.random, scope);
     const hooks = assignHooks(LIST_BATCH);
-    const craft = this.svc.craftFor(plan, { text: direction.text || 'song ideas', reference: refs.map((r) => r.name).join(', ') || null, task: 'ideas' });
+    const craft = await this.svc.research('ideas', { text: direction.text || 'song ideas', reference: refs.map((r) => r.name).join(', ') || null, task: 'ideas' });
     const taste = await this.svc.tasteFor(direction.text);
     const system = systemCore(plan.variant) + (taste ? `\n\n${taste}` : '');
     const user = sparkPromptV2({
@@ -331,7 +334,7 @@ export class Studio {
     this.svc.track(this.svc.learning.maybeReflect().catch(() => null));
     const run = await this.svc.startRun({
       task: 'list', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
-      promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${IDEA_TEMPLATE}`,
+      promptVersion: `${plan.variant}${craft.tag}/${IDEA_TEMPLATE}`,
       request: { direction, genre, scope, subjects, hooks, pack: craft.record, lessons: (await this.svc.lessons.list()).length }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('list', system, user, sparkSchema, s.effortCreative, signal, model);
@@ -432,7 +435,7 @@ export class Studio {
    * word (the engine puts it back if the writer drifts); the result becomes the idea on
    * screen, and Previous still reaches the one it came from.
    */
-  async rework(ideaId: string, input: { feedback: string; keepTitle: boolean; keepConcept: boolean; keepLineIds: string[]; changeLineIds: string[]; applyToNew: boolean; clientKey: string | null; preview?: boolean; stay?: boolean }) {
+  async rework(ideaId: string, input: { feedback: string; keepTitle: boolean; keepConcept: boolean; keepLineIds: string[]; changeLineIds: string[]; applyToNew: boolean; clientKey: string | null; preview?: boolean; stay?: boolean; research?: 'off' | 'cards' }) {
     if (input.clientKey) {
       const [r] = await this.db.query<{ id: string }>(`SELECT id FROM runs WHERE client_key=$1`, [input.clientKey]);
       if (r) return { runId: r.id };
@@ -457,18 +460,20 @@ export class Studio {
     const taste = await this.svc.tasteFor(direction.text);
     const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
     const lessons = await this.svc.lessons.list();
+    // research for developing an idea: his note first, the idea itself as context; never on by default
+    const craft = await this.svc.research('develop', { text: input.feedback || idea.title, brief: idea.concept, reference: refs.map((r) => r.name).join(', ') || null }, { choice: input.research && preview ? { mode: input.research } : undefined });
     const user = reworkPrompt({
       idea: { title: idea.title, concept: idea.concept, lines: idea.lines.map((l) => l.text) },
       feedback: input.feedback, keepTitle: input.keepTitle, keepConcept: input.keepConcept,
       keepLines: keepLines.map((l) => l.text), changeLines: changeLines.map((l) => l.text),
       direction: direction.text, shape: shapeNote(genreFor(direction.genre, direction.text)), references: referenceBlock(refs),
-      lessons: lessons.map((l) => l.text),
+      lessons: lessons.map((l) => l.text), craft: craft.block,
     });
     const prevCurrent = await this.kv<string | null>('sb.current', null);
     const run = await this.svc.startRun({
       task: preview ? 'preview' : 'rework', threadId: null, songId: null, clientKey: input.clientKey, effort: s.effortCreative,
-      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`,
-      request: { ideaId, feedback: input.feedback, keepTitle: input.keepTitle, keepConcept: input.keepConcept, keepLineIds: input.keepLineIds, changeLineIds: input.changeLineIds, lessons: lessons.length, preview },
+      promptVersion: `${PROMPT_VERSION}${craft.tag}/${IDEA_TEMPLATE}`,
+      request: { ideaId, feedback: input.feedback, keepTitle: input.keepTitle, keepConcept: input.keepConcept, keepLineIds: input.keepLineIds, changeLineIds: input.changeLineIds, lessons: lessons.length, preview, pack: craft.record },
       inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call(preview ? 'preview' : 'rework', system, user, reworkSchema, s.effortCreative, signal, model);
@@ -692,7 +697,7 @@ export class Studio {
   }
 
   // ------------------------------------------------------------ references
-  async ref(id: string): Promise<Omit<RefRow, 'rejected'> & { rejected: boolean }> {
+  async ref(id: string, depth = 0): Promise<RefView> {
     const [r] = await this.db.query<RefRow>(`SELECT * FROM refs WHERE id=$1`, [id]);
     if (!r) throw new AppError(404, 'not_found', 'Reference not found.');
     if (r.status === 'pending' && r.run_id) {
@@ -700,50 +705,65 @@ export class Studio {
       if (run.status !== 'running' && run.status !== 'succeeded') {
         await this.db.query(`UPDATE refs SET status='unavailable', details=$2, updated_at=$3 WHERE id=$1`,
           [id, JSON.stringify({ note: (run.error as { message?: string } | null)?.message ?? 'The lookup failed.' }), new Date().toISOString()]);
-        return this.ref(id);
+        return this.ref(id, depth);
       }
+    }
+    // 19 Oct: several references typed at once are one group; each member is its own reference.
+    if (r.status === 'group' && depth < 2) {
+      const members: RefView[] = [];
+      for (const m of r.details.members ?? []) { const x = await this.ref(m, depth + 1).catch(() => null); if (x && !x.rejected) members.push(x); }
+      const pending = members.some((m) => m.status === 'pending');
+      return { ...r, rejected: !!r.rejected, status: pending ? 'pending' : 'group', members };
     }
     return { ...r, rejected: !!r.rejected };
   }
 
-  /** Identify a reference: research pack → earlier lookup → web search → an honest "couldn't check". */
+  private async insertRef(query: string, fields: Partial<RefRow>) {
+    const id = newId('ref_');
+    const now = new Date().toISOString();
+    await this.db.query(`INSERT INTO refs(id, query, norm, status, name, kind, identity, details, candidates, source, run_id, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12)`,
+      [id, query, normRef(query), fields.status, fields.name ?? '', fields.kind ?? '', fields.identity ?? '', JSON.stringify(fields.details ?? {}), JSON.stringify(fields.candidates ?? []), fields.source ?? '', fields.run_id ?? null, now]);
+    return id;
+  }
+
+  private packRef(query: string, p: Profile) {
+    const pack = this.svc.pack!;
+    return this.insertRef(query, {
+      status: 'resolved', name: p.name, kind: 'artist', identity: p.resolved, source: `research pack ${pack.version}, checked ${pack.built || 'Oct 2026'}`,
+      details: { characteristics: p.characteristics.map((c) => `${c.text}${c.evidence === 'analytical_inference' ? ' (our reading)' : ''}`), profileId: p.id, ...(p.coverage ? { coverage: p.coverage } : {}) },
+    });
+  }
+
+  /** Identify a reference: research pack → earlier lookup → web search → an honest "couldn't check".
+   *  Several names in one go ("Noah Kahan, Sam Fender") become a group with one member each. */
   async resolveRef(queryRaw: string, clientKey: string | null) {
     const query = queryRaw.replace(/\r\n?/g, '\n').trim();
     if (!query) throw new AppError(400, 'empty', 'Type a reference first.');
     if (query.length > 8000) throw new AppError(400, 'too_long', 'That reference is too long; paste a verse or two.');
-    const norm = normRef(query);
-    const now = new Date().toISOString();
-    const insert = async (fields: Partial<RefRow>) => {
-      const id = newId('ref_');
-      await this.db.query(`INSERT INTO refs(id, query, norm, status, name, kind, identity, details, candidates, source, run_id, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12)`,
-        [id, query, norm, fields.status, fields.name ?? '', fields.kind ?? '', fields.identity ?? '', JSON.stringify(fields.details ?? {}), JSON.stringify(fields.candidates ?? []), fields.source ?? '', fields.run_id ?? null, now]);
-      return this.ref(id);
-    };
     // Pasted lyrics or notes: his own material to point at, never looked up.
-    if (query.includes('\n') || query.length > 160) return insert({ status: 'text', name: 'Pasted text', kind: 'text', source: 'pasted by you', details: { text: query } });
-    // The research pack's verified profiles (accents ignored).
+    if (query.includes('\n') || query.length > 160) return this.ref(await this.insertRef(query, { status: 'text', name: 'Pasted text', kind: 'text', source: 'pasted by you', details: { text: query } }));
     const pack = this.svc.pack;
-    if (pack) {
-      for (const p of pack.profiles) {
-        const names = [p.name, ...p.aliases].map(normRef).filter(Boolean);
-        const hit = names.find((n) => norm === n || new RegExp(`(^| )${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}( |$)`).test(norm));
-        if (hit) return insert({
-          status: 'resolved', name: p.name, kind: 'artist', identity: p.resolved, source: `research pack ${pack.version}, checked ${pack.built || 'Oct 2026'}`,
-          details: { characteristics: p.characteristics.map((c) => `${c.text}${c.evidence === 'analytical_inference' ? ' (our reading)' : ''}`), profileId: p.id },
-        });
-      }
-    }
-    // An earlier lookup he didn't reject.
-    const [cached] = await this.db.query<{ id: string }>(`SELECT id FROM refs WHERE norm=$1 AND rejected=0 AND status IN ('resolved','ambiguous') ORDER BY updated_at DESC LIMIT 1`, [norm]);
+    const split = pack && !/https?:\/\//i.test(query) ? splitReference(query, pack.profiles) : { profiles: [], rest: [query] };
+    if (split.profiles.length === 1 && !split.rest.length) return this.ref(await this.packRef(query, split.profiles[0]));
+    if (!split.profiles.length) return this.lookupRef(query, clientKey);
+    const members: string[] = [];
+    for (const p of split.profiles) members.push(await this.packRef(p.name, p));
+    if (split.rest.length) members.push((await this.lookupRef(split.rest.join(', '), clientKey)).id);
+    return this.ref(await this.insertRef(query, { status: 'group', kind: 'group', source: 'several references', details: { members } }));
+  }
+
+  /** An earlier lookup he didn't reject, or a web search, or an honest "couldn't check". */
+  private async lookupRef(query: string, clientKey: string | null): Promise<RefView> {
+    const norm = normRef(query);
+    const [cached] = await this.db.query<{ id: string }>(`SELECT id FROM refs WHERE norm=$1 AND rejected=0 AND status IN ('resolved','ambiguous','group') ORDER BY updated_at DESC LIMIT 1`, [norm]);
     if (cached) return this.ref(cached.id);
     const writer = this.svc.writer;
-    if (!writer?.live || !writer.search) return insert({ status: 'unavailable', source: 'no lookup available', details: { note: 'Songroom can’t look this up right now. Describe what you like about it instead.' } });
-    const refId = newId('ref_');
-    await this.db.query(`INSERT INTO refs(id, query, norm, status, source, created_at, updated_at) VALUES ($1,$2,$3,'pending','web search',$4,$4)`, [refId, query, norm, now]);
-    const user = referencePrompt(query);
+    if (!writer?.live || !writer.search) return this.ref(await this.insertRef(query, { status: 'unavailable', source: 'no lookup available', details: { note: 'Songroom can’t look this up right now. Describe what you like about it instead.' } }));
+    const refId = await this.insertRef(query, { status: 'pending', source: 'web search' });
+    const user = referencePromptV2(query);
     const run = await this.svc.startRun({
       task: 'reference', threadId: null, songId: null, clientKey, effort: 'medium',
-      promptVersion: 'ref1', request: { query }, inputChars: REFERENCE_SYSTEM.length + user.length + 30000,
+      promptVersion: REFERENCE_TEMPLATE, request: { query }, inputChars: REFERENCE_SYSTEM.length + user.length + 30000,
       exec: async (signal, model) => {
         const r = await writer.search!({ system: REFERENCE_SYSTEM, user, effort: 'medium', maxTokens: 6000, model, signal, maxUses: 4 });
         const m = r.text.match(/\{[\s\S]*\}/);
@@ -753,13 +773,24 @@ export class Studio {
         return { result: { ...parsed, sources: r.sources.slice(0, 8) } as unknown as Record<string, unknown>, usage: r.usage, requestId: r.requestId, model: r.model, live: true };
       },
       onSuccess: async (_runId, result) => {
-        const out = result as unknown as { status: string; candidates: RefRow['candidates']; sources: Array<{ url: string; title: string }> };
-        const one = out.status === 'resolved' && out.candidates[0];
+        const out = result as unknown as { status: string; unfound?: string[]; candidates: RefRow['candidates']; sources: Array<{ url: string; title: string }> };
+        const now = new Date().toISOString();
+        if (out.status === 'several' && out.candidates.length + (out.unfound?.length ?? 0) >= 2) {
+          const members: string[] = [];
+          for (const c of out.candidates.slice(0, 4)) members.push(await this.insertRef(c.name, {
+            status: 'resolved', name: c.name, kind: c.kind, identity: c.identity, source: 'web search',
+            details: { characteristics: c.characteristics.map((x) => `${x} (from web sources)`), sources: out.sources },
+          }));
+          for (const u of (out.unfound ?? []).slice(0, 4)) members.push(await this.insertRef(u, { status: 'not_found', source: 'web search', details: { note: 'The lookup could not identify this one.' } }));
+          await this.db.query(`UPDATE refs SET status='group', kind='group', details=$2, updated_at=$3 WHERE id=$1`, [refId, JSON.stringify({ members, sources: out.sources }), now]);
+          return;
+        }
+        const one = (out.status === 'resolved' || out.status === 'several') && out.candidates[0];
         await this.db.query(`UPDATE refs SET status=$2, name=$3, kind=$4, identity=$5, details=$6, candidates=$7, updated_at=$8 WHERE id=$1`, [
           refId, one ? 'resolved' : out.status === 'ambiguous' && out.candidates.length ? 'ambiguous' : 'not_found',
           one ? one.name : '', one ? one.kind : '', one ? one.identity : '',
           JSON.stringify({ characteristics: one ? one.characteristics.map((c) => `${c} (from web sources)`) : [], sources: out.sources }),
-          JSON.stringify(out.candidates.slice(0, 4)), new Date().toISOString(),
+          JSON.stringify(out.candidates.slice(0, 4)), now,
         ]);
       },
     });
@@ -791,14 +822,18 @@ export class Studio {
     return this.ref(id);
   }
 
-  async refsForPrompt(ids: string[]): Promise<RefForPrompt[]> {
+  async refsForPrompt(ids: string[], depth = 0): Promise<RefForPrompt[]> {
     const out: RefForPrompt[] = [];
     for (const id of ids) {
       const [r] = await this.db.query<RefRow>(`SELECT * FROM refs WHERE id=$1 AND rejected=0`, [id]);
       if (!r) continue;
+      if (r.status === 'group') { if (depth < 2) out.push(...(await this.refsForPrompt(r.details.members ?? [], depth + 1))); continue; }
       if (r.status === 'text') out.push({ name: 'Pasted text', identity: '', source: 'pasted', characteristics: [], want: r.want, pastedText: r.details.text ?? r.query });
-      else if (r.status === 'resolved') out.push({ name: r.name, identity: r.identity, source: r.source, characteristics: r.details.characteristics ?? [], want: r.want });
-      else out.push({ name: r.query, identity: 'not verified: Songroom could not identify this reference', source: 'unverified', characteristics: [], want: r.want });
+      else if (r.status === 'resolved') {
+        // A pack reference resolved before 19 Oct has no coverage stored: take it from the pack now.
+        const coverage = r.details.coverage ?? (r.details.profileId ? this.svc.pack?.profiles.find((p) => p.id === r.details.profileId)?.coverage : undefined);
+        out.push({ name: r.name, identity: r.identity, source: r.source, characteristics: r.details.characteristics ?? [], want: r.want, ...(coverage ? { coverage } : {}) });
+      } else out.push({ name: r.query, identity: 'not verified: Songroom could not identify this reference', source: 'unverified', characteristics: [], want: r.want });
     }
     return out;
   }
@@ -914,15 +949,17 @@ export class Studio {
     const view = ws.context;
     const taste = await this.svc.tasteFor(`${input.ask} ${String((ws as Record<string, unknown>).title ?? '')}`);
     const system = systemCore(PROMPT_VERSION) + (taste ? `\n\n${taste}` : '');
+    // research for a title: what he asked and the song's notes; never on by default
+    const craft = await this.svc.research('title', { text: input.ask || 'a title for the next section', brief: String((ws as Record<string, unknown>).brief ?? ''), reference: refs.map((r) => r.name).join(', ') || null });
     const user = titlesPrompt({
       title: String((ws as Record<string, unknown>).title ?? ''), brief: String((ws as Record<string, unknown>).brief ?? ''), lyrics, onPage, ask: input.ask, references: referenceBlock(refs),
-      context: contextBlock({ meaning: view.meaning, narrator: view.narrator, rhyme: null, rhythm: null }), avoid, hitConcepts: hitConceptsNote('all'),
+      context: contextBlock({ meaning: view.meaning, narrator: view.narrator, rhyme: null, rhythm: null }), avoid, hitConcepts: hitConceptsNote('all'), craft: craft.block,
     });
     const setId = newId('t_');
     await this.db.query(`INSERT INTO title_sets(id, song_id, ask, status, client_key) VALUES ($1,$2,$3,'running',$4)`, [setId, songId, input.ask.trim().slice(0, 300), input.clientKey]);
     const run = await this.svc.startRun({
       task: 'titles', threadId: null, songId, clientKey: null, effort: s.effortCreative,
-      promptVersion: `${PROMPT_VERSION}/${IDEA_TEMPLATE}`, request: { ask: input.ask, setId, avoid: avoid.length }, inputChars: system.length + user.length,
+      promptVersion: `${PROMPT_VERSION}${craft.tag}/${IDEA_TEMPLATE}`, request: { ask: input.ask, setId, avoid: avoid.length, pack: craft.record }, inputChars: system.length + user.length,
       exec: async (signal, model) => {
         const r = await this.svc.call('titles', system, user, titlesSchema, s.effortCreative, signal, model);
         const parsed = titlesZ.safeParse(r.json);
@@ -1055,7 +1092,7 @@ export class Studio {
     const s = await this.svc.settings();
     // Replacements count as precise edits (notes on by default); added lines follow the 'all' scope.
     const plan: PromptPlan = { variant: PROMPT_VERSION, pack: mode === 'replace' ? s.craftPack !== 'off' : s.craftPack === 'all' };
-    const craft = this.svc.craftFor(plan, { text: instruction, brief: ctx.brief, reference: refs.map((r) => r.name).join(', ') || null, task: mode === 'replace' ? 'edit' : 'lines' });
+    const craft = await this.svc.research(mode === 'replace' ? 'rewrite' : 'continue', { text: instruction, brief: ctx.brief, reference: refs.map((r) => r.name).join(', ') || null, task: mode === 'replace' ? 'edit' : 'lines' });
     const targetDescs = targets.map((t, i) => {
       const line = findLine(ctx.sections, t.lineId)!;
       return { id: `T${i + 1}`, describe: t.kind === 'line' ? `the whole line “${line.text}”` : `only the words “${t.expected}” in the line “${line.text}” (keep “${line.text.slice(0, t.start)}” before and “${line.text.slice(t.end)}” after)` };
@@ -1070,7 +1107,7 @@ export class Studio {
     const det = extractConstraints(instruction);
     const run = await this.svc.startRun({
       task: 'suggest', threadId: null, songId, clientKey: input.clientKey, effort: s.effortEdit,
-      promptVersion: `${plan.variant}${craft.record ? '+pack' : ''}/${WORKSPACE_TEMPLATE}`,
+      promptVersion: `${plan.variant}${craft.tag}/${WORKSPACE_TEMPLATE}`,
       request: { setId, instruction, baseRev: ctx.rev, mode, targets, afterLineId, context: wctx, refs: nextCtx.refIds ?? [], pack: craft.record },
       inputChars: system.length + user.length,
       exec: async (signal, model) => {

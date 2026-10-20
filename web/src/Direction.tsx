@@ -7,17 +7,64 @@ import { api, clientKey } from './api';
 import { Pending } from './paper';
 
 export type Ref = {
-  id: string; query: string; status: 'pending' | 'resolved' | 'ambiguous' | 'not_found' | 'unavailable' | 'text'; name: string; identity: string; want: string;
+  id: string; query: string; status: 'pending' | 'resolved' | 'ambiguous' | 'not_found' | 'unavailable' | 'text' | 'group'; name: string; identity: string; want: string;
   source: string; rejected: boolean;
-  details: { characteristics?: string[]; sources?: Array<{ url: string; title: string }>; note?: string; text?: string };
+  details: { characteristics?: string[]; sources?: Array<{ url: string; title: string }>; note?: string; text?: string; coverage?: string };
   candidates: Array<{ name: string; kind: string; identity: string }>;
+  /** 19 Oct: several references typed at once ("Noah Kahan, Sam Fender"), one member each. */
+  members?: Ref[];
 };
+
+/** A group's members, flattened (a looked-up part can itself be several). */
+export function refMembers(r: Ref): Ref[] {
+  return r.status === 'group' || r.members ? (r.members ?? []).flatMap((m) => (m.members ? refMembers(m) : [m])) : [r];
+}
 
 export function refSummary(r: Ref | null | undefined): string {
   if (!r || r.rejected) return '';
+  if (r.members) return refMembers(r).map((m) => refSummary(m)).filter(Boolean).join(', ');
   if (r.status === 'resolved') return r.name;
   if (r.status === 'text') return 'pasted text';
   return `${r.query} (unverified)`;
+}
+
+/** One reference inside the card: what it was identified as, or an honest "couldn't". */
+function RefBody({ r, onChoose }: { r: Ref; onChoose: (i: number) => void }) {
+  return <>
+    {r.status === 'pending' && <Pending text={`Looking up “${r.query}”…`} />}
+    {r.status === 'resolved' && <>
+      <div className="name">{r.name}</div>
+      <div>{r.identity}</div>
+      {!!r.details.characteristics?.length && <ul>{r.details.characteristics.slice(0, 4).map((c, i) => <li key={i}>{c}</li>)}</ul>}
+      {r.details.coverage && <div className="small muted">These notes rest on: {r.details.coverage}</div>}
+      <div className="small muted">From {r.source}.{r.details.sources?.length ? ' Sources: ' : ''}
+        {r.details.sources?.slice(0, 3).map((s, i) => <span key={s.url}>{i ? ', ' : ''}<a href={s.url} target="_blank" rel="noreferrer">{s.title.slice(0, 40)}</a></span>)}
+      </div>
+    </>}
+    {r.status === 'ambiguous' && <>
+      <div>Which “{r.query}” do you mean?</div>
+      {r.candidates.map((c, i) => (
+        <button type="button" key={i} className="list-btn" onClick={() => onChoose(i)}><span className="t">{c.name}</span><small>{c.identity}</small></button>
+      ))}
+    </>}
+    {(r.status === 'not_found' || r.status === 'unavailable') && <>
+      <div><b>“{r.query}”</b>: couldn’t identify this{r.details.note ? `. ${r.details.note}` : '.'}</div>
+      <div className="small muted">It will be used as an unverified name. Say what you like about it below so the writer works from that, not a guess.</div>
+    </>}
+    {r.status === 'text' && <div>Your pasted lines, used as a reference (not looked up).</div>}
+  </>;
+}
+
+/** What he likes about one reference, saved on leaving the field. Optional. */
+function WantField({ r, onSaved }: { r: Ref; onSaved: () => void }) {
+  const [want, setWant] = useState(r.want ?? '');
+  useEffect(() => { setWant(r.want ?? ''); }, [r.id]);
+  async function save() { if (want === r.want) return; await api('PATCH', `/references/${r.id}`, { want }).catch(() => {}); onSaved(); }
+  return (
+    <label className="fld">What do you like about {r.status === 'resolved' ? r.name : 'it'}? (optional)
+      <input className="line" value={want} onChange={(e) => setWant(e.target.value)} onBlur={save} placeholder="e.g. bratty asides, luxury brags, chantable hook" />
+    </label>
+  );
 }
 
 /** Look up and confirm one reference. Calls onChange with the confirmed (or unverified) ref, or null. */
@@ -63,6 +110,23 @@ export function RefChecker({ value, onChange }: { value: Ref | null; onChange: (
     const r = await api<Ref>('PATCH', `/references/${ref.id}`, { want }); setRef(r); onChange(r);
   }
 
+  async function reload() {
+    if (!ref) return;
+    const r = await api<Ref>('GET', `/references/${ref.id}`).catch(() => null);
+    if (r) { setRef(r); onChange(r); }
+  }
+  async function rejectMember(m: Ref) {
+    await api('POST', `/references/${m.id}/reject`).catch(() => {});
+    const left = ref ? refMembers(ref).filter((x) => x.id !== m.id) : [];
+    if (!left.length) { await reject(); return; }
+    await reload();
+  }
+  async function chooseMember(m: Ref, i: number) {
+    await api<Ref>('POST', `/references/${m.id}/choose`, { index: i }).catch(() => {});
+    await reload();
+  }
+
+  const group = !!ref?.members;
   return (
     <div>
       {(!ref || ref.rejected) && (
@@ -74,34 +138,30 @@ export function RefChecker({ value, onChange }: { value: Ref | null; onChange: (
         </label>
       )}
       {err && <div className="status err" role="alert">{err}</div>}
-      {ref && !ref.rejected && (
+      {ref && !ref.rejected && !group && (
         <div className="ref-card" aria-live="polite">
-          {ref.status === 'pending' && <Pending text={`Looking up “${ref.query}”…`} />}
-          {ref.status === 'resolved' && <>
-            <div className="name">{ref.name}</div>
-            <div>{ref.identity}</div>
-            {!!ref.details.characteristics?.length && <ul>{ref.details.characteristics.slice(0, 4).map((c, i) => <li key={i}>{c}</li>)}</ul>}
-            <div className="small muted">From {ref.source}.{ref.details.sources?.length ? ' Sources: ' : ''}
-              {ref.details.sources?.slice(0, 3).map((s, i) => <span key={s.url}>{i ? ', ' : ''}<a href={s.url} target="_blank" rel="noreferrer">{s.title.slice(0, 40)}</a></span>)}
-            </div>
-          </>}
-          {ref.status === 'ambiguous' && <>
-            <div>Which one do you mean?</div>
-            {ref.candidates.map((c, i) => (
-              <button type="button" key={i} className="list-btn" onClick={() => choose(i)}><span className="t">{c.name}</span><small>{c.identity}</small></button>
-            ))}
-          </>}
-          {(ref.status === 'not_found' || ref.status === 'unavailable') && <>
-            <div><b>“{ref.query}”</b>: couldn’t identify this{ref.details.note ? `. ${ref.details.note}` : '.'}</div>
-            <div className="small muted">It will be used as an unverified name. Say what you like about it below so the writer works from that, not a guess.</div>
-          </>}
-          {ref.status === 'text' && <div>Your pasted lines, used as a reference (not looked up).</div>}
+          <RefBody r={ref} onChoose={choose} />
           {ref.status !== 'pending' && <>
             <label className="fld">What do you like about it? (optional)
               <input className="line" value={want} onChange={(e) => setWant(e.target.value)} onBlur={saveWant} placeholder="e.g. bratty asides, luxury brags, chantable hook" />
             </label>
             <button type="button" className="tb under" onClick={reject}>{ref.status === 'ambiguous' ? 'None of these' : 'Not this one'}</button>
           </>}
+        </div>
+      )}
+      {ref && !ref.rejected && group && (
+        <div aria-live="polite">
+          {ref.status === 'pending' && !refMembers(ref).length && <Pending text={`Looking up “${ref.query}”…`} />}
+          {refMembers(ref).map((m) => (
+            <div className="ref-card" key={m.id}>
+              <RefBody r={m} onChoose={(i) => chooseMember(m, i)} />
+              {m.status !== 'pending' && <>
+                <WantField r={m} onSaved={reload} />
+                <button type="button" className="tb under" onClick={() => rejectMember(m)}>{m.status === 'ambiguous' ? 'None of these' : 'Not this one'}</button>
+              </>}
+            </div>
+          ))}
+          <button type="button" className="tb under" onClick={reject}>Clear all</button>
         </div>
       )}
     </div>

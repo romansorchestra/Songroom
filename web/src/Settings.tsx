@@ -5,6 +5,37 @@ import { useApp } from './App';
 
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
 
+// 19 Oct: the research experiment, one switch per task. "As above" keeps the craft-notes setting.
+const ROUTE_LABELS: Array<[string, string]> = [
+  ['ideas', 'Ideas'], ['create', 'Create'], ['develop', 'Develop an idea'],
+  ['rewrite', 'Rewrite in a song'], ['continue', 'Continue a song'], ['title', 'Find the title'],
+];
+function ResearchByTask({ routes, maxCards, set }: { routes: Record<string, string>; maxCards: number; set: (p: Record<string, unknown>) => Promise<void> }) {
+  const changed = Object.keys(routes).length;
+  return (
+    <details className="small" open={changed > 0}>
+      <summary>By task (experiment){changed ? `: ${changed} changed` : ''}</summary>
+      <p className="small muted">Leave these on "As above" unless you're testing. "Notes only" sends at most {maxCards} short note{maxCards === 1 ? '' : 's'} chosen for that task and nothing else; your references reach the writer the same way either way. The Hang never gets notes.</p>
+      <div className="grid2">
+        {ROUTE_LABELS.map(([id, label]) => (
+          <label className="field" key={id}>{label}
+            <select value={routes[id] ?? 'default'} onChange={(e) => void set({ researchRoutes: { [id]: e.target.value } })}>
+              <option value="default">As above</option>
+              <option value="off">Off</option>
+              <option value="cards">Notes only</option>
+            </select>
+          </label>
+        ))}
+        <label className="field">Notes at most
+          <select value={maxCards} onChange={(e) => void set({ researchMaxCards: Number(e.target.value) })}>
+            {[0, 1, 2].map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </label>
+      </div>
+    </details>
+  );
+}
+
 export function Settings({ section }: { section?: string }) {
   const { status, refreshStatus, toast } = useApp();
   useEffect(() => { void refreshStatus(); }, [refreshStatus]);
@@ -44,6 +75,7 @@ export function Settings({ section }: { section?: string }) {
             </select>
           </label>
           <p className="small muted">When on, the writer gets at most two short notes from working writers that fit the request (plus a reference profile when you name one it knows); never the research itself. In your blind comparison (10 Oct) the notes won 3 of 4 edit rounds and made no difference on ideas or lines, so "precise edits only" is the default.</p>
+          <ResearchByTask routes={s.researchRoutes ?? {}} maxCards={s.researchMaxCards ?? 2} set={set} />
         </div>
       </section>
 
