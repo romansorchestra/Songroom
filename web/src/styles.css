@@ -506,6 +506,7 @@ details.scraps .page-group { margin-top: 8px; }
 .chip-btn { border: 1px solid var(--edge); background: var(--paper); color: var(--ink); border-radius: 999px; min-height: 36px; padding: 4px 14px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; }
 .chip-btn.done { color: var(--ok); border-color: var(--ok); }
 .remembered { font-size: 12px; color: var(--sub); margin-top: 8px; }
+.remembered a, .simple-page .muted a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .thinking { color: var(--sub); font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
 .thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--sub); animation: think 1.2s infinite ease-in-out; }
 .thinking span:nth-child(2) { animation-delay: .15s; }
