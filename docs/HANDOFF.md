@@ -96,8 +96,9 @@ Loose ends, none urgent:
   fix after his votes if research loses on those cases.
 - The judging screen was checked on the stand-in only, so his first view is the recorded one.
 - Create's results have no rhyme or title check (Ideas has both, `studio.checkOrRetry`).
-- The Anthropic key in Render (named "New no10" in the Console) was due to **expire 3 November
-  2026**. Rotate it per `docs/OPERATIONS.md` — he pastes the new key into Render himself.
+- The Anthropic key in Render was replaced on 4 November 2026 (new key named "songroom" in the
+  Console; the old "New no10" key was due to expire 3 Nov). Rotate per `docs/OPERATIONS.md` —
+  he pastes the new key into Render himself.
 
 ## The brain, piece by piece
 
