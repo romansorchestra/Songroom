@@ -451,7 +451,7 @@ details.scraps .page-group { margin-top: 8px; }
 
 .drawer { position: fixed; z-index: 50; top: 0; bottom: 0; left: 0; width: min(84vw, 300px); background: var(--paper); border-right: 1px solid var(--edge); transform: translateX(-102%); visibility: hidden; transition: transform .22s ease, visibility 0s linear .22s; display: flex; }
 .drawer.open { transform: none; visibility: visible; transition: transform .22s ease, visibility 0s; box-shadow: 6px 0 30px #0000002a; }
-.drawer-inner { flex: 1; display: flex; flex-direction: column; padding: calc(14px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)); min-height: 0; }
+.drawer-inner { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: calc(14px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)); min-height: 0; }
 .drawer .brand { padding: 4px 10px 14px; font-size: 24px; }
 .drawer-new { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; border: 1px solid var(--edge); background: var(--sheet); border-radius: 12px; font-size: 15px; margin-bottom: 8px; color: var(--ink); }
 .drawer-new svg { width: 18px; height: 18px; }
@@ -468,6 +468,7 @@ details.scraps .page-group { margin-top: 8px; }
 .drawer-older { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0 12px 6px; font-size: 13px; }
 .drawer-older a { color: var(--sub); min-height: 32px; display: inline-flex; align-items: center; }
 .scrim { position: fixed; inset: 0; z-index: 40; background: #0000003a; }
+@media (prefers-color-scheme: dark) { .scrim { background: #00000080; } }
 @media (min-width: 1000px) {
   .drawer { transform: none; visibility: visible; box-shadow: none; transition: none; }
   .scrim, .menu-btn { display: none; }

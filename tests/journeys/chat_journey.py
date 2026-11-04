@@ -125,6 +125,16 @@ async def main():
         await page.locator('.bar-btn[aria-label="New chat"]').click()
         await page.wait_for_timeout(600)
         check('new chat is empty', await page.locator('.chat-empty').count() == 1)
+        # a chat with a long first message: its row in the drawer is cut short, not the drawer
+        await send(page, 'Write me a modern country song called Spare Key. She moved out but never gave back the key, and I have not changed the lock.')
+        await wait_reply(page, 1)
+        await page.locator('.menu-btn').click()
+        await page.wait_for_timeout(350)
+        spill = await page.evaluate("""() => { const d = document.querySelector('.drawer').getBoundingClientRect();
+          return [...document.querySelectorAll('.drawer-inner *')].filter(e => e.getBoundingClientRect().right > d.right + 1).map(e => e.className || e.tagName).slice(0, 5); }""")
+        check('drawer: a long chat title stays inside the drawer', not spill, str(spill))
+        await page.screenshot(path=f'{OUT}/4b-drawer-long.png')
+        await page.keyboard.press('Escape')
         await page.goto(BASE + '/#/ideas')
         await page.wait_for_timeout(900)
         check('older tools: Ideas still opens', await page.locator('nav.tabs').count() == 1)

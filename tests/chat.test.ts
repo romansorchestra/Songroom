@@ -78,7 +78,7 @@ describe('the chat', () => {
     expect(t.messages[1].text).toContain('[stand-in]');
     expect(t.pending).toBeNull();
     expect(t.failed).toBeNull();
-    expect(t.title).toBe('Write me a country song called Already Late');
+    expect(t.title).toBe('Stand-In Song'); // named after the song in its first reply
     // his memory went with it; nothing else stacked on top
     expect(w.chats[0].system).toContain('Never use "tonight" as a rhyme word.');
     expect(w.chats[0].system).not.toContain('Craft notes');
@@ -89,7 +89,7 @@ describe('the chat', () => {
     await api('POST', '/chats', { threadId: r.body.threadId, text: 'Lines 3 and 4 should rhyme like the others', clientKey: 'a2' });
     await svc.idle();
     expect(w.chats[1].turns.map((x) => x.role)).toEqual(['user', 'assistant', 'user']);
-    expect((await api('GET', '/chats')).body.map((c: any) => c.id)).toEqual([r.body.threadId]);
+    expect((await api('GET', '/chats')).body.map((c: any) => [c.id, c.title])).toEqual([[r.body.threadId, 'Stand-In Song']]);
     expect((await api('GET', '/threads')).body).toEqual([]);
   });
 

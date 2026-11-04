@@ -172,9 +172,13 @@ export class Chat {
           const l = await this.svc.lessons.add(r, 'chat', { note: lastText.slice(0, 300), scope: 'standing' });
           if (l) saved.push(l.text);
         }
+        // a chat whose first reply is a song is listed by the song's title, not his first sentence
+        const first = !(await this.db.query(`SELECT 1 FROM messages WHERE thread_id=$1 AND role='assistant' LIMIT 1`, [tid])).length;
+        const named = first ? lyricFrom(shown)?.title ?? '' : '';
         await this.db.query(`INSERT INTO messages(id, thread_id, role, text, run_id, payload) VALUES ($1,$2,'assistant',$3,$4,$5)`,
           [newId('m_'), tid, shown, runId, JSON.stringify(saved.length ? { remembered: saved } : {})]);
-        await this.db.query(`UPDATE threads SET updated_at=now() WHERE id=$1`, [tid]);
+        if (named) await this.db.query(`UPDATE threads SET updated_at=now(), title=$2 WHERE id=$1`, [tid, named.slice(0, 80)]);
+        else await this.db.query(`UPDATE threads SET updated_at=now() WHERE id=$1`, [tid]);
       },
     });
     return { threadId: tid, runId: run.id };
