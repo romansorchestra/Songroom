@@ -70,8 +70,11 @@ async def main():
             await wait_reply(page, i + 2)
         bad = await page.evaluate(OFF_GLASS)
         check('long chat at 393x659: chrome on the glass', not bad, str(bad))
-        at_bottom = await page.evaluate("() => { const s = document.querySelector('.chat-scroll'); return s.scrollHeight - s.scrollTop - s.clientHeight < 90; }")
-        check('long chat: newest reply in view', at_bottom)
+        in_view = await page.evaluate("""() => { const s = document.querySelector('.chat-scroll'), sr = s.getBoundingClientRect();
+          const me = [...s.querySelectorAll('.msg.me')].pop().getBoundingClientRect(), them = [...s.querySelectorAll('.msg.them')].pop().getBoundingClientRect();
+          return me.top >= sr.top - 2 && them.top < sr.bottom && them.top > sr.top; }""")
+        check('long chat: his last message and the reply under it in view', in_view)
+        check('long chat: the box says Reply', await page.get_attribute('.composer textarea', 'placeholder') == 'Reply')
         await page.screenshot(path=f'{OUT}/3-long.png')
         await page.set_viewport_size({'width': 430, 'height': 719})
         await page.wait_for_timeout(300)

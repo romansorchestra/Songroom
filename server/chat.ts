@@ -39,6 +39,28 @@ export function sameSong(songTitle: string, lyricTitle: string): boolean | null 
   return n(songTitle) === n(lyricTitle);
 }
 
+/** Every fenced block in a reply, counted the way the screen counts them. */
+function blockCount(text: string): number {
+  return [...text.matchAll(/```[^\n]*\n([\s\S]*?)```/g)].length;
+}
+
+/** A block that rewrites only part of a song ([Bridge] alone, say) goes back into the whole song:
+ *  each section it gives replaces every section with that label (a chorus that changes changes
+ *  each time it comes round) and the rest stays as it was. Null when the block isn't a part of
+ *  that song: it gives a section the song hasn't got, or it is most of the song (a new version
+ *  that drops the outro is still a new version, not a patch). */
+export function mergeInto(whole: string, part: string): string | null {
+  const base = parseLyrics(whole), bits = parseLyrics(part);
+  const key = (label: string) => label.trim().toLowerCase();
+  if (!base.length || !bits.length || bits.some((b) => !b.label)) return null;
+  const labels = new Set(base.map((x) => key(x.label)));
+  if (!bits.every((b) => labels.has(key(b.label)))) return null;
+  const count = (xs: Section[]) => xs.reduce((n, x) => n + x.lines.length, 0);
+  if (count(bits) >= 0.6 * count(base)) return null;
+  const by = new Map(bits.map((b) => [key(b.label), b]));
+  return renderLyrics(base.map((x) => { const b = by.get(key(x.label)); return b ? { ...x, lines: b.lines } : x; }));
+}
+
 export class Chat {
   /** What the running reply in each chat has written so far (chat id → text), shown as it arrives.
    *  One reply runs per chat at a time, so the chat id is the key. */
@@ -167,24 +189,39 @@ export class Chat {
     if (!parseLyrics(got.lyric).length) throw new AppError(400, 'no_lyric', 'There’s no lyric in that reply to save.');
     const [t] = await this.db.query<{ song_id: string | null }>(`SELECT song_id FROM threads WHERE id=$1`, [threadId]);
     let songId = t?.song_id ?? null;
-    let created = false;
+    let created = false, merged = false;
     if (songId) {
-      const [s] = await this.db.query<{ current_rev: number; title: string }>(`SELECT current_rev, title FROM songs WHERE id=$1`, [songId]);
+      const [s] = await this.db.query<{ current_rev: number; title: string; sections: Section[] }>(`SELECT s.current_rev, s.title, r.sections FROM songs s JOIN song_revisions r ON r.song_id=s.id AND r.rev=s.current_rev WHERE s.id=$1`, [songId]);
       // a lyric with a different title is a different song, not this one's next version
       if (!s || sameSong(s.title, got.title) === false) songId = null;
       else {
-        await this.svc.saveText(songId, s.current_rev, got.lyric);
+        // a reworked bridge on its own is saved into the song, not over it
+        const whole = mergeInto(renderLyrics(s.sections), got.lyric);
+        merged = whole !== null;
+        await this.svc.saveText(songId, s.current_rev, whole ?? got.lyric);
         if (got.title && !s.title.trim()) await this.svc.updateSong(songId, { title: got.title });
       }
     }
     if (!songId) {
-      const song = await this.svc.createSong({ title: got.title || 'Untitled', text: got.lyric }) as { id: string };
+      // not saved yet: a part goes into the whole song it belongs to, from earlier in this chat
+      let text = got.lyric;
+      const earlier = await this.db.query<Msg>(`SELECT id, role, text, run_id, payload, created_at FROM messages WHERE thread_id=$1 AND role='assistant' AND rowid<=(SELECT rowid FROM messages WHERE id=$2) ORDER BY rowid DESC`, [threadId, m.id]);
+      find: for (const e of earlier) {
+        for (let i = blockCount(e.text) - 1; i >= 0; i--) {
+          if (e.id === m.id && i >= index) continue;
+          const b = lyricFrom(e.text, i);
+          if (!b || sameSong(b.title, got.title) === false) continue;
+          const whole = mergeInto(b.lyric, got.lyric);
+          if (whole) { text = whole; merged = true; break find; }
+        }
+      }
+      const song = await this.svc.createSong({ title: got.title || 'Untitled', text }) as { id: string };
       songId = song.id;
       created = true;
       await this.db.query(`UPDATE threads SET song_id=$2 WHERE id=$1 AND song_id IS NULL`, [threadId, songId]);
     }
     const payload = { ...(m.payload ?? {}), savedSongId: songId, saved: [...new Set([...(((m.payload ?? {}) as { saved?: number[] }).saved ?? []), index])] };
     await this.db.query(`UPDATE messages SET payload=$2 WHERE id=$1`, [m.id, JSON.stringify(payload)]);
-    return { songId, created };
+    return { songId, created, merged };
   }
 }

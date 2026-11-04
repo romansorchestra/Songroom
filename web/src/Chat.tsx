@@ -34,6 +34,7 @@ export function Chat({ id, songId }: { id?: string; songId?: string | null }) {
   const scroller = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const stick = useRef(true);
+  const pinned = useRef(false);
   const coarse = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
 
   async function load(threadId: string) {
@@ -70,14 +71,26 @@ export function Chat({ id, songId }: { id?: string; songId?: string | null }) {
     return () => { stop = true; };
   }, [live?.runId, thread?.id]);
 
-  // keep the newest words in view unless he has scrolled up to read
+  // follow a reply as it grows, but only until his last message reaches the top of the screen:
+  // from there he reads the lyric down from its title instead of chasing the end of it. Once he
+  // scrolls himself, leave the page where he put it.
   useLayoutEffect(() => {
     const el = scroller.current;
-    if (el && stick.current) el.scrollTop = el.scrollHeight;
+    if (!el || !stick.current) return;
+    const bottom = el.scrollHeight - el.clientHeight;
+    const mine = el.querySelectorAll<HTMLElement>('.msg.me');
+    const last = mine[mine.length - 1];
+    const top = last ? last.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - 12 : bottom;
+    const want = Math.max(0, Math.min(bottom, top));
+    pinned.current = want < bottom - 1;
+    el.scrollTop = want;
   });
   const onScroll = () => {
     const el = scroller.current;
-    if (el) stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    if (!el) return;
+    // the page pinning his message at the top is not him scrolling away
+    if (pinned.current) { pinned.current = false; stick.current = false; return; }
+    stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
   };
 
   // the field grows with what he types, up to a point
@@ -115,9 +128,9 @@ export function Chat({ id, songId }: { id?: string; songId?: string | null }) {
   async function save(m: Msg, index: number) {
     if (!thread) return;
     try {
-      const r = await api<{ songId: string; created: boolean }>('POST', `/chats/${thread.id}/save`, { messageId: m.id, index });
+      const r = await api<{ songId: string; created: boolean; merged?: boolean }>('POST', `/chats/${thread.id}/save`, { messageId: m.id, index });
       await load(thread.id);
-      toast(r.created ? 'Saved to Songs' : 'Saved as the song’s new version');
+      toast(r.merged ? (r.created ? 'Saved the whole song to Songs, with this in it' : 'Saved: the song’s new version, with this in it') : r.created ? 'Saved to Songs' : 'Saved as the song’s new version');
     } catch (e) { toast((e as Error).message); }
   }
 
@@ -166,7 +179,7 @@ export function Chat({ id, songId }: { id?: string; songId?: string | null }) {
               ))}
             {writing && (
               <div className="msg them">
-                {live?.text ? <Markdown text={live.text} /> : <div className="thinking" aria-live="polite"><span /><span /><span /> Writing</div>}
+                {live?.text ? <Markdown text={live.text} /> : <Thinking />}
               </div>
             )}
             {thread?.failed && !live && (
@@ -184,7 +197,7 @@ export function Chat({ id, songId }: { id?: string; songId?: string | null }) {
         <form className="composer" onSubmit={(e) => { e.preventDefault(); void send(); }}>
           <textarea
             ref={field} rows={1} value={text} aria-label="Message"
-            placeholder={song ? 'What does the song need?' : 'What are we writing?'}
+            placeholder={messages.length ? 'Reply' : song ? 'What does the song need?' : 'What are we writing?'}
             onChange={(e) => { setText(e.target.value); draftStore.set(`chat:${id ?? 'new'}`, e.target.value); }}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !coarse) { e.preventDefault(); void send(); } }}
           />
@@ -193,4 +206,12 @@ export function Chat({ id, songId }: { id?: string; songId?: string | null }) {
       </div>
     </Shell>
   );
+}
+
+/** Before the first words arrive the writer is thinking, sometimes for most of a minute; a clock
+ *  says it hasn't stalled. */
+function Thinking() {
+  const [secs, setSecs] = useState(0);
+  useEffect(() => { const t0 = Date.now(); const i = window.setInterval(() => setSecs(Math.floor((Date.now() - t0) / 1000)), 1000); return () => window.clearInterval(i); }, []);
+  return <div className="thinking" role="status"><span /><span /><span /> Thinking<small aria-hidden="true">{secs >= 5 ? ` · ${secs}s` : ''}</small></div>;
 }

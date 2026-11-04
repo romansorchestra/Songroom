@@ -509,6 +509,7 @@ details.scraps .page-group { margin-top: 8px; }
 .thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--sub); animation: think 1.2s infinite ease-in-out; }
 .thinking span:nth-child(2) { animation-delay: .15s; }
 .thinking span:nth-child(3) { animation-delay: .3s; margin-right: 6px; }
+.thinking small { font-size: inherit; font-variant-numeric: tabular-nums; }
 @keyframes think { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
 .chat-tail { text-align: center; margin-top: 8px; }
 .link-quiet { background: none; border: 0; color: var(--sub); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; min-height: 36px; }

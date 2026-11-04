@@ -9,7 +9,7 @@ import { openDb, migrate, type Db } from '../server/db.js';
 import { Service } from '../server/service.js';
 import { createApp } from '../server/app.js';
 import { StandInWriter } from '../server/engine/standin.js';
-import { lyricFrom } from '../server/chat.js';
+import { lyricFrom, mergeInto } from '../server/chat.js';
 import { WriterError, type ChatRequest, type ChatResult } from '../server/engine/writer.js';
 
 let db: Db, svc: Service, server: Server, base: string, cookie = '';
@@ -40,6 +40,7 @@ async function api(method: string, p: string, body?: unknown) {
   const r = await fetch(`${base}/api${p}`, { method, headers: { 'content-type': 'application/json', 'x-songroom': '1', cookie }, body: body === undefined ? undefined : JSON.stringify(body) });
   return { status: r.status, body: (await r.json().catch(() => null)) as any };
 }
+const text = (song: any) => song.sections.map((x: any) => `[${x.label}]\n` + x.lines.map((l: any) => l.text).join('\n')).join('\n\n');
 afterEach(async () => { await svc?.idle(); server?.close(); await db?.close(); });
 
 describe('reading a lyric out of a reply', () => {
@@ -49,6 +50,19 @@ describe('reading a lyric out of a reply', () => {
     expect(lyricFrom(reply, 1)).toBeNull();
     expect(lyricFrom('```\n[Chorus]\nhold on\nlet go\n```')).toEqual({ title: '', lyric: '[Chorus]\nhold on\nlet go' });
     expect(lyricFrom('no block here')).toBeNull();
+  });
+});
+
+describe('a part of a song goes back into the whole song', () => {
+  const whole = '[Verse 1]\na\nb\nc\nd\n\n[Chorus]\ne\nf\n\n[Verse 2]\ng\nh\ni\nj\n\n[Chorus]\ne\nf\n\n[Bridge]\nk\nl\n\n[Chorus]\ne\nf';
+  it('replaces the sections it gives (a chorus every time it comes round) and keeps the rest', () => {
+    expect(mergeInto(whole, '[Bridge]\nK\nL')).toBe(whole.replace('k\nl', 'K\nL'));
+    expect(mergeInto(whole, '[chorus]\nE\nF')).toBe(whole.replaceAll('e\nf', 'E\nF'));
+  });
+  it('leaves alone a new version of most of the song, a section the song hasn’t got, and unlabelled lines', () => {
+    expect(mergeInto(whole, '[Verse 1]\na\nb\nc\nd\n\n[Chorus]\ne\nf\n\n[Verse 2]\ng\nh\ni\nj\n\n[Chorus]\ne\nf')).toBeNull();
+    expect(mergeInto(whole, '[Pre-Chorus]\nx\ny')).toBeNull();
+    expect(mergeInto(whole, 'x\ny')).toBeNull();
   });
 });
 
@@ -110,7 +124,7 @@ describe('the chat', () => {
     await api('POST', '/chats', { threadId: t.id, text: 'change the chorus', clientKey: 'c2' }); await svc.idle();
     t = (await api('GET', `/chats/${t.id}`)).body;
     const s2 = await api('POST', `/chats/${t.id}/save`, { messageId: t.messages[3].id, index: 0 });
-    expect(s2.body).toEqual({ songId: s1.body.songId, created: false });
+    expect(s2.body).toEqual({ songId: s1.body.songId, created: false, merged: false });
     expect((await api('GET', `/songs/${s1.body.songId}`)).body.current_rev).toBe(2);
     expect((await api('POST', `/chats/${t.id}/save`, { messageId: t.messages[0].id })).status).toBe(404); // his own message isn't a reply
     // a lyric with another title in the same chat is another song, not this one's next version
@@ -122,6 +136,29 @@ describe('the chat', () => {
     expect(s3.body.songId).not.toBe(s1.body.songId);
     expect((await api('GET', `/songs/${s1.body.songId}`)).body.current_rev).toBe(2);
     expect((await api('GET', `/chats/${t.id}`)).body.song_id).toBe(s1.body.songId);
+  });
+
+  it('saving a reworked bridge on its own keeps the rest of the song, saved or not yet saved', { timeout: 20000 }, async () => {
+    const w = await boot();
+    w.reply = 'Here.\n\n```\nSPARE KEY\n\n[Verse 1]\none\ntwo\nthree\nfour\n\n[Chorus]\nfive\nsix\n\n[Bridge]\nseven\neight\n\n[Chorus]\nfive\nsix\n```';
+    const r = await api('POST', '/chats', { text: 'write it', clientKey: 'f1' }); await svc.idle();
+    w.reply = 'Tighter.\n\n```\nSPARE KEY\n\n[Bridge]\nSEVEN\nEIGHT\n```\n\nOnly the bridge changed.';
+    await api('POST', '/chats', { threadId: r.body.threadId, text: 'fix the bridge', clientKey: 'f2' }); await svc.idle();
+    let t = (await api('GET', `/chats/${r.body.threadId}`)).body;
+    // not saved yet: the bridge goes into the song from earlier in the chat
+    const s1 = await api('POST', `/chats/${t.id}/save`, { messageId: t.messages[3].id, index: 0 });
+    expect(s1.body).toMatchObject({ created: true, merged: true });
+    let song = (await api('GET', `/songs/${s1.body.songId}`)).body;
+    expect(text(song)).toBe('[Verse 1]\none\ntwo\nthree\nfour\n\n[Chorus]\nfive\nsix\n\n[Bridge]\nSEVEN\nEIGHT\n\n[Chorus]\nfive\nsix');
+    // saved: a new chorus on its own becomes the next version with every chorus changed
+    w.reply = '```\nSPARE KEY\n\n[Chorus]\nFIVE\nSIX\n```';
+    await api('POST', '/chats', { threadId: t.id, text: 'and the chorus', clientKey: 'f3' }); await svc.idle();
+    t = (await api('GET', `/chats/${t.id}`)).body;
+    const s2 = await api('POST', `/chats/${t.id}/save`, { messageId: t.messages[5].id, index: 0 });
+    expect(s2.body).toEqual({ songId: s1.body.songId, created: false, merged: true });
+    song = (await api('GET', `/songs/${s1.body.songId}`)).body;
+    expect(song.current_rev).toBe(2);
+    expect(text(song)).toBe('[Verse 1]\none\ntwo\nthree\nfour\n\n[Chorus]\nFIVE\nSIX\n\n[Bridge]\nSEVEN\nEIGHT\n\n[Chorus]\nFIVE\nSIX');
   });
 
   it('a chat about a song sends the song as it stands', { timeout: 20000 }, async () => {
