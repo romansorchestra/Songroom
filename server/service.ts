@@ -76,9 +76,9 @@ const DEFAULTS: Settings = {
   songHistory: 'off',
 };
 
-export const MAX_TOKENS = { trial: 24000, write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 24000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000, list: 24000, reflect: 4000, titles: 10000, taste: 6000 };
+export const MAX_TOKENS = { chat: 32000, trial: 24000, write: 24000, edit: 12000, suno: 10000, spark: 16000, preview: 24000, suggest: 12000, reference: 6000, rework: 8000, lines: 8000, hang: 10000, list: 24000, reflect: 4000, titles: 10000, taste: 6000 };
 
-export type Task = 'trial' | 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines' | 'hang' | 'list' | 'reflect' | 'titles' | 'taste';
+export type Task = 'chat' | 'trial' | 'write' | 'edit' | 'suno' | 'spark' | 'preview' | 'suggest' | 'reference' | 'rework' | 'lines' | 'hang' | 'list' | 'reflect' | 'titles' | 'taste';
 
 export class Service {
   private aborts = new Map<string, AbortController>();

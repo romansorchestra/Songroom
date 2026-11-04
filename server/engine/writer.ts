@@ -35,10 +35,25 @@ export class WriterError extends Error {
 export type SearchRequest = Omit<WriterRequest, 'schema'> & { maxUses: number };
 export type SearchResult = { text: string; sources: Array<{ url: string; title: string }>; usage: Usage; model: string; requestId: string | null };
 
+/** A conversation (the chat, 3 Nov 2026): plain text back, streamed as it is written. */
+export type ChatRequest = {
+  system: string;
+  turns: Array<{ role: 'user' | 'assistant'; text: string }>;
+  effort: Effort;
+  maxTokens: number;
+  model: string;
+  signal?: AbortSignal;
+  /** Let the writer look up an artist or song it doesn't know (0 = never). */
+  webSearches?: number;
+};
+export type ChatResult = { text: string; usage: Usage; model: string; requestId: string | null; live: boolean; truncated: boolean };
+
 export interface Writer {
   readonly live: boolean;
   readonly label: string;
   write(req: WriterRequest): Promise<WriterResult>;
+  /** Plain-text conversation, streamed: onText gets each new piece as it arrives. */
+  chat?(req: ChatRequest, onText: (delta: string) => void): Promise<ChatResult>;
   /** Plain-text answer with server-side web search; undefined when the writer can't search. */
   search?(req: SearchRequest): Promise<SearchResult>;
 }
@@ -118,6 +133,36 @@ export class AnthropicWriter implements Writer {
       throw new WriterError('bad_output', 'The writer returned something unreadable.', usage);
     }
     return { json, usage, model: res.model ?? req.model, requestId, stopReason: res.stop_reason, live: true };
+  }
+
+  async chat(req: ChatRequest, onText: (delta: string) => void): Promise<ChatResult> {
+    let res: Anthropic.Message;
+    try {
+      const stream = this.client.messages.stream(
+        {
+          model: req.model,
+          max_tokens: req.maxTokens,
+          system: [{ type: 'text', text: req.system, cache_control: { type: 'ephemeral' } }],
+          messages: req.turns.map((t) => ({ role: t.role, content: t.text })),
+          ...(req.webSearches ? { tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: req.webSearches }] } : {}),
+          output_config: { effort: req.effort },
+        } as unknown as Anthropic.MessageStreamParams,
+        { signal: req.signal },
+      );
+      stream.on('text', (delta: string) => onText(delta));
+      res = await stream.finalMessage();
+    } catch (e: unknown) {
+      throw mapError(e);
+    }
+    const u = res.usage as Anthropic.Usage & { server_tool_use?: { web_search_requests?: number } };
+    const usage: Usage = {
+      inputTokens: u.input_tokens ?? 0, outputTokens: u.output_tokens ?? 0,
+      cacheReadTokens: u.cache_read_input_tokens ?? 0, cacheWriteTokens: u.cache_creation_input_tokens ?? 0,
+      webSearches: u.server_tool_use?.web_search_requests ?? 0,
+    };
+    if (res.stop_reason === 'refusal') throw new WriterError('refusal', 'The writer declined this request.', usage);
+    const text = res.content.filter((b) => b.type === 'text').map((b) => (b as Anthropic.TextBlock).text).join('');
+    return { text, usage, model: res.model ?? req.model, requestId: (res as unknown as { _request_id?: string })._request_id ?? null, live: true, truncated: res.stop_reason === 'max_tokens' };
   }
 
   async search(req: SearchRequest): Promise<SearchResult> {

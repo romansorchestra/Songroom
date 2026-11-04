@@ -36,6 +36,24 @@ function ResearchByTask({ routes, maxCards, set }: { routes: Record<string, stri
   );
 }
 
+/** What it remembers (3 Nov 2026): his standing notes, what it has noticed, and his own words and lyrics. */
+export function Memory() {
+  const { status, refreshStatus, toast } = useApp();
+  useEffect(() => { void refreshStatus(); }, [refreshStatus]);
+  if (!status) return null;
+  const set = async (patch: Record<string, unknown>) => {
+    try { await api('PATCH', '/settings', patch); await refreshStatus(); toast('Saved'); } catch (e) { toast((e as Error).message); }
+  };
+  return (
+    <div className="settings">
+      <p className="small muted">Everything here goes to the writer with every request. In a chat, say “remember …” to add to it.</p>
+      <section id="lessons"><LessonsList /></section>
+      <section id="learning"><Learned /></section>
+      <section id="voice"><Voice taste={status.settings.taste} onSaveTaste={(taste) => set({ taste })} /></section>
+    </div>
+  );
+}
+
 export function Settings({ section }: { section?: string }) {
   const { status, refreshStatus, toast } = useApp();
   useEffect(() => { void refreshStatus(); }, [refreshStatus]);

@@ -1,7 +1,8 @@
-// The shell (14 Oct 2026, the simplification plan): four destinations, Ideas · Create ·
-// Journal · Hang, as bottom tabs on a phone and a compact top nav on a desktop. Each is a
-// view over the same records. Old links keep working: #/write is Ideas, #/browse is Create,
-// #/song/:id opens that song, #/idea/:id a saved idea, #/session/:id an earlier session.
+// The shell. Since 3 Nov 2026 the front door is the chat (Sam: "the app is too detailed and
+// annoying… I would rather just type what I want"): #/ and #/chat/:id, with Songs (#/songs)
+// and Settings in a simple drawer (Shell.tsx). The 14 Oct four-destination screens (Ideas ·
+// Create · Journal · Hang) still work under "Older tools", in their own tabbed shell. Old
+// links keep working: #/write is Ideas, #/browse is Create, #/song/:id the detailed song page.
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { api } from './api';
@@ -10,10 +11,13 @@ import { Create } from './Create';
 import { Workspace } from './Workspace';
 import { Journal } from './Journal';
 import { HangPage } from './Hang';
-import { Settings } from './Settings';
+import { Settings, Memory } from './Settings';
 import { ThreadView } from './Thread';
 import { Taste, Contrasts } from './Taste';
 import { Trials } from './Trials';
+import { Chat } from './Chat';
+import { SongsList, SongPage } from './Songs';
+import { Shell } from './Shell';
 
 export type Status = {
   writer: { connected: boolean; live: boolean; label: string };
@@ -32,7 +36,7 @@ export function go(path: string) { window.location.hash = path; }
 /** The hash route: ["create", "idea=…"] etc. A query after ? is kept on the last part. */
 function useRoute(): { parts: string[]; query: URLSearchParams } {
   const read = () => {
-    const raw = window.location.hash.replace(/^#/, '') || '/ideas';
+    const raw = window.location.hash.replace(/^#/, '') || '/';
     const [path, qs] = raw.split('?');
     return { parts: path.split('/').filter(Boolean), query: new URLSearchParams(qs ?? '') };
   };
@@ -87,6 +91,24 @@ export function App() {
   if (!signedIn) return <Login onDone={() => setSignedIn(true)} />;
 
   const [place, id] = parts;
+  const banners = <>
+    {status && !status.writer.connected && <div className="banner">No writer connected. Writing and saving work; generating needs the Anthropic API key on the server.</div>}
+    {status?.writer.connected && !status.writer.live && <div className="banner standin">Stand-in writer: anything generated here is placeholder text, not real writing.</div>}
+  </>;
+  // the simple app: the chat, Songs, Settings
+  let simple: React.ReactNode = null;
+  if (place === undefined || place === 'chat') simple = <><Chat key={`${id ?? 'new'}:${query.get('song') ?? ''}`} id={id} songId={query.get('song')} /></>;
+  else if (place === 'songs' && id) simple = <SongPage key={id} id={id} />;
+  else if (place === 'songs') simple = <SongsList />;
+  else if (place === 'memory' || (place === 'settings' && id === 'lessons')) simple = <Shell current="memory" title={<span className="bar-name">What it remembers</span>}><main className="simple-page settings-wrap"><Memory /></main></Shell>;
+  else if (place === 'settings') simple = <Shell current="settings" title={<span className="bar-name">Settings</span>}><main className="simple-page settings-wrap">{banners}<Settings section={id} /></main></Shell>;
+  if (simple) return (
+    <AppCtx.Provider value={{ status, refreshStatus, toast }}>
+      {place !== 'settings' && <div className="banner-float">{banners}</div>}
+      {simple}
+      {toastMsg && <div className="banner toast" role="status">{toastMsg}</div>}
+    </AppCtx.Provider>
+  );
   // which tab a route belongs to
   const tab: (typeof TABS)[number]['id'] | null =
     place === 'ideas' || place === 'taste' || place === 'write' && !id || place === undefined ? 'ideas'
@@ -99,7 +121,6 @@ export function App() {
   else if (place === 'hang') page = <HangPage key={id ?? 'list'} id={id} />;
   else if (place === 'song' && id) page = <Workspace key={id} id={id} />;
   else if (place === 'idea' && id) page = <Ideas key={id} ideaId={id} />;
-  else if (place === 'settings') page = <Settings section={id} />;
   else if (place === 'taste' && id === 'contrasts') page = <Contrasts />;
   else if (place === 'taste') page = <Taste key={query.toString()} preview={query.get('preview') === '1'} />;
   else if (place === 'trials') page = <Trials key={id ?? 'latest'} id={id} />;
@@ -111,7 +132,7 @@ export function App() {
       <div className="app">
         <header className="top">
           <div className="top-inner">
-            <a className="brand" href="#/ideas">songroom.</a>
+            <a className="brand" href="#/">songroom.</a>
             <nav className="nav" aria-label="Main">
               {TABS.map((t) => <a key={t.id} className="nav-tab" href={t.href} aria-current={tab === t.id ? 'page' : undefined}>{t.label}</a>)}
               <a className="gear" href="#/settings" aria-label="Settings" aria-current={place === 'settings' ? 'page' : undefined}>{Gear}</a>
@@ -119,8 +140,7 @@ export function App() {
           </div>
         </header>
         <main className="page">
-          {status && !status.writer.connected && <div className="banner">No writer connected. Writing and saving work; generating needs the Anthropic API key on the server.</div>}
-          {status?.writer.connected && !status.writer.live && <div className="banner standin">Stand-in writer: anything generated here is placeholder text, not real writing.</div>}
+          {banners}
           {page}
         </main>
         <nav className="tabs" aria-label="Main">

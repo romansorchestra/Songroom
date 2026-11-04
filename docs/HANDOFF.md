@@ -1,4 +1,4 @@
-# Handoff — 20 October 2026
+# Handoff — 3 November 2026
 
 Written so the next chat can carry on building without the old one. Read this, then
 `CLAUDE.md` (the rules), then whichever of `docs/PRODUCT_SPEC.md`, `docs/BUILD_STATUS.md`,
@@ -7,12 +7,12 @@ update it when the state changes.
 
 ## For Sam, in thirty seconds
 
-- You judged the research test on 20 Oct: **without research won 6 of 8**. Research won only
-  Create and Develop. Nothing has been switched on. A short repeat of four of them (same
-  briefs, sides swapped) is ready at Settings → Experiments → Research test; after that I set
-  the defaults.
-- You kept four of the five taste findings and turned one down; the four are now standing
-  instructions the writer reads every time.
+- **3 Nov: the app is now a chat.** Open it and type what you want; it remembers your taste
+  (the four findings you kept, your lessons, your lyrics) and nothing else gets in the way.
+  Save puts a lyric in Songs. Say "remember …" and it keeps a note. Everything older is under
+  ☰ → Older tools.
+- Still waiting for you, no rush: the repeat of four research-test cases (Settings →
+  Experiments → Research test).
 - To continue in a new chat, paste the block at the end of this file.
 
 ## What this is
@@ -30,6 +30,27 @@ and learns from what he keeps. The writer is Claude Opus 5.5 through his own API
 - In a cloud session the clone lives at `/home/claude/songroom` (clone it again if it's gone).
 - Stack: Node 22 (`node:sqlite`), Express 5, Zod, React 19 + Vite, esbuild, Anthropic SDK with
   structured outputs. Deepgram for the hang's recordings.
+
+## State on 3 November: the chat
+
+Sam (3 Nov): the app is "too detailed and annoying, it doesn't make me want to use it"; he gets
+better songs by typing a short brief into a plain chat, and wants that with a memory of his
+songwriting. He turned down a Claude Project and asked for the app to be redesigned and
+massively simplified. So the app now opens on a chat (`server/chat.ts`, `web/src/Chat.tsx`):
+
+- One conversation at a time, streamed. The brief is `CHAT_SYSTEM_1` (`prompts.ts`, `chat1`):
+  a co-writer who writes the whole thing asked for, changes only the line he flags, puts every
+  lyric in one fenced block (CAPS title, [Section] labels), keeps notes short, never reproduces
+  existing lyrics, and writes Suno prompts as three blocks. Then his memory (`svc.tasteFor`)
+  and, in a song's chat, the song as it stands. **No research cards** — they lost 6–2.
+- Save under a lyric → Songs (or the linked song's next version; another title = a new song).
+  "Remember …" → a standing lesson (source `chat`), listed at What it remembers.
+- Drawer: New chat, Songs, What it remembers, chats, Settings, Older tools (every older screen
+  still works and reads the same memory).
+- Effort is the creative setting; max 32k tokens; two web look-ups a reply when live.
+
+What to watch: whether he uses it. If a reply goes wrong, fix it in the brief (bump `chat2`,
+keep `chat1` verbatim) or in what memory holds — not by adding research back.
 
 ## State on 19 October
 
@@ -75,8 +96,8 @@ Loose ends, none urgent:
   fix after his votes if research loses on those cases.
 - The judging screen was checked on the stand-in only, so his first view is the recorded one.
 - Create's results have no rhyme or title check (Ideas has both, `studio.checkOrRetry`).
-- The Anthropic key in Render (named "New no10" in the Console) **expires 3 November 2026**.
-  Rotate it per `docs/OPERATIONS.md` before then — he pastes the new key into Render himself.
+- The Anthropic key in Render (named "New no10" in the Console) was due to **expire 3 November
+  2026**. Rotate it per `docs/OPERATIONS.md` — he pastes the new key into Render himself.
 
 ## The brain, piece by piece
 
@@ -214,5 +235,5 @@ and update `docs/BUILD_STATUS.md` (and `DECISIONS.md` for a decision) in the sam
 ## Start the next chat with this
 
 ```
-Continue building Songroom (repo romansorchestra/Songroom). Read docs/HANDOFF.md and research/NEXT-COMMISSION-REPORT.md first and follow them. Check whether I've judged the repeat of the research test (tb_q238hjgg); if I have, read the tally, set the research defaults the evidence supports, then move on to the taste work — tell me outright what you did and what's next, one question at a time.
+Continue building Songroom (repo romansorchestra/Songroom). Read docs/HANDOFF.md first and follow it. The app is now a chat with my memory behind it — ask me how it's going before changing anything. If I've judged the repeat of the research test (tb_q238hjgg), read the tally and set the research defaults the evidence supports. Tell me outright what you did and what's next, one question at a time.
 ```

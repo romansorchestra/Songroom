@@ -436,3 +436,102 @@ details.scraps .page-group { margin-top: 8px; }
 .trial-under { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
 .trial-under .line { flex: 1 1 200px; }
 .lesson-list .btn { white-space: nowrap; }
+
+/* ================= the simple app (3 Nov 2026): chat, Songs, a drawer ================= */
+.shell { min-height: 100dvh; }
+.shell.fill { height: 100dvh; overflow: hidden; }
+.shell-main { display: flex; flex-direction: column; min-height: 100dvh; }
+.shell.fill .shell-main { height: 100dvh; min-height: 0; }
+.bar { flex: none; display: flex; align-items: center; gap: 4px; padding: env(safe-area-inset-top) 6px 0; height: calc(54px + env(safe-area-inset-top)); border-bottom: 1px solid var(--edge); background: var(--paper); position: sticky; top: 0; z-index: 20; }
+.bar-title { flex: 1; min-width: 0; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .brand { font-size: 22px; }
+.bar-name { font-family: var(--serif); font-size: 20px; color: var(--ink); text-decoration: none; }
+.bar-btn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--ink); border-radius: 10px; flex: none; }
+.bar-btn svg { width: 22px; height: 22px; }
+
+.drawer { position: fixed; z-index: 50; top: 0; bottom: 0; left: 0; width: min(84vw, 300px); background: var(--paper); border-right: 1px solid var(--edge); transform: translateX(-102%); visibility: hidden; transition: transform .22s ease, visibility 0s linear .22s; display: flex; }
+.drawer.open { transform: none; visibility: visible; transition: transform .22s ease, visibility 0s; box-shadow: 6px 0 30px #0000002a; }
+.drawer-inner { flex: 1; display: flex; flex-direction: column; padding: calc(14px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)); min-height: 0; }
+.drawer .brand { padding: 4px 10px 14px; font-size: 24px; }
+.drawer-new { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; border: 1px solid var(--edge); background: var(--sheet); border-radius: 12px; font-size: 15px; margin-bottom: 8px; color: var(--ink); }
+.drawer-new svg { width: 18px; height: 18px; }
+.drawer-link { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--ink); text-decoration: none; font-size: 15px; background: none; border: 0; text-align: left; width: 100%; }
+.drawer-link.on, .drawer-chat.on { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.drawer-link.quiet { color: var(--sub); font-size: 13px; min-height: 40px; }
+.drawer-head { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--sub); padding: 16px 12px 6px; }
+.drawer-chats { flex: 1; overflow-y: auto; min-height: 0; margin: 0 -4px; padding: 0 4px; }
+.drawer-chat { display: flex; align-items: baseline; gap: 8px; min-height: 42px; padding: 9px 12px; border-radius: 10px; color: var(--ink); text-decoration: none; }
+.drawer-chat .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.drawer-chat .d { flex: none; font-size: 11px; color: var(--sub); }
+.drawer-empty { color: var(--sub); font-size: 13px; padding: 6px 12px; }
+.drawer-foot { flex: none; border-top: 1px solid var(--edge); padding-top: 8px; margin-top: 8px; }
+.drawer-older { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0 12px 6px; font-size: 13px; }
+.drawer-older a { color: var(--sub); min-height: 32px; display: inline-flex; align-items: center; }
+.scrim { position: fixed; inset: 0; z-index: 40; background: #0000003a; }
+@media (min-width: 1000px) {
+  .drawer { transform: none; visibility: visible; box-shadow: none; transition: none; }
+  .scrim, .menu-btn { display: none; }
+  .shell-main { margin-left: 300px; }
+}
+
+/* the chat: header, a scrolling middle, the composer. The composer and header are never inside the scroller. */
+.chat { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.chat-song { flex: none; display: block; text-align: center; font-size: 13px; color: var(--sub); padding: 8px 14px; border-bottom: 1px solid var(--edge); text-decoration: none; background: var(--sheet); }
+.chat-song b { color: var(--ink); font-weight: 600; }
+.chat-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.chat-col { max-width: 720px; margin: 0 auto; padding: 18px 16px 24px; }
+.chat-empty { padding: 18vh 6px 0; text-align: center; }
+.chat-empty h1 { font-family: var(--serif); font-weight: 400; font-size: 32px; line-height: 1.15; margin: 0 0 10px; letter-spacing: -.5px; }
+.chat-empty p { color: var(--sub); margin: 0 auto; max-width: 30em; font-size: 14px; }
+.msg { margin: 0 0 20px; font-size: 16px; line-height: 1.55; overflow-wrap: anywhere; }
+.msg.me { display: flex; justify-content: flex-end; }
+.msg.me .bubble { background: var(--sheet); border: 1px solid var(--edge); border-radius: 18px 18px 6px 18px; padding: 10px 14px; max-width: 86%; white-space: pre-wrap; }
+.msg.them.failed { color: var(--warn); }
+.msg.them.failed p { margin: 0 0 8px; }
+.md p { margin: 0 0 12px; }
+.md p:last-child { margin-bottom: 0; }
+.md ul, .md ol { margin: 0 0 12px; padding-left: 22px; }
+.md li { margin: 0 0 4px; }
+.md-h { font-weight: 600; margin-top: 4px; }
+.md-h1, .md-h2 { font-family: var(--serif); font-weight: 400; font-size: 22px; }
+.md code { font-size: .9em; background: color-mix(in srgb, var(--ink) 8%, transparent); padding: 1px 4px; border-radius: 4px; }
+.lyric-block { margin: 6px 0 16px; }
+.lyric-sheet { background: var(--sheet); box-shadow: 2px 3px 0 var(--shadow); border: 1px solid var(--edge); border-radius: 4px; padding: 16px 18px; font-family: Georgia, 'Iowan Old Style', serif; font-size: 17px; line-height: 1.5; }
+.lyric-title { font-family: var(--serif); font-size: 23px; line-height: 1.2; margin-bottom: 6px; letter-spacing: -.2px; }
+.lyric-label { font-family: var(--sans); font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--sub); margin: 10px 0 2px; }
+.lyric-gap { height: 4px; }
+.lyric-line { padding-left: 1em; text-indent: -1em; }
+.lyric-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.chip-btn { border: 1px solid var(--edge); background: var(--paper); color: var(--ink); border-radius: 999px; min-height: 36px; padding: 4px 14px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; }
+.chip-btn.done { color: var(--ok); border-color: var(--ok); }
+.remembered { font-size: 12px; color: var(--sub); margin-top: 8px; }
+.thinking { color: var(--sub); font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
+.thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--sub); animation: think 1.2s infinite ease-in-out; }
+.thinking span:nth-child(2) { animation-delay: .15s; }
+.thinking span:nth-child(3) { animation-delay: .3s; margin-right: 6px; }
+@keyframes think { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.chat-tail { text-align: center; margin-top: 8px; }
+.link-quiet { background: none; border: 0; color: var(--sub); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; min-height: 36px; }
+.composer { flex: none; display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--edge); background: var(--paper); max-width: 744px; width: 100%; margin: 0 auto; }
+.composer textarea { flex: 1; min-width: 0; resize: none; border: 1px solid var(--edge); background: var(--sheet); border-radius: 20px; padding: 10px 14px; font-size: 16px; line-height: 1.4; max-height: 35dvh; outline: none; }
+.composer textarea:focus { border-color: var(--sub); }
+.send { flex: none; width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--solid); color: var(--on); display: inline-flex; align-items: center; justify-content: center; }
+.send svg { width: 20px; height: 20px; }
+.send:disabled { opacity: .3; }
+.banner-float:empty { display: none; }
+.banner-float { position: fixed; top: calc(54px + env(safe-area-inset-top)); left: 0; right: 0; z-index: 30; pointer-events: none; display: flex; justify-content: center; }
+.banner-float .banner { margin: 6px; padding: 4px 10px; font-size: 12px; }
+
+/* Songs and the plain pages */
+.simple-page { flex: 1; width: 100%; max-width: 680px; margin: 0 auto; padding: 18px 18px 40px; }
+.simple-page .search { width: 100%; margin-bottom: 14px; }
+.song-list { display: flex; flex-direction: column; }
+.song-row { display: block; padding: 13px 4px; border-bottom: 1px solid var(--edge); color: var(--ink); text-decoration: none; }
+.song-row .t { display: block; font-family: var(--serif); font-size: 20px; line-height: 1.2; }
+.song-row .l { display: block; color: var(--sub); font-size: 13px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.song-title { font-family: var(--serif); font-weight: 400; font-size: 32px; line-height: 1.1; margin: 4px 0 12px; overflow-wrap: anywhere; }
+.song-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+.song-chats { margin-top: 22px; }
+.title-field { width: 100%; font-family: var(--serif); font-size: 24px; margin-bottom: 10px; }
+.lyric-edit { width: 100%; border: 1px solid var(--edge); background: var(--sheet); border-radius: 6px; padding: 14px; font-family: Georgia, 'Iowan Old Style', serif; font-size: 16px; line-height: 1.5; margin-bottom: 12px; }
+.settings-wrap .settings > h1:first-child { display: none; }

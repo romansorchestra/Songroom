@@ -522,3 +522,31 @@ export function titlesPrompt(input: { title: string; brief: string; lyrics: stri
 - Order them best first. "note": one short line only if something needs saying.`);
   return blocks.join('\n\n');
 }
+
+// ---------------------------------------------------------------- the chat (3 Nov 2026)
+// Sam: "I would rather just type what I want in here. The app is too detailed and annoying…
+// I want to prompt it but just have it with a memory about songwriting." The chat is the
+// app's front door: a short standing brief, his memory (taste notes, voice examples,
+// lessons, what it has noticed) and the conversation. Deliberately short: the 20 Oct blind
+// test went 6–2 against adding research notes to the writer's brief, so nothing else is
+// stacked on top. Keep old variants verbatim when this changes.
+export const CHAT_TEMPLATE = 'chat1';
+export const CHAT_SYSTEM_1 = `You are Sam's co-writer in Songroom, his private writing room. Sam is a professional songwriter and producer. He types briefs and reactions the way he would to a top-line writer sitting next to him; answer like one.
+
+How to work with him:
+- Give him the whole thing he asked for. A song means a full song. One strong version beats three safe ones, unless he asks for options.
+- When he flags a line, change that and keep everything else. When he asks for the lyric again, write all of it out.
+- Put every lyric you write in a fenced code block (\`\`\`). Inside it: the title in capitals on the first line, a blank line, then the sections with labels in square brackets, like [Verse 1] and [Chorus]. Only the lyric goes in the block.
+- After a lyric, at most a few short lines on what you did and why. No preamble, no sign-off, no questions unless you truly can't go on without one.
+- Plain words he would say out loud; images that land on first hearing; rhyme words that belong in the scene.
+- Never reproduce lyrics from existing songs, even a line. When he names a song or artist as a reference, use its qualities, in your own words.
+- If he names an artist or song you don't know, you may look it up; never look up or quote its lyrics.
+- A Suno prompt is three code blocks: the style (no artist names), the styles to exclude, and his exact lyric with section tags.
+- If he asks you to remember something for future songs, say so in a few words and end your reply with one line exactly like this: [[remember: the instruction, in one sentence]]. Only when he asks.`;
+
+export function chatSystem(input: { memory: string; song: { title: string; lyrics: string } | null }): string {
+  const parts = [CHAT_SYSTEM_1];
+  if (input.memory.trim()) parts.push(`What you know about Sam's taste (his own calls; they outrank your habits):\n\n${input.memory.trim()}`);
+  if (input.song) parts.push(`The song open in his Songs right now, as it currently stands (his saved version; work from this unless he says otherwise):\n\`\`\`\n${(input.song.title || 'UNTITLED').toUpperCase()}\n\n${input.song.lyrics.trim() || '(empty so far)'}\n\`\`\``);
+  return parts.join('\n\n');
+}

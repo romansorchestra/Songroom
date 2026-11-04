@@ -10,7 +10,7 @@ import type { Db } from '../db.js';
 import { newId } from './lyrics.js';
 
 export type LessonScope = 'standing' | 'session';
-export type Lesson = { id: string; text: string; source: 'rework' | 'settings' | 'taste'; idea_id: string | null; note: string; created_at: string; scope: LessonScope; expires_at: string | null };
+export type Lesson = { id: string; text: string; source: 'rework' | 'settings' | 'taste' | 'chat'; idea_id: string | null; note: string; created_at: string; scope: LessonScope; expires_at: string | null };
 /** How long "this session" lasts: a note about the artist he's writing for today holds until tomorrow. */
 export const SESSION_HOURS = 12;
 

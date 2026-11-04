@@ -11,6 +11,7 @@ import { referenceLines } from './engine/prompts.js';
 import { Hang, MAX_AUDIO_BYTES, MAX_TRANSCRIPT_CHARS } from './hang.js';
 import { Taste, WHY_CHOICES } from './taste.js';
 import { Trials } from './trials.js';
+import { Chat } from './chat.js';
 import { keptEdits } from './edits.js';
 import type { Transcriber } from './engine/transcribe.js';
 import fs from 'node:fs';
@@ -30,6 +31,7 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   const hang = new Hang(svc, studio, opts.transcriber ?? null);
   const taste = new Taste(svc);
   const trials = new Trials(svc, studio);
+  const chat = new Chat(svc);
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
   app.use(express.json({ limit: '1mb' }));
@@ -63,6 +65,19 @@ export function createApp(svc: Service, auth: AuthConfig, opts: { staticDir?: st
   })));
 
   // Writing
+  // The chat (chat.ts, 3 Nov 2026): the app's front door.
+  api.get('/chats', h(async () => chat.list()));
+  api.get('/chats/:id', h(async (req) => chat.get(String(req.params.id))));
+  api.delete('/chats/:id', h(async (req) => chat.remove(String(req.params.id))));
+  api.post('/chats', h(async (req) => {
+    const b = z.object({ threadId: z.string().max(40).nullable().optional(), songId: z.string().max(40).nullable().optional(), text: z.string().max(30000).default(''), retry: z.boolean().optional(), clientKey: key }).parse(req.body);
+    return chat.send({ threadId: b.threadId ?? null, songId: b.songId ?? null, text: b.text, retry: b.retry, clientKey: b.clientKey ?? null });
+  }));
+  api.get('/chat-runs/:id', h(async (req) => chat.progress(String(req.params.id))));
+  api.post('/chats/:id/save', h(async (req) => {
+    const b = z.object({ messageId: z.string().max(40), index: z.number().int().min(0).max(20).default(0) }).parse(req.body);
+    return chat.save(String(req.params.id), b.messageId, b.index);
+  }));
   api.get('/threads', h(async () => svc.threads()));
   api.get('/threads/:id', h(async (req) => {
     const t = await svc.thread(String(req.params.id));

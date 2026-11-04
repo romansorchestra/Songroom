@@ -3,7 +3,7 @@
 // shows a banner, so it can never be mistaken for real writing. It is only
 // enabled when SONGROOM_STANDIN=1 and there is no API key.
 
-import type { Writer, WriterRequest, WriterResult } from './writer.js';
+import type { Writer, WriterRequest, WriterResult, ChatRequest, ChatResult } from './writer.js';
 
 export class StandInWriter implements Writer {
   readonly live = false;
@@ -14,6 +14,19 @@ export class StandInWriter implements Writer {
     await new Promise((r) => setTimeout(r, 150));
     const json = this.script ? this.script(req) : this.fake(req);
     return { json, usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 }, model: 'stand-in', requestId: null, stopReason: 'end_turn', live: false };
+  }
+
+  /** The chat: a visibly fake reply, streamed in pieces, with a lyric block so Save can be checked. */
+  async chat(req: ChatRequest, onText: (delta: string) => void): Promise<ChatResult> {
+    const last = req.turns[req.turns.length - 1]?.text ?? '';
+    const remember = /^\s*remember\b/i.test(last) ? `\n\n[[remember: [stand-in] ${last.replace(/^\s*remember( that)?:?\s*/i, '').slice(0, 120)}]]` : '';
+    const text = `[stand-in] Placeholder reply, not real writing. You said: "${last.slice(0, 80)}"\n\n\`\`\`\nSTAND-IN SONG\n\n[Verse 1]\n[stand-in] first line of the verse\n[stand-in] second line of the verse\n\n[Chorus]\n[stand-in] the chorus line\n[stand-in] the chorus line again\n\`\`\`\n\n**What I did:** nothing real; this is the stand-in.${remember}`;
+    for (let i = 0; i < text.length; i += 24) {
+      if (req.signal?.aborted) break;
+      onText(text.slice(i, i + 24));
+      await new Promise((r) => setTimeout(r, 15));
+    }
+    return { text, usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 }, model: 'stand-in', requestId: null, live: false, truncated: false };
   }
 
   private fake(req: WriterRequest): unknown {
